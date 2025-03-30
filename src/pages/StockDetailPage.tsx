@@ -72,7 +72,8 @@ const StockDetailPage: React.FC = () => {
   const avgPrice = position?.averagePrice || 0;
   const costBasis = ownedQuantity * avgPrice;
   const profitLoss = positionValue - costBasis;
-  const profitLossPercent = avgPrice > 0 ? (profitLoss / costBasis) : 0;
+  // Add null check before calculating percentage
+  const profitLossPercent = avgPrice > 0 && costBasis > 0 ? (profitLoss / costBasis) : 0;
   
   return (
     <div className="pb-20">
