@@ -60,6 +60,12 @@ const AuthPage: React.FC = () => {
     }
   };
 
+  const handleDemoLogin = () => {
+    setActiveTab('login');
+    setEmail('demo@tradesim.com');
+    setPassword('demopass123');
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
       <div className="w-full max-w-md">
@@ -113,7 +119,7 @@ const AuthPage: React.FC = () => {
                   </div>
                 </CardContent>
                 
-                <CardFooter>
+                <CardFooter className="flex flex-col gap-3">
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? (
                       <>
@@ -123,6 +129,14 @@ const AuthPage: React.FC = () => {
                     ) : (
                       'Sign In'
                     )}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleDemoLogin}
+                  >
+                    Use Demo Account
                   </Button>
                 </CardFooter>
               </form>
@@ -186,6 +200,7 @@ const AuthPage: React.FC = () => {
         <div className="mt-6 text-center text-sm text-muted-foreground">
           <p>For demo purposes, you can use any email and password.</p>
           <p className="mt-1">This is a simulation app with virtual money only.</p>
+          <p className="mt-1 font-medium">Demo credentials: demo@tradesim.com / demopass123</p>
         </div>
       </div>
     </div>
