@@ -28,7 +28,7 @@ const SettingsPage: React.FC = () => {
   const { portfolio, resetPortfolio } = usePortfolio();
   const { toast } = useToast();
   const [aiBudget, setAIBudget] = useState(user?.aiBudget.toString() || '1000');
-  const [riskTolerance, setRiskTolerance] = useState(user?.riskTolerance || 'medium');
+  const [riskTolerance, setRiskTolerance] = useState<'low' | 'medium' | 'high'>(user?.riskTolerance || 'medium');
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
   const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
 
@@ -36,6 +36,10 @@ const SettingsPage: React.FC = () => {
     navigate('/auth');
     return null;
   }
+  
+  const handleRiskToleranceChange = (value: string) => {
+    setRiskTolerance(value as 'low' | 'medium' | 'high');
+  };
   
   const handleSaveAISettings = () => {
     const budgetNumber = parseFloat(aiBudget);
@@ -141,7 +145,7 @@ const SettingsPage: React.FC = () => {
               <Label>Risk Tolerance</Label>
               <RadioGroup 
                 value={riskTolerance} 
-                onValueChange={setRiskTolerance}
+                onValueChange={handleRiskToleranceChange}
                 className="flex flex-col space-y-1 mt-2"
               >
                 <div className="flex items-center space-x-2">

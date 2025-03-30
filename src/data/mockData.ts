@@ -1,4 +1,3 @@
-
 import { Stock, NewsItem, Portfolio, User } from '@/types';
 import { getRandomChange, getRandomPrice } from '@/lib/utils';
 
@@ -305,7 +304,7 @@ export function getAIRecommendation(ticker: string, riskTolerance: 'low' | 'medi
   
   // Determine if we should recommend a call or put
   const recentTrend = Math.random() > 0.5; // Simplified logic, randomly decide trend
-  const optionType = recentTrend ? 'call' : 'put';
+  const optionType = recentTrend ? 'call' as const : 'put' as const;
   
   // Calculate strike price based on risk tolerance
   let strikeDelta = 0;
