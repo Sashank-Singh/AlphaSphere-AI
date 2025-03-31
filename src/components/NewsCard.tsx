@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { NewsItem } from '@/types';
+import { ExternalLink } from 'lucide-react';
 
 interface NewsCardProps {
   news: NewsItem;
@@ -30,35 +30,44 @@ const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
   };
   
   return (
-    <Card className="overflow-hidden mb-4 hover:bg-accent/50 transition-colors cursor-pointer">
+    <Card className="group overflow-hidden transition-all duration-300 cursor-pointer border-transparent hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 hover:translate-y-[-2px]">
       <CardContent className="p-4">
-        <div className="flex gap-3">
+        <div className="flex gap-4">
           {news.imageUrl && (
-            <div className="flex-shrink-0">
+            <div className="relative flex-shrink-0 overflow-hidden">
               <img 
                 src={news.imageUrl} 
                 alt={news.title} 
-                className="w-16 h-16 object-cover rounded-md"
+                className="w-24 h-24 object-cover rounded-xl transition-transform duration-300 group-hover:scale-105"
               />
             </div>
           )}
           
-          <div className="flex-1">
-            <h3 className="font-medium text-sm mb-1 line-clamp-2">{news.title}</h3>
-            
-            <div className="flex justify-between items-center text-xs text-muted-foreground">
-              <span>{news.source}</span>
-              <span>{timeAgo(news.timestamp)}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-medium text-base line-clamp-2 group-hover:text-primary transition-colors duration-300">
+                {news.title}
+              </h3>
+              <ExternalLink className="h-4 w-4 text-muted-foreground/50 flex-shrink-0 mt-1" />
             </div>
             
-            {news.tickers && news.tickers.length > 0 && (
-              <div className="mt-2 flex gap-1 flex-wrap">
-                {news.tickers.map(ticker => (
-                  <span 
-                    key={ticker} 
-                    className="px-1.5 py-0.5 text-xs bg-primary/10 text-primary rounded"
+            <div className="mt-2 flex items-center flex-wrap gap-2 text-xs">
+              <span className="font-medium px-2 py-0.5 bg-primary/5 rounded-full">
+                {news.source}
+              </span>
+              <span className="text-muted-foreground">
+                {timeAgo(news.timestamp)}
+              </span>
+            </div>
+            
+            {news.symbols && news.symbols.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {news.symbols.map(symbol => (
+                  <span
+                    key={symbol}
+                    className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full"
                   >
-                    {ticker}
+                    {symbol}
                   </span>
                 ))}
               </div>

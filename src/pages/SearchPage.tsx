@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
@@ -29,7 +28,7 @@ const SearchPage: React.FC = () => {
     
     const query = searchQuery.toLowerCase();
     return (
-      stock.ticker.toLowerCase().includes(query) ||
+      stock.symbol.toLowerCase().includes(query) ||
       stock.name.toLowerCase().includes(query)
     );
   });
@@ -51,18 +50,20 @@ const SearchPage: React.FC = () => {
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search tickers or companies"
+            placeholder="Search symbols or companies"
             className="pl-9 pr-9"
           />
           
           {searchQuery && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-0 top-0 h-full px-3 hover:bg-transparent"
+              aria-label="Clear search"
               onClick={clearSearch}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2"
             >
-              <X className="h-4 w-4 text-muted-foreground" />
-            </button>
+              <X className="h-4 w-4" />
+            </Button>
           )}
         </form>
       </div>

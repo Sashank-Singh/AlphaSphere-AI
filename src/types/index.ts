@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   email: string;
@@ -9,7 +8,7 @@ export interface User {
 
 export interface Stock {
   id: string;
-  ticker: string;
+  symbol: string;
   name: string;
   price: number;
   change: number;
@@ -19,6 +18,7 @@ export interface Stock {
   pe?: number;
   sector?: string;
   lastUpdated?: Date;
+  logo?: string;
 }
 
 export interface NewsItem {
@@ -28,13 +28,13 @@ export interface NewsItem {
   timestamp: Date;
   imageUrl?: string;
   url: string;
-  tickers?: string[];
+  symbols?: string[];
 }
 
 export interface Position {
   id: string;
   stockId: string;
-  ticker: string;
+  symbol: string;
   name: string;
   quantity: number;
   averagePrice: number;
@@ -44,7 +44,7 @@ export interface Position {
 export interface OptionContract {
   id: string;
   stockId: string;
-  ticker: string;
+  symbol: string;
   type: 'call' | 'put';
   strikePrice: number;
   expiryDate: Date;
@@ -57,7 +57,7 @@ export interface Transaction {
   date: Date;
   type: 'buy' | 'sell';
   assetType: 'stock' | 'option';
-  ticker: string;
+  symbol: string;
   quantity: number;
   price: number;
   total: number;
@@ -78,7 +78,7 @@ export interface Portfolio {
 }
 
 export interface AIRecommendation {
-  ticker: string;
+  symbol: string;
   confidence: 'low' | 'medium' | 'high';
   optionContract: OptionContract;
   reasoning: string;

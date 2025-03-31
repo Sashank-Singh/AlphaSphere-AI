@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Position, OptionContract } from '@/types';
@@ -21,12 +20,12 @@ export const StockPositionCard: React.FC<StockPositionCardProps> = ({ position }
   return (
     <Card 
       className="overflow-hidden transition-transform duration-200 cursor-pointer hover:scale-[1.02]"
-      onClick={() => navigate(`/stock/${position.ticker}`)}
+      onClick={() => navigate(`/stocks/${position.symbol}`)}
     >
       <CardContent className="p-4">
         <div className="flex justify-between">
           <div>
-            <h3 className="font-bold">{position.ticker}</h3>
+            <h3 className="font-bold">{position.symbol}</h3>
             <p className="text-sm text-muted-foreground">{position.quantity} shares</p>
           </div>
           
@@ -74,13 +73,13 @@ export const OptionPositionCard: React.FC<OptionPositionCardProps> = ({ option }
   return (
     <Card 
       className="overflow-hidden transition-transform duration-200 cursor-pointer hover:scale-[1.02]"
-      onClick={() => navigate(`/stock/${option.ticker}`)}
+      onClick={() => navigate(`/stocks/${option.symbol}`)}
     >
       <CardContent className="p-4">
         <div className="flex justify-between">
           <div>
             <h3 className="font-bold flex items-center gap-1">
-              {option.ticker}
+              {option.symbol}
               <span className={cn(
                 "text-xs px-1.5 py-0.5 rounded",
                 option.type === 'call' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"

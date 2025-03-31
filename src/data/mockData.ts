@@ -1,6 +1,23 @@
 import { Stock, NewsItem, Portfolio, User } from '@/types';
 import { getRandomChange, getRandomPrice } from '@/lib/utils';
 
+// Types
+export interface Index {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  logo: string;
+}
+
+export interface Sector {
+  name: string;
+  change: number;
+  marketCap: number;
+  topStocks: string[];
+  logo: string;
+}
+
 // Mock User
 export const mockUser: User = {
   id: '1',
@@ -13,288 +30,264 @@ export const mockUser: User = {
 // Mock Stocks
 export const mockStocks: Stock[] = [
   {
-    id: '1',
-    ticker: 'AAPL',
+    id: 'AAPL',
+    symbol: 'AAPL',
     name: 'Apple Inc.',
-    price: 174.79,
-    change: 0.0215,
-    marketCap: 2750000000000,
-    volume: 57000000,
-    pe: 28.7,
+    price: 175.43,
+    change: 2.31,
+    volume: 55789432,
     sector: 'Technology',
+    logo: 'https://companieslogo.com/img/orig/AAPL-bf1a4314.png'
   },
   {
-    id: '2',
-    ticker: 'MSFT',
+    id: 'MSFT',
+    symbol: 'MSFT',
     name: 'Microsoft Corporation',
-    price: 418.34,
-    change: 0.0132,
-    marketCap: 3100000000000,
-    volume: 29000000,
-    pe: 36.9,
+    price: 338.11,
+    change: 1.45,
+    volume: 23456789,
     sector: 'Technology',
+    logo: 'https://companieslogo.com/img/orig/MSFT-6e0c67c3.png'
   },
   {
-    id: '3',
-    ticker: 'AMZN',
+    id: 'GOOGL',
+    symbol: 'GOOGL',
+    name: 'Alphabet Inc.',
+    price: 131.86,
+    change: -0.89,
+    volume: 19876543,
+    sector: 'Technology',
+    logo: 'https://companieslogo.com/img/orig/GOOGL-0ed88f7c.png'
+  },
+  {
+    id: 'AMZN',
+    symbol: 'AMZN',
     name: 'Amazon.com Inc.',
-    price: 178.75,
-    change: -0.0087,
-    marketCap: 1850000000000,
-    volume: 31000000,
-    pe: 60.2,
+    price: 145.24,
+    change: 0.76,
+    volume: 45678901,
     sector: 'Consumer Cyclical',
+    logo: 'https://companieslogo.com/img/orig/AMZN-e9f942e4.png'
   },
   {
-    id: '4',
-    ticker: 'TSLA',
-    name: 'Tesla, Inc.',
-    price: 235.45,
-    change: -0.0221,
-    marketCap: 750000000000,
-    volume: 65000000,
-    pe: 75.8,
-    sector: 'Automotive',
-  },
-  {
-    id: '5',
-    ticker: 'SPY',
-    name: 'SPDR S&P 500 ETF Trust',
-    price: 511.35,
-    change: 0.0075,
-    marketCap: null,
-    volume: 85000000,
-    pe: null,
-    isEtf: true,
-    sector: 'Index Fund',
-  },
-  {
-    id: '6',
-    ticker: 'QQQ',
-    name: 'Invesco QQQ Trust',
-    price: 425.57,
-    change: 0.0092,
-    marketCap: null,
-    volume: 55000000,
-    pe: null,
-    isEtf: true,
+    id: 'NVDA',
+    symbol: 'NVDA',
+    name: 'NVIDIA Corporation',
+    price: 477.76,
+    change: 3.21,
+    volume: 34567890,
     sector: 'Technology',
+    logo: 'https://companieslogo.com/img/orig/NVDA-6d4cef10.png'
   },
+  {
+    id: 'META',
+    symbol: 'META',
+    name: 'Meta Platforms Inc.',
+    price: 326.49,
+    change: 1.98,
+    volume: 28901234,
+    sector: 'Technology',
+    logo: 'https://companieslogo.com/img/orig/META-4767da84.png'
+  },
+  {
+    id: 'TSLA',
+    symbol: 'TSLA',
+    name: 'Tesla Inc.',
+    price: 238.45,
+    change: -1.54,
+    volume: 67890123,
+    sector: 'Consumer Cyclical',
+    logo: 'https://companieslogo.com/img/orig/TSLA-6da1e910.png'
+  },
+  {
+    id: 'JPM',
+    symbol: 'JPM',
+    name: 'JPMorgan Chase & Co.',
+    price: 147.11,
+    change: 0.45,
+    volume: 12345678,
+    sector: 'Financial Services',
+    logo: 'https://companieslogo.com/img/orig/JPM-0ddf4f3e.png'
+  },
+  {
+    id: 'V',
+    symbol: 'V',
+    name: 'Visa Inc.',
+    price: 252.34,
+    change: 0.89,
+    volume: 89012345,
+    sector: 'Financial Services',
+    logo: 'https://companieslogo.com/img/orig/V-69020c3e.png'
+  }
 ];
 
 // Mock Market Indices
-export const mockIndices: Stock[] = [
+export const mockIndices: Index[] = [
   {
-    id: 'index1',
-    ticker: 'S&P 500',
-    name: 'S&P 500 Index',
-    price: 5100.27,
-    change: 0.0082,
+    symbol: 'SPX',
+    name: 'S&P 500',
+    price: 4783.45,
+    change: 1.23,
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/S%26P_500_logo.svg/1200px-S%26P_500_logo.svg.png'
   },
   {
-    id: 'index2',
-    ticker: 'DOW',
+    symbol: 'NDX',
+    name: 'Nasdaq 100',
+    price: 16832.78,
+    change: 1.56,
+    logo: 'https://companieslogo.com/img/orig/NDX-3fcd083c.png'
+  },
+  {
+    symbol: 'DJI',
     name: 'Dow Jones Industrial Average',
-    price: 38547.35,
-    change: 0.0065,
+    price: 37654.32,
+    change: 0.89,
+    logo: 'https://companieslogo.com/img/orig/DJI-c47b257b.png'
+  }
+];
+
+// Mock Sectors
+export const mockSectors: Sector[] = [
+  {
+    name: 'Technology',
+    change: 2.34,
+    marketCap: 12.5,
+    topStocks: ['AAPL', 'MSFT', 'NVDA'],
+    logo: 'https://example.com/sector-icons/technology.png'
   },
   {
-    id: 'index3',
-    ticker: 'NASDAQ',
-    name: 'NASDAQ Composite',
-    price: 16084.69,
-    change: 0.0110,
+    name: 'Financial Services',
+    change: 0.87,
+    marketCap: 8.2,
+    topStocks: ['JPM', 'V', 'BAC'],
+    logo: 'https://example.com/sector-icons/financial.png'
   },
+  {
+    name: 'Consumer Cyclical',
+    change: 1.45,
+    marketCap: 6.8,
+    topStocks: ['AMZN', 'TSLA', 'HD'],
+    logo: 'https://example.com/sector-icons/consumer.png'
+  },
+  {
+    name: 'Healthcare',
+    change: -0.32,
+    marketCap: 5.9,
+    topStocks: ['JNJ', 'UNH', 'PFE'],
+    logo: 'https://example.com/sector-icons/healthcare.png'
+  }
 ];
 
 // Mock News
 export const mockNews: NewsItem[] = [
   {
-    id: 'news1',
-    title: 'Apple Unveils New iPhone Pro Max with Groundbreaking AI Features',
+    id: '1',
+    title: 'Apple Reports Record Q4 Earnings',
+    source: 'Financial Times',
+    timestamp: new Date('2024-02-01'),
+    url: 'https://example.com/news/1',
+    symbols: ['AAPL']
+  },
+  {
+    id: '2',
+    title: 'Microsoft and Google Partner on AI Initiative',
     source: 'TechCrunch',
-    timestamp: new Date(Date.now() - 3600000), // 1 hour ago
-    imageUrl: 'https://source.unsplash.com/random/300x200?phone',
-    url: '#',
-    tickers: ['AAPL'],
+    timestamp: new Date('2024-02-02'),
+    url: 'https://example.com/news/2',
+    symbols: ['MSFT', 'GOOGL']
   },
   {
-    id: 'news2',
-    title: 'Tesla Reports Record Q2 Deliveries, Shares Jump 5%',
+    id: '3',
+    title: 'Tesla Announces New Battery Technology',
     source: 'Reuters',
-    timestamp: new Date(Date.now() - 5400000), // 1.5 hours ago
-    imageUrl: 'https://source.unsplash.com/random/300x200?car',
-    url: '#',
-    tickers: ['TSLA'],
+    timestamp: new Date('2024-02-03'),
+    url: 'https://example.com/news/3',
+    symbols: ['TSLA']
   },
   {
-    id: 'news3',
-    title: 'Federal Reserve Signals Potential Rate Cuts, Markets Rally',
-    source: 'Wall Street Journal',
-    timestamp: new Date(Date.now() - 10800000), // 3 hours ago
-    imageUrl: 'https://source.unsplash.com/random/300x200?finance',
-    url: '#',
-    tickers: ['SPY', 'QQQ'],
-  },
-  {
-    id: 'news4',
-    title: 'Microsoft Azure Growth Accelerates as Cloud Demand Surges',
+    id: '4',
+    title: 'Amazon Prime Day Sets New Sales Record',
     source: 'Bloomberg',
-    timestamp: new Date(Date.now() - 18000000), // 5 hours ago
-    imageUrl: 'https://source.unsplash.com/random/300x200?cloud',
-    url: '#',
-    tickers: ['MSFT'],
+    timestamp: new Date('2024-02-04'),
+    url: 'https://example.com/news/4',
+    symbols: ['AMZN']
   },
   {
-    id: 'news5',
-    title: 'Amazon Expands Same-Day Delivery to More U.S. Cities',
-    source: 'CNBC',
-    timestamp: new Date(Date.now() - 28800000), // 8 hours ago
-    imageUrl: 'https://source.unsplash.com/random/300x200?delivery',
-    url: '#',
-    tickers: ['AMZN'],
-  },
+    id: '5',
+    title: 'NVIDIA Unveils Next-Gen GPU Architecture',
+    source: 'The Verge',
+    timestamp: new Date('2024-02-05'),
+    url: 'https://example.com/news/5',
+    symbols: ['NVDA']
+  }
 ];
 
 // Mock Portfolio
 export const mockPortfolio: Portfolio = {
-  cash: 5324.78,
-  totalValue: 10000.00,
+  cash: 100000,
+  totalValue: 250000,
   positions: [
     {
       id: 'pos1',
-      stockId: '1',
-      ticker: 'AAPL',
+      stockId: 'AAPL',
+      symbol: 'AAPL',
       name: 'Apple Inc.',
-      quantity: 10,
-      averagePrice: 170.25,
-      currentPrice: 174.79,
+      quantity: 100,
+      averagePrice: 170.50,
+      currentPrice: 175.43
     },
     {
       id: 'pos2',
-      stockId: '3',
-      ticker: 'AMZN',
-      name: 'Amazon.com Inc.',
-      quantity: 5,
-      averagePrice: 175.50,
-      currentPrice: 178.75,
+      stockId: 'MSFT',
+      symbol: 'MSFT',
+      name: 'Microsoft Corporation',
+      quantity: 50,
+      averagePrice: 330.25,
+      currentPrice: 338.11
     },
     {
       id: 'pos3',
-      stockId: '5',
-      ticker: 'SPY',
-      name: 'SPDR S&P 500 ETF Trust',
-      quantity: 3,
-      averagePrice: 505.20,
-      currentPrice: 511.35,
-    },
+      stockId: 'GOOGL',
+      symbol: 'GOOGL',
+      name: 'Alphabet Inc.',
+      quantity: 75,
+      averagePrice: 128.75,
+      currentPrice: 131.86
+    }
   ],
   optionPositions: [
     {
       id: 'opt1',
-      stockId: '4',
-      ticker: 'TSLA',
+      stockId: 'AAPL',
+      symbol: 'AAPL',
       type: 'call',
-      strikePrice: 250,
-      expiryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
-      premium: 7.35,
-      quantity: 2,
-    },
-    {
-      id: 'opt2',
-      stockId: '2',
-      ticker: 'MSFT',
-      type: 'put',
-      strikePrice: 400,
-      expiryDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
-      premium: 4.89,
-      quantity: 1,
-    },
+      strikePrice: 180,
+      expiryDate: new Date('2024-06-21'),
+      premium: 5.50,
+      quantity: 2
+    }
   ],
-  transactions: [
-    {
-      id: 'tx1',
-      date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), // 15 days ago
-      type: 'buy',
-      assetType: 'stock',
-      ticker: 'AAPL',
-      quantity: 10,
-      price: 170.25,
-      total: 1702.50,
-    },
-    {
-      id: 'tx2',
-      date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
-      type: 'buy',
-      assetType: 'stock',
-      ticker: 'AMZN',
-      quantity: 5,
-      price: 175.50,
-      total: 877.50,
-    },
-    {
-      id: 'tx3',
-      date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-      type: 'buy',
-      assetType: 'stock',
-      ticker: 'SPY',
-      quantity: 3,
-      price: 505.20,
-      total: 1515.60,
-    },
-    {
-      id: 'tx4',
-      date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-      type: 'buy',
-      assetType: 'option',
-      ticker: 'TSLA',
-      quantity: 2,
-      price: 7.35,
-      total: 735.00,
-      optionDetails: {
-        type: 'call',
-        strikePrice: 250,
-        expiryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-        premium: 7.35,
-      },
-    },
-    {
-      id: 'tx5',
-      date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
-      type: 'buy',
-      assetType: 'option',
-      ticker: 'MSFT',
-      quantity: 1,
-      price: 4.89,
-      total: 489.00,
-      optionDetails: {
-        type: 'put',
-        strikePrice: 400,
-        expiryDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-        premium: 4.89,
-      },
-    },
-  ],
+  transactions: []
 };
 
 // Function to refresh stock prices
-export function refreshStockPrices() {
+export const refreshStockPrices = (): Stock[] => {
   return mockStocks.map(stock => ({
     ...stock,
-    price: getRandomPrice(stock.price),
-    change: getRandomChange(),
-    lastUpdated: new Date(),
+    price: stock.price * (1 + (Math.random() - 0.5) * 0.02),
+    change: (Math.random() - 0.5) * 4,
+    volume: Math.floor(Math.random() * 1000000)
   }));
-}
+};
 
-// Function to get stock by ticker
-export function getStockByTicker(ticker: string): Stock | undefined {
-  return mockStocks.find(stock => stock.ticker === ticker);
-}
+// Function to get stock by symbol
+export const getStockBySymbol = (symbol: string): Stock | null => {
+  return mockStocks.find(stock => stock.symbol === symbol) || null;
+};
 
 // Function to simulate AI recommendation
-export function getAIRecommendation(ticker: string, riskTolerance: 'low' | 'medium' | 'high') {
-  const stock = getStockByTicker(ticker);
+export function getAIRecommendation(symbol: string, riskTolerance: 'low' | 'medium' | 'high') {
+  const stock = getStockBySymbol(symbol);
   if (!stock) return null;
   
   const isEtf = stock.isEtf;
@@ -340,12 +333,12 @@ export function getAIRecommendation(ticker: string, riskTolerance: 'low' | 'medi
   }
   
   return {
-    ticker,
+    symbol,
     confidence,
     optionContract: {
       id: `rec-${Date.now()}`,
       stockId: stock.id,
-      ticker,
+      symbol,
       type: optionType,
       strikePrice,
       expiryDate,

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
@@ -12,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, BrainCircuit, Clock, Sparkles } from 'lucide-react';
-import { AIRecommendation, Stock } from '@/types';
+import { AIRecommendation, Stock, OptionContract } from '@/types';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { useAuth } from '@/context/AuthContext';
 import { formatCurrency } from '@/lib/utils';
@@ -22,11 +21,12 @@ interface AITradeModalProps {
   stock: Stock;
   open: boolean;
   onClose: () => void;
+  onTrade: (option: OptionContract, quantity: number, type: 'buy' | 'sell') => Promise<void>;
 }
 
-const AITradeModal: React.FC<AITradeModalProps> = ({ stock, open, onClose }) => {
+const AITradeModal: React.FC<AITradeModalProps> = ({ stock, open, onClose, onTrade }) => {
   const { user } = useAuth();
-  const { portfolio, executeOptionTrade } = usePortfolio();
+  const { portfolio } = usePortfolio();
   const [recommendation, setRecommendation] = useState<AIRecommendation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [quantity, setQuantity] = useState('1');
@@ -37,27 +37,26 @@ const AITradeModal: React.FC<AITradeModalProps> = ({ stock, open, onClose }) => 
       setIsLoading(true);
       // Simulate AI analysis delay
       setTimeout(() => {
-        const rec = getAIRecommendation(stock.ticker, user.riskTolerance);
+        const rec = getAIRecommendation(stock.symbol, user.riskTolerance);
         setRecommendation(rec);
         setIsLoading(false);
       }, 2000);
     }
-  }, [open, stock.ticker, user]);
+  }, [open, stock.symbol, user]);
 
   const handleTrade = async () => {
     if (!recommendation) return;
     
     setIsSubmitting(true);
     try {
-      const success = await executeOptionTrade(
+      await onTrade(
         recommendation.optionContract,
         parseInt(quantity),
         'buy'
       );
-      
-      if (success) {
-        onClose();
-      }
+      onClose();
+    } catch (error) {
+      console.error('Error executing AI trade:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -87,7 +86,7 @@ const AITradeModal: React.FC<AITradeModalProps> = ({ stock, open, onClose }) => 
             AI Trade Recommendation
           </DialogTitle>
           <DialogDescription>
-            {stock.name} ({stock.ticker})
+            {stock.name} ({stock.symbol})
           </DialogDescription>
         </DialogHeader>
 
@@ -106,7 +105,7 @@ const AITradeModal: React.FC<AITradeModalProps> = ({ stock, open, onClose }) => 
                   <div>
                     <div className="text-sm text-muted-foreground">Recommended Option:</div>
                     <div className="font-semibold flex items-center gap-1">
-                      {recommendation.ticker}
+                      {recommendation.symbol}
                       <span className={recommendation.optionContract.type === 'call' 
                         ? "text-green-500 text-xs bg-green-500/10 px-1.5 py-0.5 rounded-full" 
                         : "text-red-500 text-xs bg-red-500/10 px-1.5 py-0.5 rounded-full"
