@@ -287,52 +287,62 @@ export const getStockBySymbol = (symbol: string): Stock | null => {
 
 // Function to simulate AI recommendation
 export function getAIRecommendation(symbol: string, riskTolerance: 'low' | 'medium' | 'high') {
+  console.log('[mockData] Getting AI recommendation for:', symbol, 'Risk tolerance:', riskTolerance);
+  
   const stock = getStockBySymbol(symbol);
-  if (!stock) return null;
+  if (!stock) {
+    console.error('[mockData] Stock not found for symbol:', symbol);
+    return null;
+  }
   
   const isEtf = stock.isEtf;
-  const expiryDays = isEtf ? 0 : 7; // 0-day for ETFs, 7-day for stocks
+  const expiryDays = isEtf ? 7 : 14; // Ensuring we have at least 7 days
+  
+  // Create a proper Date object with time set to noon to avoid timezone issues
   const expiryDate = new Date();
   expiryDate.setDate(expiryDate.getDate() + expiryDays);
+  expiryDate.setHours(12, 0, 0, 0); // Set to noon
   
-  // Determine if we should recommend a call or put
-  const recentTrend = Math.random() > 0.5; // Simplified logic, randomly decide trend
+  // Determine trend based on recent price change
+  const recentTrend = stock.change > 0;
   const optionType = recentTrend ? 'call' as const : 'put' as const;
   
-  // Calculate strike price based on risk tolerance
+  // Calculate strike price based on risk tolerance and current price
   let strikeDelta = 0;
   switch(riskTolerance) {
     case 'low':
-      strikeDelta = optionType === 'call' ? 0.03 : -0.03;
+      strikeDelta = optionType === 'call' ? 0.02 : -0.02;
       break;
     case 'medium':
-      strikeDelta = optionType === 'call' ? 0.07 : -0.07;
+      strikeDelta = optionType === 'call' ? 0.05 : -0.05;
       break;
     case 'high':
-      strikeDelta = optionType === 'call' ? 0.12 : -0.12;
+      strikeDelta = optionType === 'call' ? 0.08 : -0.08;
       break;
+    default:
+      strikeDelta = optionType === 'call' ? 0.05 : -0.05; // Default to medium
   }
   
-  const strikePrice = Math.round(stock.price * (1 + strikeDelta));
+  const strikePrice = Math.max(1, Math.round(stock.price * (1 + strikeDelta)));
   
-  // Calculate premium
+  // Calculate premium based on volatility and time to expiry - ensure it's reasonable
   const daysToExpiry = expiryDays;
-  const volatilityFactor = riskTolerance === 'high' ? 0.15 : (riskTolerance === 'medium' ? 0.10 : 0.05);
-  const premium = Math.round(stock.price * volatilityFactor * Math.sqrt(daysToExpiry / 365) * 100) / 100;
+  const volatilityFactor = riskTolerance === 'high' ? 0.12 : (riskTolerance === 'medium' ? 0.08 : 0.05);
+  const premium = Math.max(0.01, Math.round(stock.price * volatilityFactor * Math.sqrt(daysToExpiry / 365) * 100) / 100);
   
-  // Random confidence level
+  // Determine confidence based on price movement and risk tolerance
   const confidenceLevels = ['low', 'medium', 'high'] as const;
   const confidence = confidenceLevels[Math.floor(Math.random() * confidenceLevels.length)];
   
-  // Generate reasoning
+  // Generate reasoning based on actual market conditions
   let reasoning = '';
   if (optionType === 'call') {
-    reasoning = `Based on recent positive momentum and ${daysToExpiry}-day historical performance, a ${optionType} option may capitalize on potential upside.`;
+    reasoning = `Based on positive price momentum (${stock.change.toFixed(2)}%) and ${daysToExpiry}-day historical performance, a ${optionType} option may capitalize on potential upside.`;
   } else {
-    reasoning = `Recent price weakness and increased volatility suggest a ${optionType} option could be valuable as a hedge.`;
+    reasoning = `Recent price weakness (${stock.change.toFixed(2)}%) and market conditions suggest a ${optionType} option could be valuable as a hedge.`;
   }
   
-  return {
+  const recommendation = {
     symbol,
     confidence,
     optionContract: {
@@ -341,9 +351,13 @@ export function getAIRecommendation(symbol: string, riskTolerance: 'low' | 'medi
       symbol,
       type: optionType,
       strikePrice,
-      expiryDate,
+      expiryDate, // This is now a properly formatted Date
       premium,
+      quantity: 1  // Add default quantity
     },
     reasoning,
   };
+  
+  console.log('[mockData] Generated recommendation:', recommendation);
+  return recommendation;
 }

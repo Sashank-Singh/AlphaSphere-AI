@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ChevronLeft, ArrowUpDown, DollarSign, BrainCircuit, TrendingUp, TrendingDown, X, Bell, BarChart2, AlertTriangle, Play, Target, ChevronDown } from 'lucide-react';
 import { formatCurrency, formatPercentage, cn } from '@/lib/utils';
-import { Stock, OptionContract } from '@/types';
+import { Stock, OptionContract, Position } from '@/types';
 import StockPriceChart from '@/components/StockPriceChart';
 import TradeModal from '@/components/TradeModal';
 import AITradeModal from '@/components/AITradeModal';
@@ -28,6 +28,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// Define Alert type matching WatchlistProps
+interface Alert {
+  symbol: string;
+  price: number;
+  type: 'above' | 'below';
+}
+
+// Keep TradeAlert for AIMarketInsights
 interface TradeAlert {
   id: string;
   type: 'opportunity' | 'risk' | 'rebalancing';
@@ -48,6 +56,7 @@ const StockDetailPage: React.FC = () => {
   const [isAITradeModalOpen, setIsAITradeModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [watchlistStocks, setWatchlistStocks] = useState<Stock[]>([]);
+  const [tradeAlerts, setTradeAlerts] = useState<Alert[]>([]); // Use Alert[] type
   const [error, setError] = useState<string | null>(null);
   const [activeComponents, setActiveComponents] = useState({
     watchlist: false,
@@ -57,11 +66,11 @@ const StockDetailPage: React.FC = () => {
     backtest: false,
     aiMetrics: false,
   });
-  const [selectedOption, setSelectedOption] = useState<any | null>(null);
+  const [selectedOption, setSelectedOption] = useState<OptionContract | null>(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [portfolioData, setPortfolioData] = useState({
-    position: null as any,
+    position: null as Position | null,
     optionPositions: [] as OptionContract[],
     ownedQuantity: 0,
     positionValue: 0,
@@ -128,6 +137,80 @@ const StockDetailPage: React.FC = () => {
     }
   }, [portfolio, stock]);
   
+  // Define callback functions before the early return
+  const handleStockTrade = useCallback(async (quantity: number, price: number, type: 'buy' | 'sell') => {
+    if (!stock) return;
+    
+    console.log('[StockDetailPage] handleStockTrade started. Quantity:', quantity, 'Price:', price, 'Type:', type);
+    try {
+      console.log('[StockDetailPage] Calling executeStockTrade...');
+      const success = await executeStockTrade(
+        stock.symbol,
+        quantity,
+        price,
+        type
+      );
+      
+      if (success) {
+        console.log('[StockDetailPage] Stock trade successful.');
+        // Trade successful - modal will close automatically
+        setIsTradeModalOpen(false);
+      } else {
+        console.log('[StockDetailPage] Stock trade failed (executeStockTrade returned false).');
+      }
+    } catch (error) {
+      console.error('[StockDetailPage] Error executing stock trade:', error);
+    }
+  }, [stock, executeStockTrade, setIsTradeModalOpen]); // Added dependencies
+
+  const handleOptionTrade = useCallback(async (option: OptionContract, quantity: number, type: 'buy' | 'sell') => {
+    console.log('[StockDetailPage] handleOptionTrade started. Option:', option, 'Quantity:', quantity, 'Type:', type);
+    try {
+      if (!option || !option.symbol) {
+        console.error('[StockDetailPage] Invalid option contract:', option);
+        return;
+      }
+      
+      setIsSubmitting(true);
+      console.log('[StockDetailPage] Calling executeOptionTrade with:', {
+        option,
+        quantity,
+        type
+      });
+      
+      const success = await executeOptionTrade(
+        option,
+        quantity,
+        type
+      );
+      
+      if (success) {
+        console.log('[StockDetailPage] Option trade successful. Closing modal.');
+        
+        // Close the appropriate modal based on the trade type
+        if (type === 'buy') {
+          setIsAITradeModalOpen(false);
+        } else {
+          setIsConfirmDialogOpen(false);
+        }
+        
+        // Update local state if needed
+        if (stock) {
+          const updatedStock = getStockBySymbol(stock.symbol);
+          if (updatedStock) {
+            setStock(updatedStock);
+          }
+        }
+      } else {
+        console.error('[StockDetailPage] Option trade failed (executeOptionTrade returned false).');
+      }
+    } catch (error) {
+      console.error('[StockDetailPage] Error executing option trade:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [executeOptionTrade, setIsAITradeModalOpen, stock, setIsConfirmDialogOpen]);
+
   if (isLoading || !stock) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
@@ -154,6 +237,8 @@ const StockDetailPage: React.FC = () => {
 
   const handleSetAlert = (symbol: string, price: number, type: 'above' | 'below') => {
     console.log(`Alert set for ${symbol}: ${type} ${price}`);
+    // Add the new alert to the state
+    setTradeAlerts(prev => [...prev, { symbol, price, type }]); 
   };
 
   const handleStrategySelect = (strategy: string) => {
@@ -162,8 +247,9 @@ const StockDetailPage: React.FC = () => {
   };
 
   const handleAlertCreate = (alert: TradeAlert) => {
-    // TODO: Implement alert creation
-    console.log('Alert created:', alert);
+    // TODO: Implement alert creation logic if needed for AIMarketInsights
+    // This might involve adding to a different state or sending to a backend
+    console.log('Trade alert created (for AI Insights):', alert);
   };
 
   const toggleComponent = (component: keyof typeof activeComponents) => {
@@ -171,47 +257,6 @@ const StockDetailPage: React.FC = () => {
       ...prev,
       [component]: !prev[component]
     }));
-  };
-
-  const handleStockTrade = async (quantity: number, price: number, type: 'buy' | 'sell') => {
-    if (!stock) return;
-    
-    try {
-      const success = await executeStockTrade(
-        stock.symbol,
-        quantity,
-        price,
-        type
-      );
-      
-      if (success) {
-        // Trade successful - modal will close automatically
-        // Portfolio data will update via the useEffect hook
-      }
-    } catch (error) {
-      console.error('Error executing stock trade:', error);
-    }
-  };
-
-  const handleOptionTrade = async (option: OptionContract, quantity: number, type: 'buy' | 'sell') => {
-    try {
-      const success = await executeOptionTrade(
-        option,
-        quantity,
-        type
-      );
-      
-      if (success) {
-        // Trade successful - modal will close automatically
-        // Portfolio data will update via the useEffect hook
-        if (type === 'sell') {
-          setIsConfirmDialogOpen(false);
-          setSelectedOption(null);
-        }
-      }
-    } catch (error) {
-      console.error('Error executing option trade:', error);
-    }
   };
 
   return (
@@ -307,6 +352,7 @@ const StockDetailPage: React.FC = () => {
         <div className="mx-4 mb-4">
           <Watchlist
             stocks={watchlistStocks}
+            alerts={tradeAlerts} // Now the type matches
             onAddStock={handleAddToWatchlist}
             onRemoveStock={handleRemoveFromWatchlist}
             onSetAlert={handleSetAlert}

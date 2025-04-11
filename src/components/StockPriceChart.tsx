@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { fetchCompanyOverview, fetchRealTimeStockPrice, StockQuote } from '@/lib/api';
+import { usePortfolio } from '@/context/PortfolioContext';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
 import { CandlestickChart, ChevronsDown, ChevronsUp, Volume2, VolumeX, BarChart2, Sparkles, LineChart } from 'lucide-react';
@@ -102,7 +103,7 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
     // Volatility Indicators
     ATR: false,
     StdDev: false,
-    
+
     // Oscillators
     WilliamsR: false,
     Momentum: false,
@@ -114,13 +115,17 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [isAITradeModalOpen, setIsAITradeModalOpen] = useState(false);
-  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Get portfolio context for executing trades
+  const { executeOptionTrade } = usePortfolio();
+
   // Update refs to use number type which is what browser APIs return
   const timerRef = useRef<number | null>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const tvWidgetRef = useRef<TVWidget | null>(null);
   const priceUpdateIntervalRef = useRef<number | null>(null);
-  
+
   // Fetch company info
   const fetchCompanyData = async () => {
     try {
@@ -147,17 +152,17 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
   // Initialize chart and fetch company data
   useEffect(() => {
     if (!symbol) return;
-    
+
     fetchCompanyData();
     fetchCurrentPrice();
-    
+
     // Clean up interval on unmount
     return () => {
       if (timerRef.current) {
         window.clearTimeout(timerRef.current);
         timerRef.current = null;
       }
-      
+
       if (priceUpdateIntervalRef.current) {
         window.clearInterval(priceUpdateIntervalRef.current);
         priceUpdateIntervalRef.current = null;
@@ -168,10 +173,10 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
   // TradingView widget setup with price data callback
   useEffect(() => {
     if (!chartContainerRef.current) return;
-    
+
     // Clear previous chart if any
     chartContainerRef.current.innerHTML = '';
-    
+
     const script = document.createElement('script');
     script.src = 'https://s3.tradingview.com/tv.js';
     script.async = true;
@@ -239,9 +244,9 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
         new window.TradingView.widget(config);
       }
     };
-    
+
     chartContainerRef.current.appendChild(script);
-    
+
     return () => {
       if (chartContainerRef.current) {
         chartContainerRef.current.innerHTML = '';
@@ -278,6 +283,41 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
     };
   };
 
+  // Handle option trade execution
+  const handleOptionTrade = useCallback(async (option, quantity, type) => {
+    console.log('[StockPriceChart] handleOptionTrade started. Option:', option, 'Quantity:', quantity, 'Type:', type);
+    try {
+      if (!option || !option.symbol) {
+        console.error('[StockPriceChart] Invalid option contract:', option);
+        return;
+      }
+
+      setIsSubmitting(true);
+      console.log('[StockPriceChart] Calling executeOptionTrade with:', {
+        option,
+        quantity,
+        type
+      });
+
+      const success = await executeOptionTrade(
+        option,
+        quantity,
+        type
+      );
+
+      if (success) {
+        console.log('[StockPriceChart] Option trade successful. Closing modal.');
+        setIsAITradeModalOpen(false);
+      } else {
+        console.error('[StockPriceChart] Option trade failed (executeOptionTrade returned false).');
+      }
+    } catch (error) {
+      console.error('[StockPriceChart] Error executing option trade:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [executeOptionTrade]);
+
   // Format for display
   const formatCurrency = (value: number | undefined | null) => {
     if (value === undefined || value === null) return '-';
@@ -306,13 +346,13 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
           <ToggleGroupItem value="12M" size="sm">1Y</ToggleGroupItem>
           <ToggleGroupItem value="60M" size="sm">5Y</ToggleGroupItem>
         </ToggleGroup>
-        
+
         <div className="flex gap-2 ml-auto">
           <Popover>
             <PopoverTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="flex items-center"
               >
                 <LineChart className="mr-1 h-4 w-4" />
@@ -434,10 +474,10 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
               </div>
             </PopoverContent>
           </Popover>
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
+
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setShowVolume(!showVolume)}
             className="flex items-center"
           >
@@ -446,17 +486,17 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
           </Button>
         </div>
       </div>
-      
+
       {/* TradingView Chart - main content */}
       <div className="rounded-lg overflow-hidden border border-gray-800 bg-black">
-        <div 
-          id="tradingview_chart" 
-          ref={chartContainerRef} 
+        <div
+          id="tradingview_chart"
+          ref={chartContainerRef}
           style={{ height: '550px' }} // Increased height by 50px
           className="bg-black"
         />
       </div>
-      
+
       {/* Stock info and analysis grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
         <div>
@@ -469,43 +509,43 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
 
       {/* Trading buttons */}
       <div className="grid grid-cols-2 gap-4 mt-4">
-        <Button 
-          onClick={() => setIsTradeModalOpen(true)} 
+        <Button
+          onClick={() => setIsTradeModalOpen(true)}
           className="bg-blue-600 hover:bg-blue-700 text-white py-2"
         >
           <BarChart2 className="mr-2 h-5 w-5" />
           Trade Stock
         </Button>
-        <Button 
-          onClick={() => setIsAITradeModalOpen(true)} 
+        <Button
+          onClick={() => setIsAITradeModalOpen(true)}
           className="bg-green-600 hover:bg-green-700 text-white py-2"
         >
           <Sparkles className="mr-2 h-5 w-5" />
           Trade with AI
         </Button>
       </div>
-      
+
       {/* Options chain toggle */}
       <div className="mt-2">
-        <Button 
-          variant="outline" 
-          onClick={() => setShowOptions(!showOptions)} 
+        <Button
+          variant="outline"
+          onClick={() => setShowOptions(!showOptions)}
           className="w-full flex items-center justify-center"
         >
           {showOptions ? (
             <>
-              <ChevronsUp className="mr-2 h-5 w-5" /> 
+              <ChevronsUp className="mr-2 h-5 w-5" />
               Hide Options
             </>
           ) : (
             <>
-              <ChevronsDown className="mr-2 h-5 w-5" /> 
+              <ChevronsDown className="mr-2 h-5 w-5" />
               Show Options
               </>
             )}
         </Button>
       </div>
-      
+
       {/* Options chain data */}
       {showOptions && (
         <div className="rounded-lg border border-gray-800 bg-black p-4 mt-4">
@@ -515,12 +555,12 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
           </div>
         </div>
       )}
-      
+
       {/* Footer */}
       <div className="text-xs text-gray-500 pt-4 pb-8 text-center">
-        Chart data provided by TradingView · Stock data from Yahoo Finance 
+        Chart data provided by TradingView · Stock data from Yahoo Finance
       </div>
-      
+
       {/* Modals */}
       {isTradeModalOpen && currentPrice && (
         <TradeModal
@@ -529,12 +569,13 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
           onClose={() => setIsTradeModalOpen(false)}
         />
       )}
-      
+
       {isAITradeModalOpen && currentPrice && (
         <AITradeModal
           stock={getStockObject()}
           open={isAITradeModalOpen}
           onClose={() => setIsAITradeModalOpen(false)}
+          onTrade={handleOptionTrade}
         />
       )}
     </div>
