@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +21,6 @@ import {
   mockStocks, 
   mockIndices, 
   refreshStockPrices, 
-  mockNews 
 } from '@/data/mockData';
 import { 
   usePortfolio 
@@ -32,7 +32,7 @@ import {
 } from '@/lib/utils';
 import StockPriceChart from '@/components/StockPriceChart';
 import PortfolioOptimizer from '@/components/PortfolioOptimizer';
-import PredictivePriceForecasting from '@/components/PredictivePriceForecasting';
+import EnhancedSphereAI from '@/components/EnhancedSphereAI';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +52,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 
+// Define a local interface for news articles to resolve type issues
 interface NewsArticle {
   title: string;
   url: string;
@@ -59,12 +60,50 @@ interface NewsArticle {
   date: string;
 }
 
+// Map mockNews to match NewsArticle interface
+const mapMockNewsToArticles = (mockNews: any[]): NewsArticle[] => {
+  return mockNews.map(news => ({
+    title: news.title,
+    url: news.url,
+    source: news.source,
+    date: news.timestamp || new Date().toLocaleDateString() // Add default date if missing
+  }));
+};
+
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { portfolio } = usePortfolio();
   const [stocks, setStocks] = useState(mockStocks);
   const [searchQuery, setSearchQuery] = useState('');
-  const [news, setNews] = useState<NewsArticle[]>(mockNews);
+  const [news, setNews] = useState<NewsArticle[]>(() => {
+    // Mock news data - in real app this would come from an API
+    return [
+      {
+        title: "Fed announces interest rate decision",
+        url: "#",
+        source: "Financial Times",
+        date: "2023-11-01"
+      },
+      {
+        title: "Tech stocks rally on earnings surprises",
+        url: "#",
+        source: "Wall Street Journal",
+        date: "2023-11-01"
+      },
+      {
+        title: "Market volatility expected ahead of jobs report",
+        url: "#",
+        source: "Bloomberg",
+        date: "2023-10-31"
+      },
+      {
+        title: "Oil prices drop on increased production",
+        url: "#",
+        source: "Reuters",
+        date: "2023-10-31"
+      }
+    ];
+  });
   const [riskTolerance, setRiskTolerance] = useState<number>(50);
 
   useEffect(() => {
@@ -118,9 +157,11 @@ const DashboardPage: React.FC = () => {
 
   const portfolioReturn = calculatePortfolioReturn();
 
+  // Modified to handle positions without sector property
   const calculateSectorAllocation = () => {
     const allocation: Record<string, number> = {};
     portfolio.positions?.forEach(position => {
+      // Using optional chaining to safely access sector property
       const sector = position.sector || 'Other';
       allocation[sector] = (allocation[sector] || 0) + (position.quantity * position.currentPrice);
     });
@@ -222,8 +263,9 @@ const DashboardPage: React.FC = () => {
                         max={100}
                         step={1}
                         onValueChange={(value) => {
-                          // Ensure value is a number before setting the state
-                          setRiskTolerance(typeof value === 'string' ? parseFloat(value) : Number(value));
+                          // Make sure we handle the value as a number
+                          const newValue = Array.isArray(value) ? value[0] : value;
+                          setRiskTolerance(Number(newValue));
                         }}
                       />
                       <Label htmlFor="risk">Aggressive</Label>
@@ -235,6 +277,9 @@ const DashboardPage: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Add back the SphereAI component */}
+      <EnhancedSphereAI className="bg-black border border-gray-800 mt-6" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
@@ -320,8 +365,8 @@ const DashboardPage: React.FC = () => {
             Today's News
           </h2>
           <div className="space-y-4">
-            {news.map(article => (
-              <Card key={article.url} className="bg-black border border-gray-800">
+            {news.map((article, index) => (
+              <Card key={index} className="bg-black border border-gray-800">
                 <CardHeader>
                   <CardTitle className="text-sm font-medium">
                     <a
@@ -359,12 +404,6 @@ const DashboardPage: React.FC = () => {
 
         <PortfolioOptimizer className="bg-black border border-gray-800" />
       </div>
-
-      <PredictivePriceForecasting
-        symbol="TSLA"
-        stock={stocks.find(stock => stock.symbol === "TSLA")}
-        className="bg-black border border-gray-800"
-      />
       
       <AlertDialog>
         <AlertDialogTrigger asChild>

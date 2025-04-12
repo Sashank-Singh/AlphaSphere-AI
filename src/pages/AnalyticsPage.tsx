@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,6 +7,9 @@ import { usePortfolio } from '@/context/PortfolioContext';
 
 const AnalyticsPage: React.FC = () => {
   const { portfolio } = usePortfolio();
+  
+  // Calculate number of trades - handle the case where trades doesn't exist
+  const tradeCount = portfolio.trades?.length || 0;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -23,7 +27,7 @@ const AnalyticsPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {portfolio.trades?.length || 0}
+              {tradeCount}
             </div>
           </CardContent>
         </Card>

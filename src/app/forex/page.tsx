@@ -1,10 +1,20 @@
 import React from 'react';
-import ForexWidget, { ForexPairs } from '@/components/ForexWidget';
+import ForexWidget from '@/components/ForexWidget';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata = {
   title: 'Forex Rates - Trade Simply AI',
   description: 'View real-time forex exchange rates powered by TradingView data'
+};
+
+// Define forex pairs enum if it's missing from ForexWidget
+const ForexPairs = {
+  EURUSD: "FX:EURUSD",
+  GBPUSD: "FX:GBPUSD",
+  USDJPY: "FX:USDJPY",
+  USDCAD: "FX:USDCAD",
+  AUDUSD: "FX:AUDUSD",
+  EURGBP: "FX:EURGBP"
 };
 
 export default function ForexPage() {
@@ -28,7 +38,7 @@ export default function ForexPage() {
             </CardHeader>
             <CardContent>
               <ForexWidget 
-                pair="FX:EURUSD" 
+                pair={ForexPairs.EURUSD}
                 width="100%" 
               />
             </CardContent>

@@ -232,6 +232,27 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
     return Math.max(0, Math.min(100, score));
   };
   
+  const calculateSectorExposure = () => {
+    const exposure: Record<string, number> = {};
+    
+    portfolio.positions.forEach(position => {
+      const sector = position.sector || 'Other';
+      
+      if (!exposure[sector]) {
+        exposure[sector] = 0;
+      }
+      
+      exposure[sector] += position.quantity * position.currentPrice;
+    });
+    
+    const total = Object.values(exposure).reduce((sum, val) => sum + val, 0);
+    
+    return Object.entries(exposure).map(([sector, value]) => ({
+      name: sector,
+      value: (value / total) * 100
+    }));
+  };
+  
   const toggleSection = (section: keyof typeof openSections) => {
     setOpenSections(prev => ({
       ...prev,
@@ -402,48 +423,41 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-3 mt-2">
-                {Object.keys(recommendation.sectorAllocation.current).map((sector) => {
-                  const currentValue = recommendation.sectorAllocation.current[sector] || 0;
-                  const recommendedValue = recommendation.sectorAllocation.recommended[sector] || 0;
-                  const difference = recommendedValue - currentValue;
-                  const needsChange = Math.abs(difference) > 0.03;
-                  
-                  return (
-                    <div key={sector} className="space-y-1">
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center">
-                          <span>{sector}</span>
-                          {needsChange && (
-                            <Badge variant="outline" className="ml-2 text-xs">
-                              {difference > 0 ? 'Increase' : 'Reduce'}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="font-medium flex items-center gap-2">
-                          <span>{formatPercentage(currentValue)}</span>
-                          {needsChange && (
-                            <span className={cn(
-                              "text-xs",
-                              difference > 0 ? "text-green-500" : "text-red-500"
-                            )}>
-                              {difference > 0 ? '→ +' : '→ '}
-                              {formatPercentage(Math.abs(difference))}
-                            </span>
-                          )}
-                        </div>
+                {calculateSectorExposure().map((sector, index) => (
+                  <div key={index} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center">
+                        <span>{sector.name}</span>
+                        {sector.value > 0.03 && (
+                          <Badge variant="outline" className="ml-2 text-xs">
+                            {sector.value > 0.05 ? 'Increase' : 'Reduce'}
+                          </Badge>
+                        )}
                       </div>
-                      <div className="relative h-2 bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className={cn(
-                            "absolute top-0 left-0 h-full",
-                            needsChange ? (difference > 0 ? "bg-green-500" : "bg-red-500") : "bg-primary"
-                          )}
-                          style={{ width: `${currentValue * 100}%` }}
-                        />
+                      <div className="font-medium flex items-center gap-2">
+                        <span>{formatPercentage(sector.value)}</span>
+                        {sector.value > 0.03 && (
+                          <span className={cn(
+                            "text-xs",
+                            sector.value > 0.05 ? "text-green-500" : "text-red-500"
+                          )}>
+                            {sector.value > 0.05 ? '→ +' : '→ '}
+                            {formatPercentage(sector.value - 0.05)}
+                          </span>
+                        )}
                       </div>
                     </div>
-                  );
-                })}
+                    <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className={cn(
+                          "absolute top-0 left-0 h-full",
+                          sector.value > 0.05 ? "bg-green-500" : "bg-red-500"
+                        )}
+                        style={{ width: `${sector.value * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </CollapsibleContent>
             </Collapsible>
             

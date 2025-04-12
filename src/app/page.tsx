@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -44,7 +45,7 @@ export default function Home() {
               <h2 className="text-lg font-medium mb-4">Popular Stocks</h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {popularStocks.map((stock) => (
-                  <Link href={`/stocks/${stock.symbol}`} key={stock.symbol}>
+                  <Link to={`/stocks/${stock.symbol}`} key={stock.symbol}>
                     <Card className="bg-gray-800/50 border-gray-700 hover:bg-gray-700/50 transition-colors duration-200">
                       <CardContent className="p-4">
                         <div className="font-bold">{stock.symbol}</div>
