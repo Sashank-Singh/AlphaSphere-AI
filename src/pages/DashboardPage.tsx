@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,7 +51,6 @@ import {
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 
-// Define a local interface for news articles to resolve type issues
 interface NewsArticle {
   title: string;
   url: string;
@@ -60,13 +58,12 @@ interface NewsArticle {
   date: string;
 }
 
-// Map mockNews to match NewsArticle interface
 const mapMockNewsToArticles = (mockNews: any[]): NewsArticle[] => {
   return mockNews.map(news => ({
     title: news.title,
     url: news.url,
     source: news.source,
-    date: news.timestamp || new Date().toLocaleDateString() // Add default date if missing
+    date: news.timestamp || new Date().toLocaleDateString()
   }));
 };
 
@@ -76,7 +73,6 @@ const DashboardPage: React.FC = () => {
   const [stocks, setStocks] = useState(mockStocks);
   const [searchQuery, setSearchQuery] = useState('');
   const [news, setNews] = useState<NewsArticle[]>(() => {
-    // Mock news data - in real app this would come from an API
     return [
       {
         title: "Fed announces interest rate decision",
@@ -149,7 +145,7 @@ const DashboardPage: React.FC = () => {
   const totalPortfolioValue = calculateTotalPortfolioValue();
 
   const calculatePortfolioReturn = () => {
-    const initialInvestment = 10000; // Example initial investment
+    const initialInvestment = 10000;
     const currentPortfolioValue = totalPortfolioValue;
     const portfolioReturn = ((currentPortfolioValue - initialInvestment) / initialInvestment) * 100;
     return portfolioReturn;
@@ -157,11 +153,9 @@ const DashboardPage: React.FC = () => {
 
   const portfolioReturn = calculatePortfolioReturn();
 
-  // Modified to handle positions without sector property
   const calculateSectorAllocation = () => {
     const allocation: Record<string, number> = {};
     portfolio.positions?.forEach(position => {
-      // Using optional chaining to safely access sector property
       const sector = position.sector || 'Other';
       allocation[sector] = (allocation[sector] || 0) + (position.quantity * position.currentPrice);
     });
@@ -263,7 +257,6 @@ const DashboardPage: React.FC = () => {
                         max={100}
                         step={1}
                         onValueChange={(value) => {
-                          // Make sure we handle the value as a number
                           const newValue = Array.isArray(value) ? value[0] : value;
                           setRiskTolerance(Number(newValue));
                         }}
@@ -277,9 +270,6 @@ const DashboardPage: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Add back the SphereAI component */}
-      <EnhancedSphereAI className="bg-black border border-gray-800 mt-6" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
@@ -426,6 +416,8 @@ const DashboardPage: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      <EnhancedSphereAI />
     </div>
   );
 };

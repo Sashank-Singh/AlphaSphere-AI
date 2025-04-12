@@ -8,8 +8,8 @@ import { usePortfolio } from '@/context/PortfolioContext';
 const AnalyticsPage: React.FC = () => {
   const { portfolio } = usePortfolio();
   
-  // Calculate number of trades - handle the case where trades doesn't exist
-  const tradeCount = portfolio.trades?.length || 0;
+  // Calculate number of trades - handling the case where trades might not exist
+  const tradeCount = portfolio?.trades?.length || 0;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
