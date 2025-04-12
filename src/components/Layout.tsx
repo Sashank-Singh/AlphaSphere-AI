@@ -7,6 +7,8 @@ import BottomNavBar from './BottomNavBar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
+import { Toaster } from '@/components/ui/toaster';
+
 const Layout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,6 +50,9 @@ const Layout = () => {
         
         {/* Show bottom nav bar only on mobile */}
         {isMobile && <BottomNavBar />}
+        
+        {/* Add Toaster component for notifications */}
+        <Toaster />
       </div>
     </div>
   );

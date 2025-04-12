@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,7 +12,9 @@ import {
   Tooltip,
   ResponsiveContainer,
   BarChart,
-  Bar
+  Bar,
+  AreaChart,
+  Area
 } from 'recharts';
 import {
   ArrowUpRight,
@@ -31,6 +34,8 @@ import { usePortfolio } from '@/context/PortfolioContext';
 import { formatCurrency, formatPercentage } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import EnhancedSphereAI from '@/components/EnhancedSphereAI';
+import PortfolioOptimizer from '@/components/PortfolioOptimizer';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -84,20 +89,32 @@ const DashboardPage = () => {
     { month: 'Jun', stocks: 4200, options: 2500 }
   ];
 
+  // Mock prediction data
+  const predictionData = [
+    { date: '2024-01', actual: totalValue, predicted: null },
+    { date: '2024-02', actual: totalValue * 1.03, predicted: null },
+    { date: '2024-03', actual: totalValue * 1.07, predicted: null },
+    { date: '2024-04', actual: totalValue * 1.05, predicted: null },
+    { date: '2024-05', actual: null, predicted: totalValue * 1.09 },
+    { date: '2024-06', actual: null, predicted: totalValue * 1.12 },
+    { date: '2024-07', actual: null, predicted: totalValue * 1.15 },
+    { date: '2024-08', actual: null, predicted: totalValue * 1.17 },
+  ];
+
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-background p-4 md:p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+        <div className="mb-4 md:mb-0">
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Welcome back! Here's your portfolio overview.</p>
         </div>
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon">
-            <Bell className="h-4 w-4" />
+        <div className="flex items-center gap-2 md:gap-4">
+          <Button variant="outline" size="icon" className="h-9 w-9 md:h-10 md:w-10">
+            <Bell className="h-4 w-4 md:h-5 md:w-5" />
           </Button>
-          <Button variant="outline" size="icon">
-            <Settings className="h-4 w-4" />
+          <Button variant="outline" size="icon" className="h-9 w-9 md:h-10 md:w-10">
+            <Settings className="h-4 w-4 md:h-5 md:w-5" />
           </Button>
           <Button onClick={() => navigate('/search')} className="bg-primary">
             <Plus className="h-4 w-4 mr-2" />
@@ -107,7 +124,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Total Value Card */}
         <Card className="col-span-full lg:col-span-1">
           <CardContent className="pt-6">
@@ -126,6 +143,27 @@ const DashboardPage = () => {
                 +2.5%
               </span>
               <span className="text-muted-foreground">vs last month</span>
+            </div>
+            
+            <div className="mt-4 pt-4 border-t border-border">
+              <div className="grid grid-cols-2 gap-y-2">
+                <div>
+                  <p className="text-xs text-muted-foreground">Stocks</p>
+                  <p className="font-medium">{formatCurrency(stockValue)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Options</p>
+                  <p className="font-medium">{formatCurrency(optionsValue)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Cash</p>
+                  <p className="font-medium">{formatCurrency(portfolio.cash)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Positions</p>
+                  <p className="font-medium">{portfolio.positions.length}</p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -166,32 +204,61 @@ const DashboardPage = () => {
           </CardContent>
         </Card>
 
-        {/* Portfolio Chart */}
+        {/* AI Portfolio Optimizer */}
+        <Card className="col-span-full lg:col-span-2">
+          <CardContent className="p-0">
+            <PortfolioOptimizer />
+          </CardContent>
+        </Card>
+        
+        {/* Enhanced Sphere AI */}
+        <Card className="col-span-full lg:col-span-1">
+          <CardContent className="p-0">
+            <EnhancedSphereAI />
+          </CardContent>
+        </Card>
+
+        {/* AI Predictive Chart */}
         <Card className="col-span-full">
           <CardContent className="pt-6">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-semibold">Portfolio Performance</h3>
+              <div>
+                <h3 className="font-semibold flex items-center">
+                  <Sparkles className="h-4 w-4 text-primary mr-2" />
+                  AI Portfolio Projection
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Based on historical data and market forecasts
+                </p>
+              </div>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm">
-                  1D
-                </Button>
-                <Button variant="outline" size="sm">
-                  1W
-                </Button>
-                <Button variant="outline" size="sm" className="bg-primary/10">
                   1M
                 </Button>
                 <Button variant="outline" size="sm">
-                  1Y
+                  3M
+                </Button>
+                <Button variant="outline" size="sm" className="bg-primary/10">
+                  6M
                 </Button>
                 <Button variant="outline" size="sm">
-                  ALL
+                  1Y
                 </Button>
               </div>
             </div>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={historicalData}>
+                <AreaChart data={predictionData}>
+                  <defs>
+                    <linearGradient id="gradientActual" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1}/>
+                    </linearGradient>
+                    <linearGradient id="gradientPredicted" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.1}/>
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
                   <XAxis dataKey="date" stroke="#666" />
                   <YAxis stroke="#666" />
@@ -201,22 +268,48 @@ const DashboardPage = () => {
                       border: '1px solid #333',
                       borderRadius: '8px'
                     }}
+                    formatter={(value) => value ? [`${formatCurrency(value)}`, ''] : ['N/A', '']}
+                    labelFormatter={(label) => `Date: ${label}`}
                   />
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#8884d8"
+                  <Area 
+                    type="monotone" 
+                    dataKey="actual" 
+                    name="Actual" 
+                    stroke="#8884d8" 
+                    fill="url(#gradientActual)" 
                     strokeWidth={2}
-                    dot={false}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
                   />
-                </LineChart>
+                  <Area 
+                    type="monotone" 
+                    dataKey="predicted" 
+                    name="AI Prediction" 
+                    stroke="#82ca9d" 
+                    fill="url(#gradientPredicted)" 
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </AreaChart>
               </ResponsiveContainer>
+            </div>
+            <div className="flex justify-center gap-6 mt-4">
+              <div className="flex items-center">
+                <div className="w-3 h-3 rounded-full bg-[#8884d8] mr-2"></div>
+                <span className="text-xs text-muted-foreground">Historical</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 rounded-full bg-[#82ca9d] mr-2"></div>
+                <span className="text-xs text-muted-foreground">AI Prediction</span>
+              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Profit/Loss Chart */}
-        <Card className="col-span-full lg:col-span-2">
+        <Card className="col-span-full">
           <CardContent className="pt-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-semibold">Profit/Loss Analysis</h3>
@@ -245,35 +338,9 @@ const DashboardPage = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* AI Advisor Card */}
-        <Card className="lg:col-span-1">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold">Sphere Ai</h3>
-              </div>
-              <Button variant="outline" size="sm">
-                View All
-              </Button>
-            </div>
-            <div className="space-y-4">
-              <div className="p-4 bg-primary/5 rounded-lg">
-                <p className="text-sm">Based on your portfolio performance, consider increasing your exposure to tech stocks.</p>
-              </div>
-              <div className="p-4 bg-primary/5 rounded-lg">
-                <p className="text-sm">Market volatility is high. Consider hedging with put options.</p>
-              </div>
-              <Button className="w-full bg-primary">
-                Get Personalized Advice
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
 };
 
-export default DashboardPage; 
+export default DashboardPage;

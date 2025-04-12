@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,9 @@ import { getStockBySymbol, refreshStockPrices } from '@/data/mockData';
 import { usePortfolio } from '@/context/PortfolioContext';
 import TVQuoteWidget from '@/components/TVQuoteWidget';
 import StockNews from '@/components/StockNews';
+import AISentimentAnalysis from '@/components/AISentimentAnalysis';
+import PredictivePriceForecasting from '@/components/PredictivePriceForecasting';
+import SmartAlerts from '@/components/SmartAlerts';
 import {
   Dialog,
   DialogContent,
@@ -63,8 +67,11 @@ const StockDetailPage: React.FC = () => {
     aiInsights: false,
     portfolioAnalytics: false,
     riskManagement: false,
-    backtest: false,
+    news: false,
     aiMetrics: false,
+    sentiment: true, // Show sentiment analysis by default
+    forecast: true,  // Show price forecasting by default
+    smartAlerts: false,
   });
   const [selectedOption, setSelectedOption] = useState<OptionContract | null>(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
@@ -287,6 +294,25 @@ const StockDetailPage: React.FC = () => {
         <StockPriceChart symbol={stock.symbol} />
       </div>
 
+      {/* AI-Powered Insights - Always show these new features */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-4 mb-6">
+        {activeComponents.sentiment && (
+          <AISentimentAnalysis 
+            symbol={stock.symbol} 
+            stock={stock}
+            className="h-full"
+          />
+        )}
+        
+        {activeComponents.forecast && (
+          <PredictivePriceForecasting 
+            symbol={stock.symbol}
+            stock={stock}
+            className="h-full"
+          />
+        )}
+      </div>
+
       {/* Component Toggle Buttons */}
       <div className="px-4 mb-4">
         <div className="grid grid-cols-3 gap-2">
@@ -327,22 +353,22 @@ const StockDetailPage: React.FC = () => {
             Risk
           </Button>
           <Button
-            variant={activeComponents.backtest ? "default" : "outline"}
+            variant={activeComponents.news ? "default" : "outline"}
             size="sm"
-            onClick={() => toggleComponent('backtest')}
+            onClick={() => toggleComponent('news')}
             className="flex gap-2 items-center"
           >
             <Play className="h-4 w-4" />
             News
           </Button>
           <Button
-            variant={activeComponents.aiMetrics ? "default" : "outline"}
+            variant={activeComponents.smartAlerts ? "default" : "outline"}
             size="sm"
-            onClick={() => toggleComponent('aiMetrics')}
+            onClick={() => toggleComponent('smartAlerts')}
             className="flex gap-2 items-center"
           >
-            <Target className="h-4 w-4" />
-            AI Metrics
+            <Bell className="h-4 w-4" />
+            Alerts
           </Button>
         </div>
       </div>
@@ -382,8 +408,7 @@ const StockDetailPage: React.FC = () => {
         </div>
       )}
 
-      {/* Replace Backtest with StockNews */}
-      {activeComponents.backtest && (
+      {activeComponents.news && (
         <div className="mx-4 mb-4">
           <StockNews symbol={stock.symbol} />
         </div>
@@ -395,6 +420,12 @@ const StockDetailPage: React.FC = () => {
             stock={stock}
             onStrategySelect={handleStrategySelect}
           />
+        </div>
+      )}
+      
+      {activeComponents.smartAlerts && (
+        <div className="mx-4 mb-4">
+          <SmartAlerts symbol={stock.symbol} />
         </div>
       )}
 

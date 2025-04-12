@@ -101,4 +101,71 @@
   .pulse-glow {
     animation: pulse-glow 2s infinite;
   }
+
+  /* Fade-in animation */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .fade-in {
+    animation: fade-in 0.6s ease-out forwards;
+  }
+
+  /* Shimmer loading effect */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Card transitions */
+  .card-hover-effect {
+    @apply transition-all duration-300 border-opacity-50 hover:border-opacity-100;
+  }
+
+  /* Tooltip styles */
+  .custom-tooltip {
+    @apply bg-background/90 border border-border rounded-md p-2 text-xs;
+    backdrop-filter: blur(8px);
+  }
+
+  /* Progress bar animation */
+  .animated-progress .progress-fill {
+    transition: width 1s ease-out;
+  }
+  
+  /* AI features highlight */
+  .ai-highlight {
+    @apply relative overflow-hidden;
+  }
+  
+  .ai-highlight::after {
+    content: '';
+    @apply absolute inset-0 bg-primary/10 opacity-0 transition-opacity duration-300;
+  }
+  
+  .ai-highlight:hover::after {
+    @apply opacity-100;
+  }
 }
