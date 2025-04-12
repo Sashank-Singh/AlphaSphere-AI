@@ -380,20 +380,7 @@ const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="bg-black border border-gray-800 lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">
-              Portfolio Performance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <StockPriceChart symbol="AAPL" />
-          </CardContent>
-        </Card>
-
-        <PortfolioOptimizer className="bg-black border border-gray-800" />
-      </div>
+      <PortfolioOptimizer className="bg-black border border-gray-800" />
       
       <AlertDialog>
         <AlertDialogTrigger asChild>

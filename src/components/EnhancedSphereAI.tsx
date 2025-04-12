@@ -14,7 +14,9 @@ import {
   ArrowRight,
   RefreshCcw,
   Lightbulb,
-  BrainCircuit
+  BrainCircuit,
+  Zap,
+  Search
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePortfolio } from '@/context/PortfolioContext';
@@ -25,8 +27,8 @@ interface EnhancedSphereAIProps {
   className?: string;
 }
 
-type AnalysisType = 'portfolio' | 'market' | 'stock';
-type ActionType = 'analyze' | 'optimize' | 'allocate';
+type AnalysisType = 'portfolio' | 'market' | 'stock' | 'option';
+type ActionType = 'analyze' | 'optimize' | 'allocate' | 'recommend';
 type AnalysisStatus = 'idle' | 'analyzing' | 'complete' | 'approved' | 'declined';
 
 interface AnalysisStep {
@@ -111,11 +113,25 @@ const EnhancedSphereAI: React.FC<EnhancedSphereAIProps> = ({ className }) => {
         { title: 'Sector rotation analysis', description: 'Identifying sector momentum shifts', status: 'pending' },
         { title: 'Market sentiment scan', description: 'Aggregating news and social sentiment', status: 'pending' },
       ];
+    } else if (type === 'stock') {
+      if (action === 'recommend') {
+        return [
+          { title: 'Screening market opportunities', description: 'Analyzing growth and value metrics', status: 'pending' },
+          { title: 'Analyzing company fundamentals', description: 'Evaluating financial health and earnings', status: 'pending' },
+          { title: 'Generating stock recommendations', description: 'Ranking by risk-adjusted potential', status: 'pending' },
+        ];
+      } else {
+        return [
+          { title: 'Technical analysis', description: 'Identifying chart patterns and indicators', status: 'pending' },
+          { title: 'News sentiment scan', description: 'Analyzing recent news impact', status: 'pending' },
+          { title: 'Earnings projection', description: 'Evaluating upcoming earnings expectations', status: 'pending' },
+        ];
+      }
     } else {
       return [
-        { title: 'Technical analysis', description: 'Identifying chart patterns and indicators', status: 'pending' },
-        { title: 'News sentiment scan', description: 'Analyzing recent news impact', status: 'pending' },
-        { title: 'Earnings projection', description: 'Evaluating upcoming earnings expectations', status: 'pending' },
+        { title: 'Analyzing volatility surface', description: 'Calculating implied volatility skew', status: 'pending' },
+        { title: 'Screening options chain', description: 'Finding optimal strike/expiry combinations', status: 'pending' },
+        { title: 'Generating trading strategies', description: 'Evaluating risk/reward profiles', status: 'pending' },
       ];
     }
   };
@@ -177,6 +193,10 @@ const EnhancedSphereAI: React.FC<EnhancedSphereAIProps> = ({ className }) => {
       }
     } else if (type === 'market') {
       return 'Market indicators suggest defensive positioning with 65% probability of increased volatility over next 2 weeks.';
+    } else if (type === 'stock' && action === 'recommend') {
+      return 'Analysis complete. Top 3 stock ideas identified with strong fundamentals and technical patterns.';
+    } else if (type === 'option') {
+      return 'Options analysis complete. Identified 3 potential option strategies with favorable risk-reward profiles.';
     } else {
       return 'Technical indicators show bullish divergence. Recent sentiment shows 78% positive coverage.';
     }
@@ -194,6 +214,10 @@ const EnhancedSphereAI: React.FC<EnhancedSphereAIProps> = ({ className }) => {
       }
     } else if (type === 'market') {
       return 'Consider increasing cash position by 10% and implementing hedges against volatility.';
+    } else if (type === 'stock' && action === 'recommend') {
+      return 'Consider: NVDA (Tech), COST (Consumer), and LLY (Healthcare) for balanced growth opportunity.';
+    } else if (type === 'option') {
+      return 'Consider AAPL $200 calls (30 days), MSFT butterfly spread, or SPY protective puts as strategic positions.';
     } else {
       return 'Consider establishing a position with 20% of normal position size and scaling in over 2 weeks.';
     }
@@ -271,6 +295,20 @@ const EnhancedSphereAI: React.FC<EnhancedSphereAIProps> = ({ className }) => {
       target: 'Market', 
       icon: <BrainCircuit className="h-3 w-3" />, 
       label: 'Analyze Market' 
+    },
+    { 
+      type: 'stock' as AnalysisType, 
+      action: 'recommend' as ActionType, 
+      target: 'Stocks', 
+      icon: <Search className="h-3 w-3" />, 
+      label: 'AI Stock Ideas' 
+    },
+    { 
+      type: 'option' as AnalysisType, 
+      action: 'recommend' as ActionType, 
+      target: 'Options', 
+      icon: <Zap className="h-3 w-3" />, 
+      label: 'AI Option Ideas' 
     }
   ];
   
@@ -404,7 +442,8 @@ const EnhancedSphereAI: React.FC<EnhancedSphereAIProps> = ({ className }) => {
                     <div className="text-xs text-muted-foreground">
                       {currentTask.type === 'portfolio' ? "Analyzing your holdings" : 
                        currentTask.type === 'market' ? "Analyzing market conditions" : 
-                       "Analyzing stock data"}
+                       currentTask.type === 'stock' ? "Finding stock opportunities" :
+                       "Analyzing options strategies"}
                     </div>
                   </div>
                   <StatusBadge status={currentTask.status} />

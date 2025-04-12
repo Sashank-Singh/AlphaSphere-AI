@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { fetchRealTimeStockPrice } from '@/lib/api';
-import { X } from 'lucide-react';
+import { X, Clock } from 'lucide-react';
 
 interface StockPosition {
   type: 'CALL' | 'PUT';
@@ -31,6 +32,8 @@ interface StockAnalysisPanelProps {
 
 const StockAnalysisPanel: React.FC<StockAnalysisPanelProps> = ({ symbol, currentPrice }) => {
   const [activeTab, setActiveTab] = useState<string>('watchlist');
+  const [activePeriod, setActivePeriod] = useState<string>('1D');
+  const [showVolume, setShowVolume] = useState<boolean>(false);
   const [positions, setPositions] = useState<StockPosition[]>([
     // Example positions that match the screenshot
     {
@@ -69,6 +72,14 @@ const StockAnalysisPanel: React.FC<StockAnalysisPanelProps> = ({ symbol, current
     marketValue: 851.50,
     totalReturn: -26.00,
     returnPercent: -2.96
+  });
+
+  // Company info
+  const [companyInfo, setCompanyInfo] = useState({
+    sector: 'Technology',
+    industry: 'Semiconductors',
+    exchange: 'NASDAQ',
+    lastUpdated: new Date().toLocaleTimeString()
   });
 
   const calculateProfitLoss = (position: StockPosition) => {
@@ -127,6 +138,18 @@ const StockAnalysisPanel: React.FC<StockAnalysisPanelProps> = ({ symbol, current
     setPositions(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Update time periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCompanyInfo(prev => ({
+        ...prev,
+        lastUpdated: new Date().toLocaleTimeString()
+      }));
+    }, 60000); // Update every minute
+    
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="bg-black text-white rounded-lg shadow-xl overflow-hidden">
       <Tabs defaultValue="watchlist" value={activeTab} onValueChange={setActiveTab}>
@@ -161,6 +184,69 @@ const StockAnalysisPanel: React.FC<StockAnalysisPanelProps> = ({ symbol, current
 
         <TabsContent value="watchlist" className="p-4">
           <div className="space-y-6">
+            {/* Company Info */}
+            <div className="rounded-lg border border-gray-800 overflow-hidden">
+              <div className="p-4">
+                <h3 className="text-lg font-bold mb-4">Company Info</h3>
+                <div className="grid grid-cols-2 gap-y-4">
+                  <div>
+                    <div className="text-sm text-gray-400">Sector:</div>
+                    <div className="font-semibold">{companyInfo.sector || '-'}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-400">Industry:</div>
+                    <div className="font-semibold">{companyInfo.industry || '-'}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-400">Exchange:</div>
+                    <div className="font-semibold">{companyInfo.exchange}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-400">Last updated:</div>
+                    <div className="font-semibold flex items-center">
+                      <Clock className="h-3 w-3 mr-1" /> {companyInfo.lastUpdated}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Chart Period Selector */}
+            <div className="rounded-lg border border-gray-800 overflow-hidden">
+              <div className="p-4">
+                <div className="flex flex-col space-y-4">
+                  <h3 className="text-lg font-bold">Portfolio Performance</h3>
+                  <div className="flex space-x-2">
+                    {['1D', '1W', '1M', '3M', '1Y', '5Y'].map((period) => (
+                      <Button
+                        key={period}
+                        variant={activePeriod === period ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setActivePeriod(period)}
+                        className="flex-1"
+                      >
+                        {period}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium">Indicators</div>
+                    <div className="flex items-center space-x-2">
+                      <div className="text-sm">Show Volume</div>
+                      <Button
+                        variant={showVolume ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setShowVolume(!showVolume)}
+                        className="h-7 w-7 p-0"
+                      >
+                        {showVolume ? "✓" : ""}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Stock Position */}
             <div className="rounded-lg border border-gray-800 overflow-hidden">
               <div className="p-4">
@@ -190,6 +276,18 @@ const StockAnalysisPanel: React.FC<StockAnalysisPanelProps> = ({ symbol, current
             
             <div className="text-sm text-gray-400">
               Create a watchlist to track your favorite stocks.
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="flex space-x-3">
+              <Button className="flex-1">Trade Stock</Button>
+              <Button className="flex-1" variant="outline">Trade with AI</Button>
+            </div>
+            
+            <Button variant="outline" className="w-full">Show Options</Button>
+            
+            <div className="text-xs text-gray-500 text-center">
+              Chart data provided by TradingView · Stock data from Yahoo Finance
             </div>
           </div>
         </TabsContent>
@@ -291,4 +389,4 @@ function calculateDaysRemaining(expiryDate: string): number {
   return diffDays > 0 ? diffDays : 0;
 }
 
-export default StockAnalysisPanel; 
+export default StockAnalysisPanel;
