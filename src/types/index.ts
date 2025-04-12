@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   email: string;
@@ -14,7 +15,7 @@ export interface Stock {
   change: number;
   isEtf?: boolean;
   marketCap?: number;
-  volume?: number;
+  volume: number;  // Changed from optional to required
   pe?: number;
   sector?: string;
   lastUpdated?: Date;
@@ -39,6 +40,7 @@ export interface Position {
   quantity: number;
   averagePrice: number;
   currentPrice: number;
+  sector?: string;  // Added sector property to match usage
 }
 
 export interface OptionContract {
@@ -75,6 +77,7 @@ export interface Portfolio {
   positions: Position[];
   optionPositions: OptionContract[];
   transactions: Transaction[];
+  trades?: Transaction[];  // Added trades property to match usage in AnalyticsPage
 }
 
 export interface AIRecommendation {

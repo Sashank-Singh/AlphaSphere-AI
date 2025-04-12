@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -87,6 +88,7 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
       const sectorAllocation: Record<string, number> = {};
       
       stockPositions.forEach(position => {
+        // Safely access sector property with fallback to 'Other'
         const sector = position.sector || 'Other';
         const value = position.quantity * position.currentPrice;
         sectorAllocation[sector] = (sectorAllocation[sector] || 0) + value;
@@ -236,6 +238,7 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
     const exposure: Record<string, number> = {};
     
     portfolio.positions.forEach(position => {
+      // Safely access sector property with fallback to 'Other'
       const sector = position.sector || 'Other';
       
       if (!exposure[sector]) {

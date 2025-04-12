@@ -9,7 +9,8 @@ const AnalyticsPage: React.FC = () => {
   const { portfolio } = usePortfolio();
   
   // Calculate number of trades - handling the case where trades might not exist
-  const tradeCount = portfolio?.trades?.length || 0;
+  // Use transactions as a fallback if trades property doesn't exist
+  const tradeCount = portfolio?.trades?.length || portfolio?.transactions?.length || 0;
 
   return (
     <div className="container mx-auto p-6 space-y-6">

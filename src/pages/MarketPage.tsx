@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TrendingUp, TrendingDown, Search, ExternalLink } from 'lucide-react';
 import { mockStocks, mockIndices, refreshStockPrices } from '@/data/mockData';
+import { Stock } from '@/types';
 
-interface Stock {
+// Define a local interface for Market page stocks to avoid type conflicts
+interface MarketStock {
   id?: string;
   symbol: string;
   name: string;
@@ -29,12 +32,12 @@ const fallbackLogo = 'https://via.placeholder.com/32'; // Fallback logo image UR
 
 const MarketPage: React.FC = () => {
   const navigate = useNavigate();
-  const [stocks, setStocks] = useState<Stock[]>(mockStocks);
+  const [stocks, setStocks] = useState<MarketStock[]>(() => mockStocks as MarketStock[]);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      setStocks(refreshStockPrices());
+      setStocks(refreshStockPrices() as MarketStock[]);
     }, 5000); // Update every 5 seconds
 
     return () => clearInterval(intervalId);
