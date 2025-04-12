@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,17 +64,14 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
     risk: false
   });
   
-  // Generate mock optimization recommendation based on portfolio and risk tolerance
   const generateRecommendation = () => {
     setIsLoading(true);
     
-    // In a real app, this would call an API with ML models
     setTimeout(() => {
       const stockPositions = portfolio.positions || [];
       const optionPositions = portfolio.optionPositions || [];
       const cash = portfolio.cash || 0;
       
-      // Calculate total value
       const stockValue = stockPositions.reduce(
         (sum, position) => sum + (position.quantity * position.currentPrice),
         0
@@ -88,7 +84,6 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
       
       const totalValue = cash + stockValue + optionsValue;
       
-      // Determine current sector allocation
       const sectorAllocation: Record<string, number> = {};
       
       stockPositions.forEach(position => {
@@ -97,18 +92,14 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
         sectorAllocation[sector] = (sectorAllocation[sector] || 0) + value;
       });
       
-      // Convert to percentages
       Object.keys(sectorAllocation).forEach(sector => {
         sectorAllocation[sector] = sectorAllocation[sector] / totalValue;
       });
       
-      // Add cash
       sectorAllocation['Cash'] = cash / totalValue;
       
-      // Generate recommended sector allocation based on risk tolerance
       const recommendedAllocation: Record<string, number> = { ...sectorAllocation };
       
-      // Higher risk tolerance = more tech, less cash/utilities
       if (riskTolerance > 70) {
         recommendedAllocation['Technology'] = (recommendedAllocation['Technology'] || 0) + 0.1;
         recommendedAllocation['Cash'] = Math.max(0.05, (recommendedAllocation['Cash'] || 0) - 0.05);
@@ -119,16 +110,13 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
         recommendedAllocation['Utilities'] = (recommendedAllocation['Utilities'] || 0) + 0.02;
       }
       
-      // Normalize percentages
       let total = Object.values(recommendedAllocation).reduce((sum, value) => sum + value, 0);
       Object.keys(recommendedAllocation).forEach(key => {
         recommendedAllocation[key] = recommendedAllocation[key] / total;
       });
       
-      // Generate suggestions
       const suggestions: OptimizationRecommendation['suggestions'] = [];
       
-      // Check for concentration risk
       const highestPosition = [...stockPositions].sort(
         (a, b) => (b.quantity * b.currentPrice) - (a.quantity * a.currentPrice)
       )[0];
@@ -140,11 +128,10 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
           name: highestPosition.name,
           reasoning: 'Position exceeds 25% of your stock portfolio, creating concentration risk.',
           severity: 'high',
-          actionAmount: Math.floor(highestPosition.quantity * 0.2) // Sell 20%
+          actionAmount: Math.floor(highestPosition.quantity * 0.2)
         });
       }
       
-      // Check for cash allocation
       if (cash / totalValue < 0.05) {
         suggestions.push({
           type: 'hold',
@@ -159,11 +146,10 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
           name: 'S&P 500 ETF',
           reasoning: 'Higher cash allocation than optimal for your risk profile. Consider investing in a market index.',
           severity: 'medium',
-          actionAmount: formatCurrency(cash * 0.4) // 40% of cash
+          actionAmount: formatCurrency(cash * 0.4)
         });
       }
       
-      // Add option-based suggestions if there are options positions
       if (optionPositions.length > 0 && optionsValue / totalValue > 0.2) {
         suggestions.push({
           type: 'rebalance',
@@ -173,7 +159,6 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
         });
       }
       
-      // Add a buy recommendation
       if (suggestions.length < 3) {
         suggestions.push({
           type: 'buy',
@@ -181,14 +166,13 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
           name: 'Apple Inc.',
           reasoning: 'Would improve sector balance and growth potential of portfolio.',
           severity: 'low',
-          actionAmount: formatCurrency(Math.min(cash * 0.15, 2000)) // 15% of cash or $2000, whichever is less
+          actionAmount: formatCurrency(Math.min(cash * 0.15, 2000))
         });
       }
       
-      // Calculate scores
       const diversificationScore = calculateDiversificationScore(sectorAllocation);
       const riskScore = calculateRiskScore(portfolio, sectorAllocation);
-      const returnScore = 65 + Math.floor(Math.random() * 25); // Placeholder
+      const returnScore = 65 + Math.floor(Math.random() * 25);
       const overallScore = Math.round((diversificationScore + riskScore + returnScore) / 3);
       
       const newRecommendation: OptimizationRecommendation = {
@@ -209,12 +193,10 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
     }, 1500);
   };
   
-  // Helper functions for scores
   const calculateDiversificationScore = (sectorAllocation: Record<string, number>): number => {
     const sectorCount = Object.keys(sectorAllocation).length;
     const maxSectorWeight = Math.max(...Object.values(sectorAllocation));
     
-    // Better diversity = more sectors, lower max weight
     let score = 50;
     
     if (sectorCount >= 8) score += 20;
@@ -229,7 +211,6 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
   };
   
   const calculateRiskScore = (portfolio: any, sectorAllocation: Record<string, number>): number => {
-    // Higher score = better risk management
     let score = 60;
     
     const cashRatio = portfolio.cash / (portfolio.totalValue || 1);
@@ -239,15 +220,12 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
     ) || 0;
     const optionsRatio = optionsValue / (portfolio.totalValue || 1);
     
-    // Cash allocation
     if (cashRatio >= 0.1) score += 15;
     else if (cashRatio >= 0.05) score += 10;
     
-    // Options exposure (higher is riskier)
     if (optionsRatio > 0.2) score -= 20;
     else if (optionsRatio > 0.1) score -= 10;
     
-    // Sector risk
     const techWeight = sectorAllocation['Technology'] || 0;
     if (techWeight > 0.4) score -= 15;
     
@@ -285,7 +263,6 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
           </div>
         ) : recommendation ? (
           <div className="space-y-6">
-            {/* Portfolio Health Score */}
             <div className="text-center py-3">
               <div className="text-3xl font-bold mb-1">
                 {recommendation.score}/100
@@ -310,7 +287,6 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
             
             <Separator />
             
-            {/* Risk Tolerance Setting */}
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="text-sm font-medium">Your Risk Tolerance</label>
@@ -338,7 +314,6 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
             
             <Separator />
             
-            {/* Recommendations */}
             <Collapsible 
               open={openSections.recommendations} 
               onOpenChange={() => toggleSection('recommendations')}
@@ -409,7 +384,6 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
               </CollapsibleContent>
             </Collapsible>
             
-            {/* Sector Allocation */}
             <Collapsible 
               open={openSections.allocation} 
               onOpenChange={() => toggleSection('allocation')}
@@ -432,7 +406,7 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
                   const currentValue = recommendation.sectorAllocation.current[sector] || 0;
                   const recommendedValue = recommendation.sectorAllocation.recommended[sector] || 0;
                   const difference = recommendedValue - currentValue;
-                  const needsChange = Math.abs(difference) > 0.03; // 3% threshold
+                  const needsChange = Math.abs(difference) > 0.03;
                   
                   return (
                     <div key={sector} className="space-y-1">
@@ -473,7 +447,6 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
               </CollapsibleContent>
             </Collapsible>
             
-            {/* Risk Assessment */}
             <Collapsible 
               open={openSections.risk} 
               onOpenChange={() => toggleSection('risk')}
@@ -510,7 +483,7 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
                     },
                     {
                       title: 'Options Exposure',
-                      check: true, // Placeholder
+                      check: true,
                       description: 'Options positions within acceptable risk parameters'
                     },
                     {

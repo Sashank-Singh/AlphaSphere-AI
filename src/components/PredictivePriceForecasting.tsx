@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -256,7 +255,7 @@ const PredictivePriceForecasting: React.FC<PredictivePriceForecastingProps> = ({
                   <YAxis 
                     domain={['auto', 'auto']} 
                     tick={{ fontSize: 10 }}
-                    tickFormatter={(value) => formatCurrency(value, 0)}
+                    tickFormatter={(value) => formatCurrency(value)}
                     tickLine={{ stroke: '#555' }}
                     axisLine={{ stroke: '#555' }}
                   />

@@ -334,7 +334,7 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
     return `${sign}${value.toFixed(2)}%`;
   };
 
-    return (
+  return (
     <div className="flex flex-col space-y-4 text-white">
       {/* Chart controls row */}
       <div className="flex flex-wrap gap-2 items-center mb-2">
@@ -567,6 +567,10 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
           stock={getStockObject()}
           open={isTradeModalOpen}
           onClose={() => setIsTradeModalOpen(false)}
+          onTrade={async (quantity, price, type) => {
+            console.log(`Trade executed: ${type} ${quantity} shares at ${price}`);
+            setIsTradeModalOpen(false);
+          }}
         />
       )}
 

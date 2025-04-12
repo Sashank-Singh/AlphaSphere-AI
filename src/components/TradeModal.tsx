@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
@@ -35,16 +34,13 @@ const TradeModal: React.FC<TradeModalProps> = ({ stock, open, onClose, onTrade }
   const { toast } = useToast();
   const [showEstimateDetails, setShowEstimateDetails] = useState(false);
 
-  // Reset quantity when stock changes or modal opens
   useEffect(() => {
     if (open) {
       setQuantity('1');
     }
   }, [open, stock.symbol]);
 
-  // Handle quantity change with validation
   const handleQuantityChange = (value: string) => {
-    // Allow only numbers
     if (/^\d*$/.test(value)) {
       setQuantity(value);
     }
@@ -62,7 +58,7 @@ const TradeModal: React.FC<TradeModalProps> = ({ stock, open, onClose, onTrade }
       toast({
         title: `${tab === 'buy' ? 'Purchase' : 'Sale'} Successful`,
         description: `${tab === 'buy' ? 'Bought' : 'Sold'} ${quantity} shares of ${stock.symbol} at ${formatCurrency(stock.price)}`,
-        variant: "success",
+        variant: "default",
       });
       
       onClose();
@@ -87,14 +83,10 @@ const TradeModal: React.FC<TradeModalProps> = ({ stock, open, onClose, onTrade }
   const canAfford = tab === 'buy' ? estimatedCost <= portfolio.cash : true;
   const canSell = tab === 'sell' ? parseInt(quantity) <= currentlyOwnedShares : true;
   
-  // Calculate commission (fictional - 0.5%)
   const commission = estimatedCost * 0.005;
-  // Calculate taxes (fictional - 0.2%)
   const estimatedTax = estimatedCost * 0.002;
-  // Total cost including fees
   const totalCost = estimatedCost + commission + estimatedTax;
 
-  // Quick trade presets
   const handleQuickTrade = (percentage: number) => {
     if (tab === 'buy') {
       const maxShares = maxAffordableShares * (percentage / 100);
@@ -145,7 +137,6 @@ const TradeModal: React.FC<TradeModalProps> = ({ stock, open, onClose, onTrade }
           </TabsList>
           
           <div className="py-4 space-y-4">
-            {/* Quick trade options */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Quick Trade</Label>
               <div className="flex gap-2">

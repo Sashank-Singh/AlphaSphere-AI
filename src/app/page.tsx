@@ -1,9 +1,9 @@
-import Link from 'next/link';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight, Search, TrendingUp, LineChart, BarChart4 } from 'lucide-react';
-import { useState } from 'react';
 
 const popularStocks = [
   { symbol: 'AAPL', name: 'Apple Inc.' },
@@ -137,4 +137,4 @@ function FeatureCard({ title, description, icon }: { title: string; description:
       </CardContent>
     </Card>
   );
-} 
+}

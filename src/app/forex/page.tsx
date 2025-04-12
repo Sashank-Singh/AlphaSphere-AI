@@ -1,5 +1,5 @@
 import React from 'react';
-import { ForexWidget, ForexPairs } from '@/components/ForexWidget';
+import ForexWidget, { ForexPairs } from '@/components/ForexWidget';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata = {
@@ -50,4 +50,4 @@ export default function ForexPage() {
       </footer>
     </div>
   );
-} 
+}

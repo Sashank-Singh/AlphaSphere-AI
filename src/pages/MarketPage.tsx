@@ -6,7 +6,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TrendingUp, TrendingDown, Search, ExternalLink } from 'lucide-react';
 import { mockStocks, mockIndices, refreshStockPrices } from '@/data/mockData';
-import type { Stock, Index } from '@/data/mockData';
+
+interface Stock {
+  id?: string;
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  volume: number;
+  logo?: string;
+  sector?: string;
+}
+
+interface Index {
+  symbol: string;
+  name: string;
+  value: number;
+  change: number;
+}
 
 const fallbackLogo = 'https://via.placeholder.com/32'; // Fallback logo image URL
 
