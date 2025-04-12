@@ -46,4 +46,59 @@
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
+  
+  /* Mobile optimizations */
+  .mobile-bottom-sheet {
+    @apply rounded-t-xl fixed bottom-0 left-0 right-0 z-50;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  .mobile-card {
+    @apply p-3 md:p-4;
+  }
+  
+  /* Glassmorphism & visual effects */
+  .glass-card {
+    @apply backdrop-blur-lg bg-background/80 border border-border/50;
+  }
+  
+  .hover-scale {
+    @apply transition-transform hover:scale-105;
+  }
+  
+  .slide-up-enter {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  
+  .slide-up-enter-active {
+    transform: translateY(0);
+    opacity: 1;
+    transition: transform 300ms ease-in-out, opacity 300ms ease-in-out;
+  }
+  
+  /* Responsive text utilities */
+  .text-adaptive {
+    @apply text-sm md:text-base;
+  }
+  
+  .heading-adaptive {
+    @apply text-lg md:text-xl lg:text-2xl font-bold;
+  }
+  
+  /* Animations */
+  @keyframes pulse-glow {
+    0%, 100% {
+      opacity: 1;
+      filter: brightness(1);
+    }
+    50% {
+      opacity: 0.8;
+      filter: brightness(1.2);
+    }
+  }
+  
+  .pulse-glow {
+    animation: pulse-glow 2s infinite;
+  }
 }

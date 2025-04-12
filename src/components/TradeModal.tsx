@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -14,7 +15,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OptionContract, Stock } from '@/types';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { formatCurrency, cn } from '@/lib/utils';
-import { TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile'; 
+import { TrendingUp, TrendingDown, Loader2, Info, DollarSign, Percent } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface TradeModalProps {
   stock: Stock;
@@ -28,6 +31,24 @@ const TradeModal: React.FC<TradeModalProps> = ({ stock, open, onClose, onTrade }
   const [quantity, setQuantity] = useState<string>('1');
   const { portfolio } = usePortfolio();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isMobile = useIsMobile();
+  const { toast } = useToast();
+  const [showEstimateDetails, setShowEstimateDetails] = useState(false);
+
+  // Reset quantity when stock changes or modal opens
+  useEffect(() => {
+    if (open) {
+      setQuantity('1');
+    }
+  }, [open, stock.symbol]);
+
+  // Handle quantity change with validation
+  const handleQuantityChange = (value: string) => {
+    // Allow only numbers
+    if (/^\d*$/.test(value)) {
+      setQuantity(value);
+    }
+  };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -37,9 +58,21 @@ const TradeModal: React.FC<TradeModalProps> = ({ stock, open, onClose, onTrade }
         stock.price,
         tab
       );
+      
+      toast({
+        title: `${tab === 'buy' ? 'Purchase' : 'Sale'} Successful`,
+        description: `${tab === 'buy' ? 'Bought' : 'Sold'} ${quantity} shares of ${stock.symbol} at ${formatCurrency(stock.price)}`,
+        variant: "success",
+      });
+      
       onClose();
     } catch (error) {
       console.error('Error executing trade:', error);
+      toast({
+        title: "Trade Failed",
+        description: "There was an error processing your trade. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -53,13 +86,40 @@ const TradeModal: React.FC<TradeModalProps> = ({ stock, open, onClose, onTrade }
   const estimatedCost = parseInt(quantity) * stock.price;
   const canAfford = tab === 'buy' ? estimatedCost <= portfolio.cash : true;
   const canSell = tab === 'sell' ? parseInt(quantity) <= currentlyOwnedShares : true;
+  
+  // Calculate commission (fictional - 0.5%)
+  const commission = estimatedCost * 0.005;
+  // Calculate taxes (fictional - 0.2%)
+  const estimatedTax = estimatedCost * 0.002;
+  // Total cost including fees
+  const totalCost = estimatedCost + commission + estimatedTax;
+
+  // Quick trade presets
+  const handleQuickTrade = (percentage: number) => {
+    if (tab === 'buy') {
+      const maxShares = maxAffordableShares * (percentage / 100);
+      setQuantity(String(Math.floor(maxShares)));
+    } else {
+      const sharesToSell = currentlyOwnedShares * (percentage / 100);
+      setQuantity(String(Math.floor(sharesToSell)));
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold tracking-tight">
+      <DialogContent className={cn(
+        "sm:max-w-md",
+        isMobile ? "p-4 rounded-t-xl w-full mx-0 mt-auto mb-0 max-h-[90vh] overflow-auto" : ""
+      )}>
+        <DialogHeader className={isMobile ? "mb-2" : ""}>
+          <DialogTitle className="text-xl font-bold tracking-tight flex items-center gap-2">
             {stock.name} ({stock.symbol})
+            <span className={cn(
+              "text-sm px-2 py-0.5 rounded-full",
+              stock.change >= 0 ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+            )}>
+              {stock.change >= 0 ? '+' : ''}{(stock.change * 100).toFixed(2)}%
+            </span>
           </DialogTitle>
           <DialogDescription className="text-base">
             Current Price: <span className="font-medium">{formatCurrency(stock.price)}</span>
@@ -84,17 +144,58 @@ const TradeModal: React.FC<TradeModalProps> = ({ stock, open, onClose, onTrade }
             </TabsTrigger>
           </TabsList>
           
-          <div className="py-6 space-y-6">
+          <div className="py-4 space-y-4">
+            {/* Quick trade options */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Quick Trade</Label>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1 text-xs"
+                  onClick={() => handleQuickTrade(25)}
+                >
+                  25%
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1 text-xs"
+                  onClick={() => handleQuickTrade(50)}
+                >
+                  50%
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1 text-xs"
+                  onClick={() => handleQuickTrade(75)}
+                >
+                  75%
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1 text-xs"
+                  onClick={() => handleQuickTrade(100)}
+                >
+                  Max
+                </Button>
+              </div>
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="quantity" className="text-sm font-medium">
                 Quantity
               </Label>
               <Input
                 id="quantity"
-                type="number"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 min="1"
                 value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+                onChange={(e) => handleQuantityChange(e.target.value)}
                 className="h-10"
               />
               
@@ -113,9 +214,36 @@ const TradeModal: React.FC<TradeModalProps> = ({ stock, open, onClose, onTrade }
             
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Estimated Cost:</span>
-                <span className="font-bold text-lg">{formatCurrency(estimatedCost)}</span>
+                <button 
+                  className="text-sm font-medium flex items-center gap-1"
+                  onClick={() => setShowEstimateDetails(!showEstimateDetails)}
+                >
+                  Trade Estimate
+                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+                <span className="font-bold text-lg">{formatCurrency(totalCost)}</span>
               </div>
+              
+              {showEstimateDetails && (
+                <div className="bg-muted/30 rounded-md p-2 space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>{formatCurrency(estimatedCost)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Commission (0.5%)</span>
+                    <span>{formatCurrency(commission)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Est. Tax (0.2%)</span>
+                    <span>{formatCurrency(estimatedTax)}</span>
+                  </div>
+                  <div className="border-t border-border pt-1 flex justify-between font-medium">
+                    <span>Total</span>
+                    <span>{formatCurrency(totalCost)}</span>
+                  </div>
+                </div>
+              )}
               
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Available Cash:</span>
@@ -138,7 +266,7 @@ const TradeModal: React.FC<TradeModalProps> = ({ stock, open, onClose, onTrade }
         </Tabs>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose} className="flex-1">
+          <Button variant="outline" onClick={onClose} className={cn("flex-1", isMobile && "text-sm h-10")}>
             Cancel
           </Button>
           <Button 
@@ -150,7 +278,7 @@ const TradeModal: React.FC<TradeModalProps> = ({ stock, open, onClose, onTrade }
               !canAfford || 
               !canSell
             }
-            className="flex-1"
+            className={cn("flex-1", isMobile && "text-sm h-10")}
           >
             {isSubmitting ? (
               <>
@@ -158,7 +286,19 @@ const TradeModal: React.FC<TradeModalProps> = ({ stock, open, onClose, onTrade }
                 Processing...
               </>
             ) : (
-              tab === 'buy' ? "Buy" : "Sell"
+              <>
+                {tab === 'buy' ? (
+                  <>
+                    <DollarSign className="mr-1 h-4 w-4" />
+                    Buy {quantity} {parseInt(quantity) === 1 ? 'Share' : 'Shares'}
+                  </>
+                ) : (
+                  <>
+                    <DollarSign className="mr-1 h-4 w-4" />
+                    Sell {quantity} {parseInt(quantity) === 1 ? 'Share' : 'Shares'}
+                  </>
+                )}
+              </>
             )}
           </Button>
         </DialogFooter>
