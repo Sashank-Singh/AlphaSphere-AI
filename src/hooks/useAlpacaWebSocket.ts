@@ -1,33 +1,51 @@
-import { useState, useEffect, useRef } from 'react';
-import { getAlpacaWebSocketClient, StockQuote, OptionQuote, NewsItem } from '@/lib/alpacaWebSocketApi';
-import { mockStockService } from '@/lib/mockStockService';
 
-interface UseStockWebSocketResult {
-  stockData: Record<string, StockQuote>;
-  isConnected: boolean;
-  error: Error | null;
+import { useState, useEffect, useRef } from 'react';
+
+export interface OptionQuote {
+  symbol: string;
+  strike: number;
+  type: 'call' | 'put';
+  expiration: string;
+  bid: number;
+  ask: number;
+  last: number;
+  volume: number;
+  openInterest: number;
+  impliedVolatility: number;
 }
 
-/**
- * Custom hook to subscribe to real-time stock data using Alpaca WebSocket API
- * @param symbols Array of stock symbols to subscribe to
- * @returns Object containing stockData, connection status, and any error
- */
+interface UseStockWebSocketResult {
+  data: any;
+  isConnected: boolean;
+  optionsData?: OptionQuote[];
+}
+
+interface UseOptionsWebSocketResult {
+  data: any;
+  isConnected: boolean;
+  optionsData?: OptionQuote[];
+}
+
 export const useStockWebSocket = (symbol: string): UseStockWebSocketResult => {
   const [data, setData] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
+    // Mock WebSocket connection for demo
     setIsConnected(true);
-    const interval = setInterval(async () => {
-      try {
-        const quote = await mockStockService.getStockQuote(symbol);
-        setData(quote);
-      } catch (error) {
-        console.error('Error fetching stock data:', error);
-      }
-    }, 1000);
+    
+    // Simulate real-time data updates
+    const interval = setInterval(() => {
+      const mockData = {
+        symbol,
+        price: 150 + Math.random() * 50,
+        change: (Math.random() - 0.5) * 10,
+        volume: Math.floor(Math.random() * 1000000),
+        timestamp: Date.now()
+      };
+      setData(mockData);
+    }, 2000);
 
     return () => {
       clearInterval(interval);
@@ -35,107 +53,41 @@ export const useStockWebSocket = (symbol: string): UseStockWebSocketResult => {
     };
   }, [symbol]);
 
-  return { data, isConnected, error };
+  return { data, isConnected };
 };
 
-/**
- * Custom hook to subscribe to real-time options data
- * @param symbols Array of option symbols to subscribe to
- */
-export const useOptionsWebSocket = (symbol: string) => {
+export const useOptionsWebSocket = (symbol: string): UseOptionsWebSocketResult => {
   const [data, setData] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [optionsData, setOptionsData] = useState<OptionQuote[]>([]);
 
   useEffect(() => {
+    // Mock WebSocket connection for options
     setIsConnected(true);
-    // Mock options data
-    const mockOptionsData = {
-      symbol,
-      bid: 0,
-      ask: 0,
-      last: 0,
-      volume: 0,
-      openInterest: 0
-    };
-    setData(mockOptionsData);
+    
+    // Generate mock options data
+    const mockOptions: OptionQuote[] = [
+      {
+        symbol: `${symbol}240315C00150000`,
+        strike: 150,
+        type: 'call',
+        expiration: '2024-03-15',
+        bid: 5.20,
+        ask: 5.40,
+        last: 5.30,
+        volume: 1250,
+        openInterest: 3400,
+        impliedVolatility: 0.28
+      }
+    ];
+    
+    setOptionsData(mockOptions);
+    setData({ optionsData: mockOptions });
 
     return () => {
       setIsConnected(false);
     };
   }, [symbol]);
 
-  return { data, isConnected };
-};
-
-/**
- * Custom hook to subscribe to real-time news data
- * @param symbols Array of symbols to get news for
- */
-export const useNewsWebSocket = (symbol: string) => {
-  const [data, setData] = useState<any>(null);
-  const [isConnected, setIsConnected] = useState(false);
-
-  useEffect(() => {
-    setIsConnected(true);
-    // Mock news data
-    const mockNewsData = {
-      symbol,
-      headlines: [
-        {
-          id: '1',
-          title: 'Market Update',
-          source: 'Mock News',
-          timestamp: new Date().toISOString()
-        }
-      ]
-    };
-    setData(mockNewsData);
-
-    return () => {
-      setIsConnected(false);
-    };
-  }, [symbol]);
-
-  return { data, isConnected };
-};
-
-/**
- * Combined hook for subscribing to multiple types of Alpaca WebSocket data
- * @param stockSymbols Array of stock symbols to subscribe to
- * @param optionSymbols Array of option symbols to subscribe to
- * @param newsSymbols Array of symbols to get news for (can be same as stock symbols)
- * @returns Object containing data for all subscribed types
- */
-export const useAlpacaWebSocketData = (
-  stockSymbols: string[] = [],
-  optionSymbols: string[] = [], 
-  newsSymbols: string[] = []
-) => {
-  const { data: stockData, isConnected: stocksConnected, error: stocksError } = useStockWebSocket(stockSymbols[0]);
-  const { data: optionsData, isConnected: optionsConnected } = useOptionsWebSocket(optionSymbols[0]);
-  const { data: newsData, isConnected: newsConnected } = useNewsWebSocket(newsSymbols[0]);
-
-  // Combined connection status
-  const isConnected = {
-    stocks: stocksConnected,
-    options: optionsConnected,
-    news: newsConnected,
-    any: stocksConnected || optionsConnected || newsConnected
-  };
-
-  // Combined errors
-  const errors = {
-    stocks: stocksError,
-    options: new Error('Mock options data used'),
-    news: new Error('Mock news data used'),
-    any: stocksError || new Error('Mock options data used') || new Error('Mock news data used')
-  };
-
-  return {
-    stockData,
-    optionsData,
-    newsData,
-    isConnected,
-    errors
-  };
+  return { data, isConnected, optionsData };
 };

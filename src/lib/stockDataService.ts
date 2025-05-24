@@ -23,6 +23,21 @@ interface OptionsDataCache {
 // Cache TTL in milliseconds (5 minutes)
 const CACHE_TTL = 5 * 60 * 1000;
 
+// Add CompanyInfo interface
+export interface CompanyInfo {
+  symbol: string;
+  name: string;
+  sector: string;
+  industry: string;
+  exchange: string;
+  marketCap: number;
+  description: string;
+  employees: number;
+  website: string;
+  ceo: string;
+  founded: string;
+}
+
 class StockDataService {
   private static instance: StockDataService;
   private stockCache: StockDataCache = {};

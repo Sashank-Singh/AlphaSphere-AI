@@ -1,48 +1,35 @@
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockStockService } from '@/lib/mockStockService';
-import { Skeleton } from "@/components/ui/skeleton";
+
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Building2, Users, Globe, Calendar } from 'lucide-react';
+
+interface CompanyInfo {
+  symbol: string;
+  name: string;
+  sector: string;
+  industry: string;
+  exchange: string;
+  marketCap: number;
+  description: string;
+  employees: number;
+  website: string;
+  ceo: string;
+  founded: string;
+}
 
 interface StockInfoCardProps {
   symbol: string;
+  companyInfo?: CompanyInfo;
 }
 
-const StockInfoCard: React.FC<StockInfoCardProps> = ({ symbol }) => {
-  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const data = await mockStockService.getCompanyInfo(symbol);
-        if (data) {
-          setCompanyInfo(data);
-        }
-      } catch (error) {
-        console.error('Error fetching company info:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [symbol]);
-
-  if (loading) {
+const StockInfoCard: React.FC<StockInfoCardProps> = ({ symbol, companyInfo }) => {
+  if (!companyInfo) {
     return (
-      <Card className="bg-black border border-gray-800 h-full">
-        <CardHeader>
-          <CardTitle className="text-white flex justify-between items-center">
-            <Skeleton className="h-6 w-24 bg-gray-800" />
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-white">
-          <div className="space-y-4">
-            <Skeleton className="h-10 w-full bg-gray-800" />
-            <Skeleton className="h-4 w-full bg-gray-800" />
-            <Skeleton className="h-4 w-3/4 bg-gray-800" />
-            <Skeleton className="h-4 w-1/2 bg-gray-800" />
+      <Card>
+        <CardContent className="p-6 text-center">
+          <div className="text-muted-foreground">
+            Loading company information...
           </div>
         </CardContent>
       </Card>
@@ -50,39 +37,78 @@ const StockInfoCard: React.FC<StockInfoCardProps> = ({ symbol }) => {
   }
 
   return (
-    <Card className="bg-black border border-gray-800 h-full">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-white">
-          Company Info
+        <CardTitle className="flex items-center gap-2">
+          <Building2 className="h-5 w-5" />
+          Company Information
         </CardTitle>
       </CardHeader>
-      <CardContent className="text-white">
-        <div className="space-y-2">
+      <CardContent className="space-y-4">
+        <div>
+          <h3 className="font-semibold text-lg">{companyInfo.name}</h3>
+          <Badge variant="secondary">{companyInfo.symbol}</Badge>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <span className="text-gray-400 text-sm">Sector:</span>
-            <p className="font-semibold">{companyInfo?.Sector || '-'}</p>
+            <label className="text-sm font-medium text-muted-foreground">Sector</label>
+            <p>{companyInfo.sector}</p>
           </div>
           <div>
-            <span className="text-gray-400 text-sm">Industry:</span>
-            <p className="font-semibold">{companyInfo?.Industry || '-'}</p>
+            <label className="text-sm font-medium text-muted-foreground">Industry</label>
+            <p>{companyInfo.industry}</p>
           </div>
           <div>
-            <span className="text-gray-400 text-sm">Exchange:</span>
-            <p className="font-semibold">{companyInfo?.Exchange || '-'}</p>
+            <label className="text-sm font-medium text-muted-foreground">Exchange</label>
+            <p>{companyInfo.exchange}</p>
           </div>
-          {companyInfo?.Description && (
-            <div className="mt-4">
-              <span className="text-gray-400 text-sm">About:</span>
-              <p className="text-sm mt-1 text-gray-300 line-clamp-4">{companyInfo.Description}</p>
+          <div>
+            <label className="text-sm font-medium text-muted-foreground">Market Cap</label>
+            <p>${(companyInfo.marketCap / 1000000000).toFixed(2)}B</p>
+          </div>
+        </div>
+
+        {companyInfo.description && (
+          <div>
+            <label className="text-sm font-medium text-muted-foreground">Description</label>
+            <p className="text-sm text-muted-foreground mt-1">
+              {companyInfo.description}
+            </p>
+          </div>
+        )}
+
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          {companyInfo.employees && (
+            <div className="flex items-center gap-1">
+              <Users className="h-4 w-4" />
+              {companyInfo.employees.toLocaleString()} employees
+            </div>
+          )}
+          {companyInfo.founded && (
+            <div className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
+              Founded {companyInfo.founded}
             </div>
           )}
         </div>
-        <div className="text-xs text-gray-500 mt-4">
-          Last updated: {new Date().toLocaleTimeString()}
-        </div>
+
+        {companyInfo.website && (
+          <div>
+            <a 
+              href={companyInfo.website} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm"
+            >
+              <Globe className="h-4 w-4" />
+              Visit Website
+            </a>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 };
 
-export default StockInfoCard; 
+export default StockInfoCard;
