@@ -175,6 +175,55 @@ export const mockSectors: Sector[] = [
     marketCap: 5.9,
     topStocks: ['JNJ', 'UNH', 'PFE'],
     logo: 'https://example.com/sector-icons/healthcare.png'
+  },
+  {
+    name: 'Communication Services',
+    change: 1.12,
+    marketCap: 4.7,
+    topStocks: ['GOOGL', 'META', 'NFLX'],
+    logo: 'https://example.com/sector-icons/communication.png'
+  },
+  {
+    name: 'Industrials',
+    change: 0.54,
+    marketCap: 3.8,
+    topStocks: ['HON', 'UPS', 'CAT'],
+    logo: 'https://example.com/sector-icons/industrials.png'
+  },
+  {
+    name: 'Energy',
+    change: -1.23,
+    marketCap: 2.9,
+    topStocks: ['XOM', 'CVX', 'COP'],
+    logo: 'https://example.com/sector-icons/energy.png'
+  },
+  {
+    name: 'Utilities',
+    change: -0.45,
+    marketCap: 1.8,
+    topStocks: ['NEE', 'DUK', 'SO'],
+    logo: 'https://example.com/sector-icons/utilities.png'
+  },
+  {
+    name: 'Real Estate',
+    change: 0.21,
+    marketCap: 1.5,
+    topStocks: ['AMT', 'PLD', 'CCI'],
+    logo: 'https://example.com/sector-icons/realestate.png'
+  },
+  {
+    name: 'Materials',
+    change: -0.67,
+    marketCap: 1.2,
+    topStocks: ['LIN', 'APD', 'ECL'],
+    logo: 'https://example.com/sector-icons/materials.png'
+  },
+  {
+    name: 'Consumer Defensive',
+    change: 0.32,
+    marketCap: 2.1,
+    topStocks: ['PG', 'KO', 'PEP'],
+    logo: 'https://example.com/sector-icons/consumerdefensive.png'
   }
 ];
 
@@ -288,25 +337,25 @@ export const getStockBySymbol = (symbol: string): Stock | null => {
 // Function to simulate AI recommendation
 export function getAIRecommendation(symbol: string, riskTolerance: 'low' | 'medium' | 'high') {
   console.log('[mockData] Getting AI recommendation for:', symbol, 'Risk tolerance:', riskTolerance);
-  
+
   const stock = getStockBySymbol(symbol);
   if (!stock) {
     console.error('[mockData] Stock not found for symbol:', symbol);
     return null;
   }
-  
+
   const isEtf = stock.isEtf;
   const expiryDays = isEtf ? 7 : 14; // Ensuring we have at least 7 days
-  
+
   // Create a proper Date object with time set to noon to avoid timezone issues
   const expiryDate = new Date();
   expiryDate.setDate(expiryDate.getDate() + expiryDays);
   expiryDate.setHours(12, 0, 0, 0); // Set to noon
-  
+
   // Determine trend based on recent price change
   const recentTrend = stock.change > 0;
   const optionType = recentTrend ? 'call' as const : 'put' as const;
-  
+
   // Calculate strike price based on risk tolerance and current price
   let strikeDelta = 0;
   switch(riskTolerance) {
@@ -322,18 +371,18 @@ export function getAIRecommendation(symbol: string, riskTolerance: 'low' | 'medi
     default:
       strikeDelta = optionType === 'call' ? 0.05 : -0.05; // Default to medium
   }
-  
+
   const strikePrice = Math.max(1, Math.round(stock.price * (1 + strikeDelta)));
-  
+
   // Calculate premium based on volatility and time to expiry - ensure it's reasonable
   const daysToExpiry = expiryDays;
   const volatilityFactor = riskTolerance === 'high' ? 0.12 : (riskTolerance === 'medium' ? 0.08 : 0.05);
   const premium = Math.max(0.01, Math.round(stock.price * volatilityFactor * Math.sqrt(daysToExpiry / 365) * 100) / 100);
-  
+
   // Determine confidence based on price movement and risk tolerance
   const confidenceLevels = ['low', 'medium', 'high'] as const;
   const confidence = confidenceLevels[Math.floor(Math.random() * confidenceLevels.length)];
-  
+
   // Generate reasoning based on actual market conditions
   let reasoning = '';
   if (optionType === 'call') {
@@ -341,7 +390,7 @@ export function getAIRecommendation(symbol: string, riskTolerance: 'low' | 'medi
   } else {
     reasoning = `Recent price weakness (${stock.change.toFixed(2)}%) and market conditions suggest a ${optionType} option could be valuable as a hedge.`;
   }
-  
+
   const recommendation = {
     symbol,
     confidence,
@@ -357,7 +406,7 @@ export function getAIRecommendation(symbol: string, riskTolerance: 'low' | 'medi
     },
     reasoning,
   };
-  
+
   console.log('[mockData] Generated recommendation:', recommendation);
   return recommendation;
 }

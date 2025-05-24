@@ -11,6 +11,8 @@ import {
   HelpCircle,
   ChevronLeft,
   ChevronRight,
+  TrendingUp,
+  Percent,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -32,6 +34,16 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
       name: 'Market',
       icon: LineChart,
       path: '/market'
+    },
+    {
+      name: 'Trading',
+      icon: TrendingUp,
+      path: '/trading'
+    },
+    {
+      name: 'Options',
+      icon: Percent,
+      path: '/options'
     },
     {
       name: 'Portfolio',
@@ -142,4 +154,4 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
   );
 };
 
-export default Sidebar; 
+export default Sidebar;

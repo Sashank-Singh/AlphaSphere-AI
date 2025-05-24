@@ -17,6 +17,8 @@ import SearchPage from '@/pages/SearchPage';
 import SettingsPage from '@/pages/SettingsPage';
 import SupportPage from '@/pages/SupportPage';
 import StockDetailPage from '@/pages/StockDetailPage';
+import TradingPage from '@/pages/TradingPage';
+import OptionsPage from '@/pages/OptionsPage';
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,7 +33,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<AuthPage />} />
-              
+
               <Route element={
                 <ProtectedRoute>
                   <Layout />
@@ -47,17 +49,21 @@ const App = () => (
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/support" element={<SupportPage />} />
                 <Route path="/stocks/:symbol" element={<StockDetailPage />} />
-                
+                <Route path="/trading" element={<TradingPage />} />
+                <Route path="/trading/:symbol" element={<TradingPage />} />
+                <Route path="/options" element={<OptionsPage />} />
+                <Route path="/options/:symbol" element={<OptionsPage />} />
+
                 {/* Redirect old URLs to new format */}
-                <Route 
-                  path="/stock/:ticker" 
-                  element={<StockDetailPage />} 
+                <Route
+                  path="/stock/:ticker"
+                  element={<StockDetailPage />}
                 />
               </Route>
-              
+
               {/* Next.js routes - forward to Next.js app */}
               <Route path="/stocks/*" element={<StockDetailPage />} />
-              
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

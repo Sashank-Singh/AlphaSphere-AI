@@ -5,6 +5,7 @@ import { AlertTriangle, TrendingDown, BarChart2, Target } from 'lucide-react';
 import { formatCurrency, formatPercentage, cn } from '@/lib/utils';
 import { Portfolio } from '@/types';
 import { getStockBySymbol } from '@/data/mockData';
+import { mockStockService } from '@/lib/mockStockService';
 
 interface RiskManagementDashboardProps {
   portfolio: Portfolio;
@@ -22,15 +23,14 @@ interface RiskMetrics {
 const RiskManagementDashboard: React.FC<RiskManagementDashboardProps> = ({
   portfolio,
 }) => {
-  // Mock risk metrics data
-  const riskMetrics: RiskMetrics = {
+  const [riskMetrics, setRiskMetrics] = useState<RiskMetrics>({
     var: 5000,
     varConfidence: 0.95,
     maxDrawdown: -0.15,
     beta: 1.2,
     correlation: 0.8,
     volatility: 0.25,
-  };
+  });
 
   // Calculate portfolio exposure by sector
   const sectorExposure = portfolio.positions.reduce((acc, pos) => {
@@ -43,15 +43,43 @@ const RiskManagementDashboard: React.FC<RiskManagementDashboardProps> = ({
 
   const totalValue = Object.values(sectorExposure).reduce((a, b) => a + b, 0);
 
-  // Add real-time risk calculations
+  // Add mock risk calculations
   useEffect(() => {
-    const calculateRiskMetrics = () => {
-      // TODO: Implement real risk calculations
-      // This would replace the mock data
+    const calculateRiskMetrics = async () => {
+      try {
+        // Get mock quotes for all portfolio positions
+        const symbols = portfolio.positions.map(pos => pos.symbol);
+        const quotes = await Promise.all(
+          symbols.map(symbol => mockStockService.getStockQuote(symbol))
+        );
+        
+        // Calculate portfolio value and risk metrics
+        const portfolioValue = quotes.reduce((total, quote) => {
+          const position = portfolio.positions.find(pos => pos.symbol === quote.symbol);
+          return total + (position?.quantity || 0) * quote.price;
+        }, 0);
+        
+        // Calculate volatility and VaR based on price changes
+        const volatility = quotes.reduce((sum, quote) => {
+          return sum + Math.abs(quote.changePercent);
+        }, 0) / quotes.length;
+        
+        // Update risk metrics
+        setRiskMetrics(prev => ({
+          ...prev,
+          volatility,
+          var: portfolioValue * volatility * 2.33, // 99% confidence VaR
+          varConfidence: 0.99,
+          maxDrawdown: Math.min(...quotes.map(q => q.changePercent)),
+          beta: volatility / 0.12 // Compare to market volatility (assumed 12%)
+        }));
+      } catch (error) {
+        console.error('Error calculating risk metrics:', error);
+      }
     };
     
     calculateRiskMetrics();
-    const interval = setInterval(calculateRiskMetrics, 60000);
+    const interval = setInterval(calculateRiskMetrics, 60000); // Update every minute
     return () => clearInterval(interval);
   }, [portfolio]);
 
@@ -156,4 +184,4 @@ const RiskManagementDashboard: React.FC<RiskManagementDashboardProps> = ({
   );
 };
 
-export default RiskManagementDashboard; 
+export default RiskManagementDashboard;

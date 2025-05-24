@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { fetchCompanyOverview, CompanyInfo } from '@/lib/api';
+import { mockStockService } from '@/lib/mockStockService';
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface StockInfoCardProps {
@@ -15,10 +15,12 @@ const StockInfoCard: React.FC<StockInfoCardProps> = ({ symbol }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await fetchCompanyOverview(symbol);
-        setCompanyInfo(data);
+        const data = await mockStockService.getCompanyInfo(symbol);
+        if (data) {
+          setCompanyInfo(data);
+        }
       } catch (error) {
-        console.error('Error fetching company data:', error);
+        console.error('Error fetching company info:', error);
       } finally {
         setLoading(false);
       }

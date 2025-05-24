@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { fetchCompanyOverview, CompanyInfo } from '@/lib/api';
+import React, { useEffect, useState } from 'react';
+import { mockStockService, CompanyInfo } from '@/lib/mockStockService';
 import { ChevronLeft } from 'lucide-react';
 import TVQuoteWidget from './TVQuoteWidget';
 
@@ -7,27 +7,18 @@ interface StockHeaderProps {
   symbol: string;
 }
 
-const StockHeader: React.FC<StockHeaderProps> = ({ 
-  symbol
-}) => {
+const StockHeader: React.FC<StockHeaderProps> = ({ symbol }) => {
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   
   // Check if this is a forex pair
   const isForex = symbol.toUpperCase().startsWith('FX:');
 
-  // Fetch company data
   useEffect(() => {
-    // Skip fetching company info for forex pairs
-    if (isForex) {
-      setLoading(false);
-      return;
-    }
-    
     const fetchCompanyData = async () => {
       try {
         setLoading(true);
-        const data = await fetchCompanyOverview(symbol);
+        const data = await mockStockService.getCompanyInfo(symbol);
         setCompanyInfo(data);
       } catch (error) {
         console.error('Error fetching company info:', error);
@@ -37,7 +28,15 @@ const StockHeader: React.FC<StockHeaderProps> = ({
     };
 
     fetchCompanyData();
-  }, [symbol, isForex]);
+  }, [symbol]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!companyInfo) {
+    return <div>Company information not available</div>;
+  }
 
   return (
     <header className="bg-black text-white py-4 sticky top-0 z-10 border-b border-gray-800">
@@ -62,7 +61,7 @@ const StockHeader: React.FC<StockHeaderProps> = ({
               <div>
                 {!loading && companyInfo && !isForex && (
                   <div className="text-sm text-gray-400">
-                    {companyInfo.Name}
+                    {companyInfo.name}
                   </div>
                 )}
                 {isForex && (

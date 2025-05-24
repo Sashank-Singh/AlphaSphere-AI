@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { fetchCompanyOverview, fetchRealTimeStockPrice, StockQuote } from '@/lib/api';
+import { mockStockService, StockQuote } from '@/lib/mockStockService';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
@@ -11,15 +11,7 @@ import TradeModal from './TradeModal';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-
-interface CompanyInfo {
-  Symbol: string;
-  Name: string;
-  Exchange: string;
-  Sector: string;
-  Industry: string;
-  Description: string;
-}
+import { CompanyInfo } from '@/lib/mockStockService';
 
 // Price data structure from TradingView
 interface TVPriceData {
@@ -111,11 +103,12 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
   const [showOptions, setShowOptions] = useState(false);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
-  const [priceData, setPriceData] = useState<TVPriceData | null>(null);
+  const [priceData, setPriceData] = useState<any[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [isAITradeModalOpen, setIsAITradeModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Get portfolio context for executing trades
   const { executeOptionTrade } = usePortfolio();
@@ -129,17 +122,24 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
   // Fetch company info
   const fetchCompanyData = async () => {
     try {
-      const data = await fetchCompanyOverview(symbol);
-      setCompanyInfo(data);
+      setLoading(true);
+      const [company, prices] = await Promise.all([
+        mockStockService.getCompanyInfo(symbol),
+        mockStockService.getHistoricalPrices(symbol, 30)
+      ]);
+      setCompanyInfo(company);
+      setPriceData(prices);
     } catch (error) {
-      console.error('Error fetching company info:', error);
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   // Fetch price data for currentPrice state (used by StockAnalysisPanel)
   const fetchCurrentPrice = async () => {
     try {
-      const data = await fetchRealTimeStockPrice(symbol);
+      const data = await mockStockService.getStockQuote(symbol);
       if (data) {
         setCurrentPrice(data.price);
         setLastUpdated(new Date());
@@ -274,12 +274,12 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
     return {
       id: symbol,
       symbol: symbol,
-      name: companyInfo?.Name || symbol,
+      name: companyInfo?.name || symbol,
       price: currentPrice || 0,
-      change: priceData?.change || 0,
-      changePercent: priceData?.changePercent || 0,
-      volume: priceData?.volume || 0,
-      sector: companyInfo?.Sector || 'Unknown'
+      change: priceData[priceData.length - 1]?.change || 0,
+      changePercent: priceData[priceData.length - 1]?.changePercent || 0,
+      volume: priceData[priceData.length - 1]?.volume || 0,
+      sector: companyInfo?.sector || 'Unknown'
     };
   };
 
@@ -333,6 +333,10 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
     const sign = value >= 0 ? '+' : '';
     return `${sign}${value.toFixed(2)}%`;
   };
+
+  if (loading) {
+    return <div>Loading chart data...</div>;
+  }
 
   return (
     <div className="flex flex-col space-y-4 text-white">
