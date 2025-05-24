@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +28,10 @@ import SmartNotifications from '@/components/SmartNotifications';
 import SocialTrading from '@/components/SocialTrading';
 import MobileRealTimeDashboard from '@/components/MobileRealTimeDashboard';
 import { useRealTimeStock } from '@/hooks/useRealTimeStock';
+import MarketSentimentCard from '@/components/MarketSentimentCard';
+import SectorPerformanceCard from '@/components/SectorPerformanceCard';
+import TopMoversCard from '@/components/TopMoversCard';
+import SectorHeatmapCard from '@/components/SectorHeatmapCard';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -185,6 +188,43 @@ const DashboardPage: React.FC = () => {
             <Button className="w-full mt-4" onClick={() => navigate('/market')}>
               View Full Market
             </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Market Dashboard Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <MarketSentimentCard />
+        <SectorPerformanceCard />
+        <TopMoversCard />
+      </div>
+
+      {/* Sector Heatmap */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SectorHeatmapCard />
+        <Card>
+          <CardHeader>
+            <CardTitle>Market News</CardTitle>
+            <p className="text-sm text-muted-foreground">Latest market updates</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                <h4 className="font-semibold text-sm">Fed Maintains Interest Rates</h4>
+                <p className="text-xs text-muted-foreground mt-1">Markets react positively to stable monetary policy...</p>
+                <span className="text-xs text-muted-foreground">2 hours ago</span>
+              </div>
+              <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                <h4 className="font-semibold text-sm">Tech Earnings Beat Expectations</h4>
+                <p className="text-xs text-muted-foreground mt-1">Major tech companies report strong quarterly results...</p>
+                <span className="text-xs text-muted-foreground">4 hours ago</span>
+              </div>
+              <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                <h4 className="font-semibold text-sm">Oil Prices Surge on Supply Concerns</h4>
+                <p className="text-xs text-muted-foreground mt-1">Energy sector sees significant gains amid geopolitical tensions...</p>
+                <span className="text-xs text-muted-foreground">6 hours ago</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
