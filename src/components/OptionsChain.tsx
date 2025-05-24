@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,11 +12,22 @@ interface OptionsChainProps {
   symbol: string;
 }
 
+interface OptionData {
+  contractSymbol: string;
+  type: 'call' | 'put';
+  strike: number;
+  expiration: string;
+  bid: number;
+  ask: number;
+  volume: number;
+  openInterest: number;
+}
+
 const OptionsChain: React.FC<OptionsChainProps> = ({ symbol }) => {
   const [selectedExpiry, setSelectedExpiry] = useState<string>('');
-  const [optionsData, setOptionsData] = useState<any>(null);
+  const [optionsData, setOptionsData] = useState<{ options: OptionData[] } | null>(null);
   const [loading, setLoading] = useState(true);
-  const { data: wsData, isConnected } = useOptionsWebSocket(symbol);
+  const { data: wsData, isConnected } = useOptionsWebSocket([symbol]);
 
   useEffect(() => {
     const fetchOptionsData = async () => {
@@ -53,14 +65,16 @@ const OptionsChain: React.FC<OptionsChainProps> = ({ symbol }) => {
     );
   }
 
-  const uniqueExpiries = Array.from(new Set(optionsData.options.map((option: any) => option.expiration)));
-
-  const filteredOptions = optionsData.options.filter(
-    (option: any) => option.expiration === selectedExpiry
+  const uniqueExpiries = Array.from(
+    new Set(optionsData.options.map((option: OptionData) => option.expiration))
   );
 
-  const calls = filteredOptions.filter((option: any) => option.type === 'call');
-  const puts = filteredOptions.filter((option: any) => option.type === 'put');
+  const filteredOptions = optionsData.options.filter(
+    (option: OptionData) => option.expiration === selectedExpiry
+  );
+
+  const calls = filteredOptions.filter((option: OptionData) => option.type === 'call');
+  const puts = filteredOptions.filter((option: OptionData) => option.type === 'put');
 
   return (
     <Card>
@@ -74,16 +88,20 @@ const OptionsChain: React.FC<OptionsChainProps> = ({ symbol }) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Tabs defaultValue={uniqueExpiries[0]} className="space-y-4">
+        <Tabs defaultValue={uniqueExpiries[0] || ''} className="space-y-4">
           <TabsList>
-            {uniqueExpiries.map((expiry) => (
-              <TabsTrigger key={expiry} value={expiry} onClick={() => setSelectedExpiry(expiry)}>
+            {uniqueExpiries.map((expiry: string) => (
+              <TabsTrigger 
+                key={expiry} 
+                value={expiry} 
+                onClick={() => setSelectedExpiry(expiry)}
+              >
                 {expiry}
               </TabsTrigger>
             ))}
           </TabsList>
           
-          {uniqueExpiries.map((expiry) => (
+          {uniqueExpiries.map((expiry: string) => (
             <TabsContent key={expiry} value={expiry} className="space-y-4">
               <h4 className="text-sm font-semibold">Calls</h4>
               <div className="overflow-x-auto">
@@ -108,7 +126,7 @@ const OptionsChain: React.FC<OptionsChainProps> = ({ symbol }) => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {calls.map((call: any) => (
+                    {calls.map((call: OptionData) => (
                       <tr key={call.contractSymbol}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {call.strike}
@@ -146,7 +164,7 @@ const OptionsChain: React.FC<OptionsChainProps> = ({ symbol }) => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {puts.map((put: any) => (
+                    {puts.map((put: OptionData) => (
                       <tr key={put.contractSymbol}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {put.strike}

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -105,7 +106,7 @@ const OptionStrategyBuilder: React.FC = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={leg.strike} onValueChange={(value) => updateLeg(leg.id, 'strike', Number(value))}>
+              <Select value={leg.strike.toString()} onValueChange={(value) => updateLeg(leg.id, 'strike', Number(value))}>
                 <SelectTrigger className="w-[120px]">
                   <SelectValue placeholder="Select Strike" />
                 </SelectTrigger>

@@ -28,3 +28,11 @@ export function debounce<T extends (...args: any[]) => any>(
     timeout = setTimeout(() => func(...args), wait);
   };
 }
+
+export function getRandomChange(): number {
+  return (Math.random() - 0.5) * 10; // Random change between -5 and 5
+}
+
+export function getRandomPrice(basePrice: number = 100): number {
+  return basePrice + (Math.random() - 0.5) * 20; // Random price around basePrice
+}
