@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Home, Search, BarChart2, Settings } from 'lucide-react';
+import { Home, Search, BarChart2, Settings, Brain } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const BottomNavBar: React.FC = () => {
   const navigate = useNavigate();
@@ -19,6 +21,12 @@ const BottomNavBar: React.FC = () => {
       icon: Search,
     },
     {
+      path: '/analytics',
+      label: 'AI',
+      icon: Brain,
+      badge: 'New'
+    },
+    {
       path: '/portfolio',
       label: 'Portfolio',
       icon: BarChart2,
@@ -31,7 +39,7 @@ const BottomNavBar: React.FC = () => {
   ];
   
   return (
-    <div className="fixed bottom-4 left-4 right-4 bg-background/80 backdrop-blur-xl border border-border/50 rounded-2xl shadow-xl z-50">
+    <div className="fixed bottom-4 left-4 right-4 bg-background/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-xl z-50">
       <div className="max-w-md mx-auto flex justify-around items-center h-16">
         {navItems.map(item => {
           const isActive = location.pathname === item.path;
@@ -52,10 +60,21 @@ const BottomNavBar: React.FC = () => {
                 <div className="absolute inset-0 bg-primary/5 rounded-xl" />
               </div>
               
-              <item.icon className={cn(
-                "h-5 w-5 mb-1 transition-all duration-300",
-                isActive ? "text-primary scale-110" : "text-muted-foreground"
-              )} />
+              <div className="relative">
+                <item.icon className={cn(
+                  "h-5 w-5 mb-1 transition-all duration-300",
+                  isActive ? "text-primary scale-110" : "text-muted-foreground"
+                )} />
+                {item.badge && (
+                  <Badge 
+                    variant="secondary" 
+                    className="absolute -top-2 -right-2 text-xs px-1 py-0 h-4 min-w-4 flex items-center justify-center"
+                  >
+                    {item.badge}
+                  </Badge>
+                )}
+              </div>
+              
               <span className={cn(
                 "text-xs font-medium transition-all duration-300",
                 isActive ? "text-primary" : "text-muted-foreground"
