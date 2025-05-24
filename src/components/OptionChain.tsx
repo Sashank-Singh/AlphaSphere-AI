@@ -17,7 +17,7 @@ interface OptionContract {
   change: number;
   volume: number;
   openInterest: number;
-  iv: number; // Implied volatility
+  iv: number;
   delta: number;
   gamma: number;
   theta: number;
@@ -53,49 +53,15 @@ const OptionChain: React.FC<OptionChainProps> = ({
     direction: 'ascending'
   });
 
-  // Generate option symbols for the selected stock and expiry
-  const generateOptionSymbols = (stockSymbol: string, expiryDate: string): string[] => {
-    if (!expiryDate) return [];
-
-    // Format: AAPL230616C00150000
-    // Remove dashes from date
+  const generateOptionSymbols = (stockSymbol: string, expiryDate: string): string => {
+    if (!expiryDate) return '';
     const formattedDate = expiryDate.replace(/-/g, '').substring(2);
-
-    // Generate strikes around current price
-    const strikes = [];
-    const baseStrike = Math.round(stockPrice / 5) * 5;
-
-    for (let i = -5; i <= 5; i++) {
-      const strike = baseStrike + (i * 5);
-      strikes.push(strike);
-    }
-
-    // Generate option symbols for calls and puts
-    const optionSymbols: string[] = [];
-
-    strikes.forEach(strike => {
-      // Format strike price with padding (e.g., 00150000 for $150)
-      const formattedStrike = (strike * 1000).toString().padStart(8, '0');
-
-      // Call option
-      const callSymbol = `${stockSymbol}${formattedDate}C${formattedStrike}`;
-      optionSymbols.push(callSymbol);
-
-      // Put option
-      const putSymbol = `${stockSymbol}${formattedDate}P${formattedStrike}`;
-      optionSymbols.push(putSymbol);
-    });
-
-    return optionSymbols;
+    return `${stockSymbol}${formattedDate}`;
   };
 
-  // Generate option symbols based on selected expiry
-  const [optionSymbols, setOptionSymbols] = useState<string[]>([]);
-
-  // Use WebSocket for real-time option data
+  const [optionSymbols, setOptionSymbols] = useState<string>('');
   const { optionsData: wsOptionData, isConnected } = useOptionsWebSocket(optionSymbols);
 
-  // Update option symbols when expiry date or stock price changes
   useEffect(() => {
     if (expiryDate && symbol) {
       const symbols = generateOptionSymbols(symbol, expiryDate);
@@ -103,42 +69,27 @@ const OptionChain: React.FC<OptionChainProps> = ({
     }
   }, [expiryDate, symbol, stockPrice]);
 
-  // Process WebSocket option data
   useEffect(() => {
     setIsLoading(true);
 
     try {
-      if (wsOptionData && Object.keys(wsOptionData).length > 0) {
-        // Process WebSocket data
+      if (wsOptionData && Array.isArray(wsOptionData) && wsOptionData.length > 0) {
         const calls: OptionContract[] = [];
         const puts: OptionContract[] = [];
 
-        // Process each option from WebSocket data
-        Object.values(wsOptionData).forEach(option => {
-          // Extract option details from the symbol
-          const isCall = option.symbol.includes('C');
-          const isPut = option.symbol.includes('P');
-
-          if (!isCall && !isPut) return;
-
-          // Extract strike price from the symbol
-          const strikeMatch = option.symbol.match(/[CP](\d+)/);
-          if (!strikeMatch) return;
-
-          const strike = parseInt(strikeMatch[1]) / 1000;
-
-          // Create option contract
+        wsOptionData.forEach((option: OptionQuote) => {
+          const isCall = option.type === 'call';
           const contract: OptionContract = {
-            strike,
-            expiryDate: option.expirationDate || expiryDate,
-            type: isCall ? 'call' : 'put',
-            bid: option.bidPrice || 0,
-            ask: option.askPrice || 0,
-            last: option.lastPrice || 0,
-            change: 0, // Not provided in real-time data
+            strike: option.strike,
+            expiryDate: option.expiration,
+            type: option.type,
+            bid: option.bidPrice || option.bid,
+            ask: option.askPrice || option.ask,
+            last: option.lastPrice || option.last,
+            change: 0,
             volume: option.volume || 0,
             openInterest: option.openInterest || 0,
-            iv: option.impliedVolatility || Math.random() * 0.3 + 0.2, // Use WebSocket IV or generate mock
+            iv: option.impliedVolatility || Math.random() * 0.3 + 0.2,
             delta: isCall ? Math.random() * 0.5 + 0.5 : -Math.random() * 0.5 - 0.5,
             gamma: Math.random() * 0.05,
             theta: -Math.random() * 0.1,
@@ -152,7 +103,6 @@ const OptionChain: React.FC<OptionChainProps> = ({
           }
         });
 
-        // If we have WebSocket data, use it
         if (calls.length > 0 || puts.length > 0) {
           setOptions({
             calls: sortOptionsByKey(calls, sortConfig.key, sortConfig.direction),
@@ -163,30 +113,24 @@ const OptionChain: React.FC<OptionChainProps> = ({
         }
       }
 
-      // Fallback to mock data if WebSocket data is not available
-      // Generate strikes around the current stock price
       const strikes = [];
-      const roundedPrice = Math.round(stockPrice / 5) * 5; // Round to nearest $5
+      const roundedPrice = Math.round(stockPrice / 5) * 5;
 
       for (let i = -5; i <= 5; i++) {
         strikes.push(roundedPrice + (i * 5));
       }
 
-      // Generate mock option data
       const calls: OptionContract[] = [];
       const puts: OptionContract[] = [];
 
       strikes.forEach(strike => {
-        // Calculate rough option prices based on distance from strike
         const callInTheMoney = strike < stockPrice;
         const putInTheMoney = strike > stockPrice;
-
         const strikeDiff = Math.abs(stockPrice - strike);
-        const timeValue = Math.random() * 2 + 0.5; // Random time value between $0.50 and $2.50
+        const timeValue = Math.random() * 2 + 0.5;
 
-        // Call option
         const callPrice = callInTheMoney ? (stockPrice - strike) + timeValue : timeValue;
-        const callIv = Math.random() * 0.3 + 0.2; // IV between 20% and 50%
+        const callIv = Math.random() * 0.3 + 0.2;
 
         calls.push({
           strike,
@@ -205,9 +149,8 @@ const OptionChain: React.FC<OptionChainProps> = ({
           vega: Math.random() * 0.2
         });
 
-        // Put option
         const putPrice = putInTheMoney ? (strike - stockPrice) + timeValue : timeValue;
-        const putIv = Math.random() * 0.3 + 0.2; // IV between 20% and 50%
+        const putIv = Math.random() * 0.3 + 0.2;
 
         puts.push({
           strike,
@@ -308,7 +251,6 @@ const OptionChain: React.FC<OptionChainProps> = ({
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Calls */}
             <div>
               <h3 className="text-lg font-semibold mb-2 flex items-center">
                 <Badge className="bg-green-500/20 text-green-500 mr-2">CALLS</Badge>
@@ -379,7 +321,6 @@ const OptionChain: React.FC<OptionChainProps> = ({
               </div>
             </div>
 
-            {/* Puts */}
             <div>
               <h3 className="text-lg font-semibold mb-2 flex items-center">
                 <Badge className="bg-red-500/20 text-red-500 mr-2">PUTS</Badge>

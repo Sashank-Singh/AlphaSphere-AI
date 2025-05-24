@@ -1,5 +1,5 @@
 // Centralized Stock and Options Data Service
-import { StockQuote, CompanyInfo } from './api';
+import { StockQuote } from './api';
 
 // Constants
 const YAHOO_FINANCE_API_URL = 'https://query1.finance.yahoo.com/v8/finance/chart';

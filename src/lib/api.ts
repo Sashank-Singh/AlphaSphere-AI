@@ -51,3 +51,22 @@ export interface OptionsChain {
   calls: OptionQuote[];
   puts: OptionQuote[];
 }
+
+// Mock implementations for missing functions
+export const fetchRealTimeStockPrice = async (symbol: string): Promise<number> => {
+  // Mock implementation
+  return 150 + Math.random() * 50;
+};
+
+export const fetchTimeSeriesData = async (symbol: string, period: string): Promise<any[]> => {
+  // Mock implementation
+  const data = [];
+  for (let i = 0; i < 30; i++) {
+    data.push({
+      date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
+      price: 150 + Math.random() * 50,
+      volume: Math.floor(Math.random() * 1000000)
+    });
+  }
+  return data;
+};
