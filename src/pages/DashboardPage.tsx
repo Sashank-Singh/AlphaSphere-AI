@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,22 +17,24 @@ import {
   Bell,
   Zap,
   Target,
-  BarChart3
+  BarChart3,
+  MessageSquare,
+  LineChart
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { formatCurrency } from '@/lib/utils';
-import CompactSphereAI from '@/components/CompactSphereAI';
+import ImprovedSphereAI from '@/components/ImprovedSphereAI';
 import AIMarketSentiment from '@/components/AIMarketSentiment';
 import SmartNotifications from '@/components/SmartNotifications';
-import SocialTrading from '@/components/SocialTrading';
 import MobileRealTimeDashboard from '@/components/MobileRealTimeDashboard';
 import { useRealTimeStock } from '@/hooks/useRealTimeStock';
 import MarketSentimentCard from '@/components/MarketSentimentCard';
 import SectorPerformanceCard from '@/components/SectorPerformanceCard';
 import TopMoversCard from '@/components/TopMoversCard';
 import SectorHeatmapCard from '@/components/SectorHeatmapCard';
+import CommunityPage from '@/pages/CommunityPage';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -67,9 +70,9 @@ const DashboardPage: React.FC = () => {
 
   const quickActions = [
     { label: 'Quick Trade', icon: Zap, action: () => navigate('/trading'), color: 'bg-blue-500' },
-    { label: 'AI Insights', icon: Brain, action: () => {}, color: 'bg-purple-500' },
-    { label: 'Options', icon: Target, action: () => navigate('/options'), color: 'bg-green-500' },
-    { label: 'Analytics', icon: BarChart3, action: () => navigate('/analytics'), color: 'bg-orange-500' }
+    { label: 'AI Insights', icon: Brain, action: () => {}, color: 'bg-green-500' },
+    { label: 'Options', icon: Target, action: () => navigate('/options'), color: 'bg-amber-500' },
+    { label: 'Analytics', icon: BarChart3, action: () => navigate('/analytics'), color: 'bg-cyan-500' }
   ];
 
   const portfolioPositions = portfolio.positions.slice(0, 3);
@@ -117,9 +120,9 @@ const DashboardPage: React.FC = () => {
         <MobileRealTimeDashboard symbols={['AAPL', 'TSLA', 'NVDA', 'MSFT']} />
       )}
 
-      {/* Portfolio Overview */}
+      {/* Portfolio Overview & Market Pulse */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 bg-gradient-to-br from-blue-600 to-purple-700 text-white">
+        <Card className="lg:col-span-2 bg-gradient-to-br from-blue-600 to-cyan-700 text-white">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               Portfolio Overview
@@ -192,41 +195,53 @@ const DashboardPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* Market Dashboard Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <MarketSentimentCard />
-        <SectorPerformanceCard />
-        <TopMoversCard />
+      {/* Market Intelligence Section */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <LineChart className="h-5 w-5" />
+          Market Intelligence
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <MarketSentimentCard />
+          <SectorPerformanceCard />
+          <TopMoversCard />
+        </div>
       </div>
 
-      {/* Sector Heatmap */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SectorHeatmapCard />
-        <Card>
-          <CardHeader>
-            <CardTitle>Market News</CardTitle>
-            <p className="text-sm text-muted-foreground">Latest market updates</p>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                <h4 className="font-semibold text-sm">Fed Maintains Interest Rates</h4>
-                <p className="text-xs text-muted-foreground mt-1">Markets react positively to stable monetary policy...</p>
-                <span className="text-xs text-muted-foreground">2 hours ago</span>
+      {/* Market Analytics Section */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <BarChart3 className="h-5 w-5" />
+          Market Analytics
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SectorHeatmapCard />
+          <Card>
+            <CardHeader>
+              <CardTitle>Market News</CardTitle>
+              <p className="text-sm text-muted-foreground">Latest market updates</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <h4 className="font-semibold text-sm">Fed Maintains Interest Rates</h4>
+                  <p className="text-xs text-muted-foreground mt-1">Markets react positively to stable monetary policy...</p>
+                  <span className="text-xs text-muted-foreground">2 hours ago</span>
+                </div>
+                <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <h4 className="font-semibold text-sm">Tech Earnings Beat Expectations</h4>
+                  <p className="text-xs text-muted-foreground mt-1">Major tech companies report strong quarterly results...</p>
+                  <span className="text-xs text-muted-foreground">4 hours ago</span>
+                </div>
+                <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <h4 className="font-semibold text-sm">Oil Prices Surge on Supply Concerns</h4>
+                  <p className="text-xs text-muted-foreground mt-1">Energy sector sees significant gains amid geopolitical tensions...</p>
+                  <span className="text-xs text-muted-foreground">6 hours ago</span>
+                </div>
               </div>
-              <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                <h4 className="font-semibold text-sm">Tech Earnings Beat Expectations</h4>
-                <p className="text-xs text-muted-foreground mt-1">Major tech companies report strong quarterly results...</p>
-                <span className="text-xs text-muted-foreground">4 hours ago</span>
-              </div>
-              <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                <h4 className="font-semibold text-sm">Oil Prices Surge on Supply Concerns</h4>
-                <p className="text-xs text-muted-foreground mt-1">Energy sector sees significant gains amid geopolitical tensions...</p>
-                <span className="text-xs text-muted-foreground">6 hours ago</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Main Content Tabs */}
@@ -234,7 +249,7 @@ const DashboardPage: React.FC = () => {
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="positions">Positions</TabsTrigger>
           <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
-          <TabsTrigger value="social">Social</TabsTrigger>
+          <TabsTrigger value="community">Community</TabsTrigger>
           <TabsTrigger value="alerts">Alerts</TabsTrigger>
         </TabsList>
 
@@ -303,8 +318,14 @@ const DashboardPage: React.FC = () => {
           <AIMarketSentiment />
         </TabsContent>
 
-        <TabsContent value="social">
-          <SocialTrading />
+        <TabsContent value="community">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <MessageSquare className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Trading Community</h3>
+            </div>
+            <CommunityPage />
+          </div>
         </TabsContent>
 
         <TabsContent value="alerts">
@@ -312,8 +333,8 @@ const DashboardPage: React.FC = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Compact Sphere AI */}
-      <CompactSphereAI />
+      {/* Improved Sphere AI */}
+      <ImprovedSphereAI />
     </div>
   );
 };
