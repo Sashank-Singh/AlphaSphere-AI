@@ -42,6 +42,37 @@ export interface PopularStock {
   volume: number;
 }
 
+export interface StockPrice {
+  symbol: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+}
+
+export interface OptionsData {
+  symbol: string;
+  options: Array<{
+    contractSymbol: string;
+    strike: number;
+    type: 'call' | 'put';
+    expiration: string;
+    bid: number;
+    ask: number;
+    volume: number;
+    openInterest: number;
+  }>;
+}
+
+export interface CompanyDetails {
+  symbol: string;
+  name: string;
+  description: string;
+  sector: string;
+  industry: string;
+  marketCap: number;
+}
+
 class PolygonApi {
   private apiKey: string;
 
@@ -103,6 +134,127 @@ export const fetchPopularStocks = async (): Promise<PopularStock[]> => {
     { symbol: 'MSFT', name: 'Microsoft', price: 338.11, change: -1.5, changePercent: -0.44, volume: 30000000 },
     { symbol: 'GOOGL', name: 'Alphabet', price: 131.86, change: 0.8, changePercent: 0.61, volume: 25000000 }
   ];
+};
+
+export const fetchMarketNews = async (): Promise<PolygonNewsItem[]> => {
+  return [
+    {
+      id: '1',
+      title: 'Market Shows Strong Performance',
+      description: 'Market analysis shows positive trends...',
+      url: '#',
+      published_utc: new Date().toISOString(),
+      author: 'Market Analyst',
+      tickers: ['SPY', 'QQQ']
+    }
+  ];
+};
+
+export const calculateMarketSentiment = async (): Promise<{ sentiment: 'bullish' | 'bearish' | 'neutral'; score: number }> => {
+  const score = Math.random();
+  let sentiment: 'bullish' | 'bearish' | 'neutral' = 'neutral';
+  
+  if (score > 0.6) sentiment = 'bullish';
+  else if (score < 0.4) sentiment = 'bearish';
+  
+  return { sentiment, score };
+};
+
+export const fetchRealTimeStockPrice = async (symbol: string): Promise<StockPrice> => {
+  const basePrice = 100 + Math.random() * 400;
+  const change = (Math.random() - 0.5) * 10;
+  
+  return {
+    symbol,
+    price: basePrice,
+    change,
+    changePercent: (change / basePrice) * 100,
+    volume: Math.floor(Math.random() * 1000000)
+  };
+};
+
+export const fetchOptionsData = async (symbol: string): Promise<OptionsData> => {
+  const strikes = [90, 95, 100, 105, 110];
+  const options = [];
+  
+  for (const strike of strikes) {
+    options.push({
+      contractSymbol: `${symbol}240101C${strike}`,
+      strike,
+      type: 'call' as const,
+      expiration: '2024-01-01',
+      bid: strike * 0.05,
+      ask: strike * 0.06,
+      volume: Math.floor(Math.random() * 1000),
+      openInterest: Math.floor(Math.random() * 5000)
+    });
+    
+    options.push({
+      contractSymbol: `${symbol}240101P${strike}`,
+      strike,
+      type: 'put' as const,
+      expiration: '2024-01-01',
+      bid: strike * 0.03,
+      ask: strike * 0.04,
+      volume: Math.floor(Math.random() * 1000),
+      openInterest: Math.floor(Math.random() * 5000)
+    });
+  }
+  
+  return { symbol, options };
+};
+
+export const fetchHistoricalPrices = async (symbol: string, period: string = '1Y'): Promise<Array<{ date: string; price: number; volume: number }>> => {
+  const data = [];
+  const startDate = new Date();
+  startDate.setFullYear(startDate.getFullYear() - 1);
+  
+  for (let i = 0; i < 365; i++) {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + i);
+    
+    data.push({
+      date: date.toISOString().split('T')[0],
+      price: 100 + Math.random() * 50,
+      volume: Math.floor(Math.random() * 1000000)
+    });
+  }
+  
+  return data;
+};
+
+export const fetchOptionsChain = async (symbol: string): Promise<OptionsData> => {
+  return fetchOptionsData(symbol);
+};
+
+export const fetchCompanyDetails = async (symbol: string): Promise<CompanyDetails> => {
+  const companies: Record<string, CompanyDetails> = {
+    'AAPL': {
+      symbol: 'AAPL',
+      name: 'Apple Inc.',
+      description: 'Technology company that designs and manufactures consumer electronics',
+      sector: 'Technology',
+      industry: 'Consumer Electronics',
+      marketCap: 3000000000000
+    },
+    'MSFT': {
+      symbol: 'MSFT',
+      name: 'Microsoft Corporation',
+      description: 'Technology company that develops software and cloud services',
+      sector: 'Technology',
+      industry: 'Software',
+      marketCap: 2800000000000
+    }
+  };
+  
+  return companies[symbol] || {
+    symbol,
+    name: `${symbol} Corporation`,
+    description: 'Company description not available',
+    sector: 'Technology',
+    industry: 'Software',
+    marketCap: 1000000000
+  };
 };
 
 export default PolygonApi;

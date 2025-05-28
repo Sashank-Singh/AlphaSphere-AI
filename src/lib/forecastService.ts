@@ -1,5 +1,6 @@
+
 // Price Forecasting Service
-import { fetchRealTimeStockPrice, fetchTimeSeriesData } from './api';
+import { fetchRealTimeStockPrice } from './api';
 
 export interface ForecastData {
   timeframe: '1d' | '1w' | '1m';
@@ -95,43 +96,33 @@ const calculateBollingerBands = (prices: number[], period: number = 20, stdDev: 
 };
 
 /**
+ * Mock time series data for testing
+ */
+const generateMockTimeSeries = (symbol: string, currentPrice: number): number[] => {
+  const prices = [];
+  let price = currentPrice;
+  
+  // Generate 60 days of mock historical data
+  for (let i = 0; i < 60; i++) {
+    const change = (Math.random() - 0.5) * 0.05; // ±2.5% daily change
+    price = price * (1 + change);
+    prices.push(price);
+  }
+  
+  return prices;
+};
+
+/**
  * Generate price forecast based on historical data and technical indicators
  */
 export const generatePriceForecast = async (symbol: string, timeframe: '1d' | '1w' | '1m'): Promise<ForecastData> => {
   try {
-    // Map timeframes to API parameters
-    const intervalMap = {
-      '1d': 'intraday',
-      '1w': 'daily',
-      '1m': 'daily'
-    };
-    
-    const intraday_interval = timeframe === '1d' ? '5min' : undefined;
-    
-    // Fetch historical data
-    const historicalData = await fetchTimeSeriesData(
-      symbol, 
-      intervalMap[timeframe] as any, 
-      'compact', 
-      intraday_interval as any
-    );
-    
     // Get current price
-    const currentPrice = await fetchRealTimeStockPrice(symbol);
+    const currentPriceData = await fetchRealTimeStockPrice(symbol);
+    const currentPrice = currentPriceData.price;
     
-    // Extract prices from historical data
-    const timeSeriesKey = 
-      timeframe === '1d' ? `Time Series (${intraday_interval})` :
-      timeframe === '1w' ? 'Time Series (Daily)' :
-      'Time Series (Daily)';
-    
-    if (!historicalData || !historicalData[timeSeriesKey]) {
-      return generateMockForecastData(timeframe, currentPrice.price);
-    }
-    
-    const timeSeries = historicalData[timeSeriesKey];
-    const dates = Object.keys(timeSeries).sort();
-    const prices = dates.map(date => parseFloat(timeSeries[date]['4. close']));
+    // Generate mock historical prices for analysis
+    const prices = generateMockTimeSeries(symbol, currentPrice);
     
     // Calculate technical indicators
     const sma20 = calculateSMA(prices, 20);
@@ -155,13 +146,13 @@ export const generatePriceForecast = async (symbol: string, timeframe: '1d' | '1
     
     // If price is above SMA and EMA, increase confidence for uptrend
     if (direction === 'up') {
-      if (currentPrice.price > sma20) confidenceScore += 0.1;
-      if (currentPrice.price > ema50) confidenceScore += 0.1;
+      if (currentPrice > sma20) confidenceScore += 0.1;
+      if (currentPrice > ema50) confidenceScore += 0.1;
       if (rsi > 50) confidenceScore += 0.05;
       if (rsi > 70) confidenceScore -= 0.1; // Overbought warning
     } else if (direction === 'down') {
-      if (currentPrice.price < sma20) confidenceScore += 0.1;
-      if (currentPrice.price < ema50) confidenceScore += 0.1;
+      if (currentPrice < sma20) confidenceScore += 0.1;
+      if (currentPrice < ema50) confidenceScore += 0.1;
       if (rsi < 50) confidenceScore += 0.05;
       if (rsi < 30) confidenceScore -= 0.1; // Oversold warning
     }
@@ -183,7 +174,7 @@ export const generatePriceForecast = async (symbol: string, timeframe: '1d' | '1
     }[timeframe];
     
     const predictions = [];
-    const basePrice = currentPrice.price;
+    const basePrice = currentPrice;
     const directionMultiplier = direction === 'up' ? 1 : direction === 'down' ? -1 : 0;
     
     // Create prediction points
@@ -227,8 +218,8 @@ export const generatePriceForecast = async (symbol: string, timeframe: '1d' | '1
   } catch (error) {
     console.error('Error generating price forecast:', error);
     // Fallback to mock data
-    const currentPrice = await fetchRealTimeStockPrice(symbol);
-    return generateMockForecastData(timeframe, currentPrice.price);
+    const mockPrice = 100 + Math.random() * 400;
+    return generateMockForecastData(timeframe, mockPrice);
   }
 };
 

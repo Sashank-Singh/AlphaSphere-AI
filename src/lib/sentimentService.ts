@@ -1,5 +1,7 @@
+
 // Sentiment Analysis Service
 import { fetchRealTimeStockPrice } from './api';
+import { debounce } from './utils';
 
 export interface SentimentData {
   overall: number;
@@ -111,8 +113,8 @@ export const calculateTechnicalSentiment = async (symbol: string): Promise<numbe
     const stockData = await fetchRealTimeStockPrice(symbol);
     
     // Simple technical sentiment based on price vs previous close
-    if (stockData) {
-      const priceChange = stockData.changePercent;
+    if (stockData && typeof stockData === 'object' && 'changePercent' in stockData) {
+      const priceChange = stockData.changePercent as number;
       // Normalize to 0-1 scale (assuming normal daily range is -5% to +5%)
       return Math.min(Math.max((priceChange + 5) / 10, 0), 1);
     }
@@ -207,7 +209,7 @@ export const generateMockSentiment = (symbol: string, baseValue: number = 0.5, v
  */
 // Cache for sentiment data
 const sentimentCache = new Map<string, { data: SentimentData; timestamp: number }>();
-const CACHE_DURATION = 6; // 1 minute cache duration
+const CACHE_DURATION = 60000; // 1 minute cache duration
 
 // Debounced fetch function for each symbol
 const debouncedFetches = new Map<string, (symbol: string) => Promise<SentimentData>>();
