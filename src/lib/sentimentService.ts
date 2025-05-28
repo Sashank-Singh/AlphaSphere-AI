@@ -222,7 +222,7 @@ export const fetchStockSentiment = async (symbol: string): Promise<SentimentData
 
   // Create debounced fetch function for this symbol if it doesn't exist
   if (!debouncedFetches.has(symbol)) {
-    debouncedFetches.set(symbol, debounce(async (sym: string): Promise<SentimentData> => {
+    debouncedFetches.set(symbol, debounce(async (sym: string) => {
       try {
         // Fetch all sentiment components in parallel
         const [newsSentiment, socialSentiment, insiderSentiment, technicalSentiment] = await Promise.all([

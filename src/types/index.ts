@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   email: string;
@@ -12,7 +13,7 @@ export interface Stock {
   name: string;
   price: number;
   change: number;
-  changePercent: number;
+  changePercent?: number; // Made optional to fix build errors
   volume: number;
   open?: number;
   high?: number;
