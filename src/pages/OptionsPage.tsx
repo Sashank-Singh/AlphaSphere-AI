@@ -543,6 +543,16 @@ const OptionsPage: React.FC = () => {
         </Card>
       </div>
 
+      {/* Options Analysis */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Options Analysis</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <OptionsAnalysis />
+        </CardContent>
+      </Card>
+
       <Tabs defaultValue="option-chain" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="option-chain">

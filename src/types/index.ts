@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   email: string;
@@ -13,11 +12,15 @@ export interface Stock {
   name: string;
   price: number;
   change: number;
-  isEtf?: boolean;
+  changePercent: number;
+  volume: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  previousClose?: number;
   marketCap?: number;
-  volume: number;  // Changed from optional to required
-  pe?: number;
   sector?: string;
+  description?: string;
   lastUpdated?: Date;
   logo?: string;
 }
