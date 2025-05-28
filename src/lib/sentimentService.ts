@@ -210,6 +210,27 @@ export const generateMockSentiment = (symbol: string, baseValue: number = 0.5, v
 const sentimentCache = new Map<string, { data: SentimentData; timestamp: number }>();
 const CACHE_DURATION = 60000; // 1 minute cache duration
 
+// Create a proper debounce function
+const debounce = <T extends (...args: any[]) => Promise<any>>(
+  func: T,
+  wait: number
+): T => {
+  let timeout: NodeJS.Timeout;
+  return ((...args: any[]) => {
+    return new Promise<Awaited<ReturnType<T>>>((resolve, reject) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(async () => {
+        try {
+          const result = await func(...args);
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        }
+      }, wait);
+    });
+  }) as T;
+};
+
 // Debounced fetch function for each symbol
 const debouncedFetches = new Map<string, (symbol: string) => Promise<SentimentData>>();
 
@@ -222,7 +243,7 @@ export const fetchStockSentiment = async (symbol: string): Promise<SentimentData
 
   // Create debounced fetch function for this symbol if it doesn't exist
   if (!debouncedFetches.has(symbol)) {
-    debouncedFetches.set(symbol, debounce(async (sym: string) => {
+    const fetchFunction = async (sym: string): Promise<SentimentData> => {
       try {
         // Fetch all sentiment components in parallel
         const [newsSentiment, socialSentiment, insiderSentiment, technicalSentiment] = await Promise.all([
@@ -280,7 +301,9 @@ export const fetchStockSentiment = async (symbol: string): Promise<SentimentData
         sentimentCache.set(symbol, { data, timestamp: Date.now() });
         return data;
       }
-    }, 1000));
+    };
+
+    debouncedFetches.set(symbol, debounce(fetchFunction, 1000));
   }
 
   // Get the debounced fetch function and execute it

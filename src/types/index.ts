@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   email: string;
@@ -13,7 +12,7 @@ export interface Stock {
   name: string;
   price: number;
   change: number;
-  changePercent?: number; // Made optional to fix build errors
+  changePercent?: number;
   volume: number;
   open?: number;
   high?: number;
@@ -24,6 +23,7 @@ export interface Stock {
   description?: string;
   lastUpdated?: Date;
   logo?: string;
+  isEtf?: boolean;
 }
 
 export interface NewsItem {
@@ -44,7 +44,7 @@ export interface Position {
   quantity: number;
   averagePrice: number;
   currentPrice: number;
-  sector?: string;  // Added sector property to match usage
+  sector?: string;
 }
 
 export interface OptionContract {
