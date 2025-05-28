@@ -133,6 +133,7 @@ const ImprovedStockDetailPage: React.FC = () => {
   }
 
   const isPositive = stock.change >= 0;
+  const safeChangePercent = stock.changePercent ?? 0;
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl">
@@ -163,7 +164,7 @@ const ImprovedStockDetailPage: React.FC = () => {
               <div className={cn("flex items-center gap-2 text-lg", isPositive ? "text-green-600" : "text-red-600")}>
                 {isPositive ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
                 <span>{isPositive ? '+' : ''}{formatCurrency(stock.change)}</span>
-                <span>({formatPercentage(stock.changePercent)})</span>
+                <span>({formatPercentage(safeChangePercent)})</span>
               </div>
             </div>
             

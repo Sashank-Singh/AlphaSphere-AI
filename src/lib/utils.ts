@@ -13,7 +13,10 @@ export function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
-export function formatPercentage(value: number): string {
+export function formatPercentage(value: number | undefined): string {
+  if (value === undefined || value === null || isNaN(value)) {
+    return '0.00%';
+  }
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
 }
 
