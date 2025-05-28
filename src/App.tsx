@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import HomePage from '@/pages/HomePage';
@@ -10,6 +9,7 @@ import SettingsPage from '@/pages/SettingsPage';
 import CommunityPage from '@/pages/CommunityPage';
 import TradingPage from '@/pages/TradingPage';
 import AuthPage from '@/pages/AuthPage';
+import AnalyticsPage from '@/pages/AnalyticsPage';
 import { AuthProvider } from '@/context/AuthContext';
 import { PortfolioProvider } from '@/context/PortfolioContext';
 import ImprovedStockDetailPage from '@/pages/ImprovedStockDetailPage';
@@ -62,6 +62,11 @@ const App: React.FC = () => {
             <Route path="/options/:symbol" element={
               <Layout>
                 <OptionsPage />
+              </Layout>
+            } />
+            <Route path="/analytics" element={
+              <Layout>
+                <AnalyticsPage />
               </Layout>
             } />
             <Route path="/settings" element={
