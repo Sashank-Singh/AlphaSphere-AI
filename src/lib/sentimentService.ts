@@ -1,6 +1,5 @@
 // Sentiment Analysis Service
 import { fetchRealTimeStockPrice } from './polygonApi';
-import { debounce } from './utils';
 
 export interface SentimentData {
   overall: number;
