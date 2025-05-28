@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import BottomNavBar from './BottomNavBar';
@@ -9,7 +8,11 @@ import { cn } from '@/lib/utils';
 
 import { Toaster } from '@/components/ui/toaster';
 
-const Layout = () => {
+interface LayoutProps {
+  children: React.ReactNode;
+}
+
+const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const isMobile = useIsMobile();
@@ -45,7 +48,7 @@ const Layout = () => {
       )}>
         <TopBar onSearch={handleSearch} />
         <main className="flex-1 overflow-auto">
-          <Outlet />
+          {children}
         </main>
         
         {/* Show bottom nav bar only on mobile */}
