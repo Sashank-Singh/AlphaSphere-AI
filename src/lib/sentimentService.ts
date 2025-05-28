@@ -1,6 +1,6 @@
 
 // Sentiment Analysis Service
-import { fetchRealTimeStockPrice } from './api';
+import { fetchRealTimeStockPrice } from './polygonApi';
 import { debounce } from './utils';
 
 export interface SentimentData {
@@ -223,7 +223,7 @@ export const fetchStockSentiment = async (symbol: string): Promise<SentimentData
 
   // Create debounced fetch function for this symbol if it doesn't exist
   if (!debouncedFetches.has(symbol)) {
-    debouncedFetches.set(symbol, debounce(async (sym: string) => {
+    debouncedFetches.set(symbol, debounce(async (sym: string): Promise<SentimentData> => {
       try {
         // Fetch all sentiment components in parallel
         const [newsSentiment, socialSentiment, insiderSentiment, technicalSentiment] = await Promise.all([

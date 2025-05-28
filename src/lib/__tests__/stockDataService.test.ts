@@ -1,8 +1,30 @@
+
 import { stockDataService } from '../stockDataService';
 import { StockQuote } from '../api';
 
 // Mock fetch globally
 global.fetch = jest.fn();
+
+// Helper function to create a proper Response mock
+const createMockResponse = (data: any): Response => {
+  return {
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    headers: new Headers(),
+    redirected: false,
+    type: 'basic',
+    url: '',
+    body: null,
+    bodyUsed: false,
+    arrayBuffer: jest.fn(),
+    blob: jest.fn(),
+    formData: jest.fn(),
+    text: jest.fn(),
+    clone: jest.fn(),
+    json: jest.fn().mockResolvedValue(data)
+  } as Response;
+};
 
 describe('StockDataService', () => {
   beforeEach(() => {
@@ -44,10 +66,7 @@ describe('StockDataService', () => {
     };
 
     it('should fetch and return stock quote data', async () => {
-      jest.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockYahooResponse
-      });
+      jest.mocked(global.fetch).mockResolvedValueOnce(createMockResponse(mockYahooResponse));
 
       const quote = await stockDataService.getStockQuote('AAPL');
       
@@ -61,10 +80,7 @@ describe('StockDataService', () => {
     });
 
     it('should use cache for subsequent requests within TTL', async () => {
-      jest.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockYahooResponse
-      });
+      jest.mocked(global.fetch).mockResolvedValueOnce(createMockResponse(mockYahooResponse));
 
       // First call should fetch
       await stockDataService.getStockQuote('AAPL');
@@ -76,10 +92,7 @@ describe('StockDataService', () => {
     });
     
     it('should bypass cache after TTL expiration', async () => {
-      jest.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => mockYahooResponse
-      });
+      jest.mocked(global.fetch).mockResolvedValue(createMockResponse(mockYahooResponse));
       
       // First call
       await stockDataService.getStockQuote('AAPL');
@@ -98,10 +111,7 @@ describe('StockDataService', () => {
     it('should handle concurrent requests correctly', async () => {
       jest.mocked(global.fetch).mockImplementation(async () => {
         await new Promise(resolve => setTimeout(resolve, 100));
-        return {
-          ok: true,
-          json: async () => mockYahooResponse
-        };
+        return createMockResponse(mockYahooResponse);
       });
       
       // Make 5 concurrent requests
@@ -144,30 +154,27 @@ describe('StockDataService', () => {
     it('should generate and return options data', async () => {
       // Mock the getStockQuote method to return a fixed price
       const mockQuote: StockQuote = {
-  symbol: 'AAPL',
-  price: 150,
-  open: 149,
-  high: 151,
-  low: 148,
-  volume: 1000000,
-  previousClose: 149,
-  change: 1,
-  changePercent: 0.67,
-  latestTradingDay: '2023-01-01'
-};
+        symbol: 'AAPL',
+        price: 150,
+        open: 149,
+        high: 151,
+        low: 148,
+        volume: 1000000,
+        previousClose: 149,
+        change: 1,
+        changePercent: 0.67,
+        latestTradingDay: '2023-01-01'
+      };
 
-      jest.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          chart: {
-            result: [{
-              meta: { regularMarketPrice: 150 },
-              indicators: { quote: [{ close: [150] }] },
-              timestamp: [1234567890]
-            }]
-          }
-        })
-      });
+      jest.mocked(global.fetch).mockResolvedValueOnce(createMockResponse({
+        chart: {
+          result: [{
+            meta: { regularMarketPrice: 150 },
+            indicators: { quote: [{ close: [150] }] },
+            timestamp: [1234567890]
+          }]
+        }
+      }));
 
       const options = await stockDataService.getOptionsData('AAPL');
       
@@ -194,18 +201,15 @@ describe('StockDataService', () => {
     });
 
     it('should use cache for subsequent options requests within TTL', async () => {
-      jest.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          chart: {
-            result: [{
-              meta: { regularMarketPrice: 150 },
-              indicators: { quote: [{ close: [150] }] },
-              timestamp: [1234567890]
-            }]
-          }
-        })
-      });
+      jest.mocked(global.fetch).mockResolvedValue(createMockResponse({
+        chart: {
+          result: [{
+            meta: { regularMarketPrice: 150 },
+            indicators: { quote: [{ close: [150] }] },
+            timestamp: [1234567890]
+          }]
+        }
+      }));
 
       // First call should fetch
       await stockDataService.getOptionsData('AAPL');
@@ -220,18 +224,15 @@ describe('StockDataService', () => {
     it('should handle concurrent options requests correctly', async () => {
       jest.mocked(global.fetch).mockImplementation(async () => {
         await new Promise(resolve => setTimeout(resolve, 100));
-        return {
-          ok: true,
-          json: async () => ({
-            chart: {
-              result: [{
-                meta: { regularMarketPrice: 150 },
-                indicators: { quote: [{ close: [150] }] },
-                timestamp: [1234567890]
-              }]
-            }
-          })
-        };
+        return createMockResponse({
+          chart: {
+            result: [{
+              meta: { regularMarketPrice: 150 },
+              indicators: { quote: [{ close: [150] }] },
+              timestamp: [1234567890]
+            }]
+          }
+        });
       });
       
       // Make 5 concurrent requests
@@ -251,18 +252,15 @@ describe('StockDataService', () => {
     });
 
     it('should handle specific option contract requests', async () => {
-      jest.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          chart: {
-            result: [{
-              meta: { regularMarketPrice: 150 },
-              indicators: { quote: [{ close: [150] }] },
-              timestamp: [1234567890]
-            }]
-          }
-        })
-      });
+      jest.mocked(global.fetch).mockResolvedValueOnce(createMockResponse({
+        chart: {
+          result: [{
+            meta: { regularMarketPrice: 150 },
+            indicators: { quote: [{ close: [150] }] },
+            timestamp: [1234567890]
+          }]
+        }
+      }));
 
       const specificContract = 'AAPL230101C150';
       const options = await stockDataService.getOptionsData('AAPL', false, specificContract);

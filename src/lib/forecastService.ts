@@ -1,6 +1,5 @@
-
 // Price Forecasting Service
-import { fetchRealTimeStockPrice } from './api';
+import { fetchRealTimeStockPrice } from './polygonApi';
 
 export interface ForecastData {
   timeframe: '1d' | '1w' | '1m';
