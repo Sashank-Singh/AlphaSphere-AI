@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import HomePage from '@/app/page';
+import HomePage from '@/pages/HomePage';
 import DashboardPage from '@/pages/DashboardPage';
 import MarketPage from '@/pages/MarketPage';
 import PortfolioPage from '@/pages/PortfolioPage';
@@ -9,9 +9,11 @@ import OptionsPage from '@/pages/OptionsPage';
 import SettingsPage from '@/pages/SettingsPage';
 import CommunityPage from '@/pages/CommunityPage';
 import TradingPage from '@/pages/TradingPage';
+import AuthPage from '@/pages/AuthPage';
 import { AuthProvider } from '@/context/AuthContext';
 import { PortfolioProvider } from '@/context/PortfolioContext';
 import ImprovedStockDetailPage from '@/pages/ImprovedStockDetailPage';
+import Layout from '@/components/Layout';
 
 const App: React.FC = () => {
   return (
@@ -20,17 +22,50 @@ const App: React.FC = () => {
         <Router>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/auth" element={<AuthPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/market" element={<MarketPage />} />
-            <Route path="/portfolio" element={<PortfolioPage />} />
+            <Route path="/market" element={
+              <Layout>
+                <MarketPage />
+              </Layout>
+            } />
+            <Route path="/portfolio" element={
+              <Layout>
+                <PortfolioPage />
+              </Layout>
+            } />
             <Route path="/stocks/:symbol" element={<ImprovedStockDetailPage />} />
             <Route path="/stocks/:ticker" element={<ImprovedStockDetailPage />} />
-            <Route path="/trading" element={<TradingPage />} />
-            <Route path="/trading/:symbol" element={<TradingPage />} />
-            <Route path="/options" element={<OptionsPage />} />
-            <Route path="/options/:symbol" element={<OptionsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/community" element={<CommunityPage />} />
+            <Route path="/trading" element={
+              <Layout>
+                <TradingPage />
+              </Layout>
+            } />
+            <Route path="/trading/:symbol" element={
+              <Layout>
+                <TradingPage />
+              </Layout>
+            } />
+            <Route path="/options" element={
+              <Layout>
+                <OptionsPage />
+              </Layout>
+            } />
+            <Route path="/options/:symbol" element={
+              <Layout>
+                <OptionsPage />
+              </Layout>
+            } />
+            <Route path="/settings" element={
+              <Layout>
+                <SettingsPage />
+              </Layout>
+            } />
+            <Route path="/community" element={
+              <Layout>
+                <CommunityPage />
+              </Layout>
+            } />
           </Routes>
         </Router>
       </PortfolioProvider>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,7 +16,9 @@ import {
   Zap,
   Brain,
   Wifi,
-  Smartphone
+  Smartphone,
+  LogIn,
+  UserPlus
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { useAuth } from '@/context/AuthContext';
@@ -58,6 +59,100 @@ const HomePage: React.FC = () => {
     { ...mockIndices[1], data: qqqData },
     { ...mockIndices[2], data: diaData }
   ];
+
+  // Show login/signup buttons if user is not authenticated
+  if (!user) {
+    return (
+      <div className={`pb-20 w-full ${isMobile ? 'px-4' : 'px-8'}`}>
+        {/* Header for non-authenticated users */}
+        <div className={`py-6 flex ${isMobile ? 'flex-col' : 'flex-row'} justify-between items-start ${isMobile ? '' : 'sm:items-center'} gap-4 border-b border-border/40`}>
+          <div>
+            <h1 className={`${isMobile ? 'text-xl' : 'text-xl'} font-bold tracking-tight`}>
+              Welcome to AlphaSphere
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Your AI-powered trading platform
+            </p>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate('/auth')}>
+              <LogIn className="h-4 w-4 mr-2" />
+              Login
+            </Button>
+            <Button onClick={() => navigate('/auth')}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Sign Up
+            </Button>
+          </div>
+        </div>
+
+        {/* Welcome content for non-authenticated users */}
+        <div className="py-12 text-center">
+          <h2 className="text-3xl font-bold mb-4">Start Your Trading Journey</h2>
+          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Join thousands of traders using AI-powered insights to make smarter investment decisions.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Button size="lg" onClick={() => navigate('/auth')}>
+              Get Started Free
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button variant="outline" size="lg" onClick={() => navigate('/market')}>
+              Explore Markets
+            </Button>
+          </div>
+        </div>
+
+        {/* Market Overview for all users */}
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold tracking-tight">Market Overview</h2>
+            <Badge variant="secondary" className="gap-1">
+              <Wifi className="h-3 w-3" />
+              Live
+            </Badge>
+          </div>
+          
+          <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-3'} gap-3`}>
+            {realTimeIndices.map((index, i) => {
+              const realTimeData = index.data;
+              const displayPrice = realTimeData?.price || index.price;
+              const displayChange = realTimeData?.changePercent || index.change;
+              
+              return (
+                <Card key={index.symbol} className="overflow-hidden hover:bg-muted/50 transition-colors">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm font-medium truncate">{index.symbol}</div>
+                      {realTimeData && (
+                        <Badge variant="outline" className="text-xs gap-1">
+                          <Zap className="h-2 w-2" />
+                          Live
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-base font-bold mt-1.5">{formatCurrency(displayPrice)}</div>
+                    <div className={cn(
+                      "flex items-center gap-1 text-xs font-medium mt-1.5 px-1.5 py-0.5 rounded-full w-fit",
+                      displayChange >= 0 ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                    )}>
+                      {displayChange >= 0 ? (
+                        <TrendingUp className="h-3 w-3" />
+                      ) : (
+                        <TrendingDown className="h-3 w-3" />
+                      )}
+                      {(displayChange >= 0 ? '+' : '')}{(displayChange * 100).toFixed(2)}%
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`pb-20 w-full ${isMobile ? 'px-4' : 'px-8'}`}>
