@@ -9,16 +9,15 @@ const AnalyticsPage: React.FC = () => {
   const { portfolio } = usePortfolio();
   
   // Safely calculate metrics with proper null checks and fallbacks
-  const safePortfolio = portfolio || {};
-  const trades = safePortfolio.trades || safePortfolio.transactions || [];
-  const positions = safePortfolio.positions || [];
+  const trades = portfolio?.trades || portfolio?.transactions || [];
+  const positions = portfolio?.positions || [];
   
   const tradeCount = Array.isArray(trades) ? trades.length : 0;
   const positionsCount = Array.isArray(positions) ? positions.length : 0;
   
   // Calculate safe values
-  const totalValue = safePortfolio.totalValue || safePortfolio.value || 0;
-  const totalGain = safePortfolio.totalGain || safePortfolio.gain || 0;
+  const totalValue = portfolio?.totalValue || 0;
+  const totalGain = portfolio?.totalGain || 0;
   const totalGainPercent = totalValue > 0 ? ((totalGain / totalValue) * 100) : 0;
 
   return (
@@ -174,4 +173,4 @@ const AnalyticsPage: React.FC = () => {
   );
 };
 
-export default OptionsPage;
+export default AnalyticsPage;
