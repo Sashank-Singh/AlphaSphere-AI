@@ -8,9 +8,18 @@ import { usePortfolio } from '@/context/PortfolioContext';
 const AnalyticsPage: React.FC = () => {
   const { portfolio } = usePortfolio();
   
-  // Safely calculate number of trades with proper null checks
-  const tradeCount = portfolio?.trades?.length || portfolio?.transactions?.length || 0;
-  const positionsCount = portfolio?.positions?.length || 0;
+  // Safely calculate metrics with proper null checks and fallbacks
+  const safePortfolio = portfolio || {};
+  const trades = safePortfolio.trades || safePortfolio.transactions || [];
+  const positions = safePortfolio.positions || [];
+  
+  const tradeCount = Array.isArray(trades) ? trades.length : 0;
+  const positionsCount = Array.isArray(positions) ? positions.length : 0;
+  
+  // Calculate safe values
+  const totalValue = safePortfolio.totalValue || safePortfolio.value || 0;
+  const totalGain = safePortfolio.totalGain || safePortfolio.gain || 0;
+  const totalGainPercent = totalValue > 0 ? ((totalGain / totalValue) * 100) : 0;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -30,13 +39,16 @@ const AnalyticsPage: React.FC = () => {
             <div className="text-2xl font-bold">
               {tradeCount}
             </div>
+            <p className="text-xs text-muted-foreground">
+              {tradeCount === 0 ? 'No trades yet' : 'Completed trades'}
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Positions
+              Active Positions
             </CardTitle>
             <PieChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -44,34 +56,43 @@ const AnalyticsPage: React.FC = () => {
             <div className="text-2xl font-bold">
               {positionsCount}
             </div>
+            <p className="text-xs text-muted-foreground">
+              {positionsCount === 0 ? 'No positions' : 'Open positions'}
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Win Rate
+              Portfolio Value
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              65.4%
+              ${totalValue.toLocaleString()}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Total portfolio value
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Avg. Return
+              Total Return
             </CardTitle>
             <BarChart2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-500">
-              +12.3%
+            <div className={`text-2xl font-bold ${totalGainPercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {totalGainPercent >= 0 ? '+' : ''}{totalGainPercent.toFixed(2)}%
             </div>
+            <p className="text-xs text-muted-foreground">
+              ${totalGain.toLocaleString()} total gain/loss
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -93,7 +114,7 @@ const AnalyticsPage: React.FC = () => {
                 <div className="text-center">
                   <BarChart2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-semibold mb-2">Performance Chart</h3>
-                  <p className="text-muted-foreground">Chart visualization coming soon</p>
+                  <p className="text-muted-foreground">Interactive performance charts coming soon</p>
                 </div>
               </div>
             </CardContent>
@@ -103,15 +124,20 @@ const AnalyticsPage: React.FC = () => {
         <TabsContent value="trades" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Recent Trades</CardTitle>
+              <CardTitle>Trade History</CardTitle>
             </CardHeader>
             <CardContent>
               {tradeCount > 0 ? (
-                <div className="h-[400px] flex items-center justify-center border rounded-lg bg-muted/10">
-                  <div className="text-center">
-                    <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="text-lg font-semibold mb-2">Trade History</h3>
-                    <p className="text-muted-foreground">Detailed trade history coming soon</p>
+                <div className="space-y-4">
+                  <div className="text-sm text-muted-foreground mb-4">
+                    Showing {tradeCount} completed trades
+                  </div>
+                  <div className="h-[350px] flex items-center justify-center border rounded-lg bg-muted/10">
+                    <div className="text-center">
+                      <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                      <h3 className="text-lg font-semibold mb-2">Trade Details</h3>
+                      <p className="text-muted-foreground">Detailed trade history table coming soon</p>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -137,7 +163,7 @@ const AnalyticsPage: React.FC = () => {
                 <div className="text-center">
                   <PieChart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-semibold mb-2">Risk Analysis</h3>
-                  <p className="text-muted-foreground">Advanced risk metrics coming soon</p>
+                  <p className="text-muted-foreground">Advanced risk metrics and analysis coming soon</p>
                 </div>
               </div>
             </CardContent>
@@ -148,4 +174,4 @@ const AnalyticsPage: React.FC = () => {
   );
 };
 
-export default AnalyticsPage;
+export default OptionsPage;

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowRight, Search, TrendingUp, LineChart, BarChart4, Brain, Shield, Zap } from 'lucide-react';
+import { ArrowRight, Search, TrendingUp, LineChart, BarChart4, Brain, Shield, Zap, Play } from 'lucide-react';
 
 const popularStocks = [
   { symbol: 'AAPL', name: 'Apple Inc.' },
@@ -33,7 +33,7 @@ const HomePage: React.FC = () => {
         <div className="text-2xl font-bold">AlphaSphere</div>
         <div className="flex gap-3">
           <Button variant="outline" onClick={() => navigate('/auth')} className="text-white border-white hover:bg-white hover:text-black">
-            Log In
+            Login
           </Button>
           <Button onClick={() => navigate('/auth')} className="bg-blue-600 hover:bg-blue-700">
             Sign Up
@@ -44,10 +44,10 @@ const HomePage: React.FC = () => {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">
         <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-          Trade Smarter with AI
+          Learn Trading with AI
         </h1>
         <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
-          Real-time market analysis, AI-powered insights, and advanced trading tools all in one platform
+          Master the art of trading with our comprehensive learning platform powered by AI insights and real-time market analysis
         </p>
         
         {/* Search Box */}
@@ -56,7 +56,7 @@ const HomePage: React.FC = () => {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
               type="text"
-              placeholder="Search stocks (e.g. AAPL)"
+              placeholder="Search stocks to analyze (e.g. AAPL)"
               className="pl-10 bg-gray-800/50 border-gray-600 text-white placeholder:text-gray-400"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -67,20 +67,34 @@ const HomePage: React.FC = () => {
           </Button>
         </form>
 
-        {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+        {/* Main CTA Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
           <Button size="lg" onClick={() => navigate('/auth')} className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-3">
-            Get Started Free
+            Sign Up to Learn
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
-          <Button variant="outline" size="lg" onClick={() => navigate('/market')} className="text-white border-white hover:bg-white hover:text-black text-lg px-8 py-3">
-            Explore Markets
+          <Button size="lg" onClick={() => navigate('/auth')} className="bg-green-600 hover:bg-green-700 text-lg px-8 py-3">
+            Login
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Demo Button */}
+        <div className="mb-16">
+          <Button 
+            variant="outline" 
+            size="lg" 
+            onClick={() => navigate('/dashboard')} 
+            className="text-white border-white hover:bg-white hover:text-black text-lg px-8 py-3"
+          >
+            <Play className="mr-2 h-5 w-5" />
+            Try Demo
           </Button>
         </div>
 
         {/* Popular Stocks */}
         <div className="mb-16">
-          <h2 className="text-xl font-semibold mb-6">Popular Stocks</h2>
+          <h2 className="text-xl font-semibold mb-6">Start Learning with Popular Stocks</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {popularStocks.map((stock) => (
               <Card key={stock.symbol} className="bg-gray-800/30 border-gray-700 hover:bg-gray-700/50 transition-all duration-200 cursor-pointer" onClick={() => navigate(`/stocks/${stock.symbol}`)}>
@@ -94,57 +108,63 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Learning Features Section */}
       <section className="py-20 bg-black/20">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-16">Why Choose AlphaSphere?</h2>
+          <h2 className="text-4xl font-bold text-center mb-16">What You'll Learn</h2>
           
           <div className="grid md:grid-cols-3 gap-8">
             <FeatureCard 
-              title="AI-Powered Analysis" 
-              description="Get intelligent market insights and trading recommendations powered by advanced AI algorithms"
+              title="AI-Powered Education" 
+              description="Learn trading strategies with personalized AI tutoring and real-time market explanations"
               icon={<Brain className="w-12 h-12 text-purple-400" />}
             />
             <FeatureCard 
-              title="Real-Time Data" 
-              description="Access live market data with instant updates and real-time price movements"
+              title="Real-Time Practice" 
+              description="Practice with live market data in a safe environment before risking real money"
               icon={<Zap className="w-12 h-12 text-yellow-400" />}
             />
             <FeatureCard 
-              title="Advanced Charts" 
-              description="Professional-grade charting tools with technical indicators and analysis features"
+              title="Technical Analysis" 
+              description="Master chart reading, indicators, and technical analysis with interactive lessons"
               icon={<LineChart className="w-12 h-12 text-green-400" />}
             />
             <FeatureCard 
-              title="Options Trading" 
-              description="Comprehensive options analysis with profit/loss calculations and strategy builders"
+              title="Options Strategies" 
+              description="Learn complex options trading strategies with step-by-step guidance and examples"
               icon={<BarChart4 className="w-12 h-12 text-blue-400" />}
             />
             <FeatureCard 
-              title="Portfolio Management" 
-              description="Track your investments with detailed analytics and performance metrics"
-              icon={<TrendingUp className="w-12 h-12 text-cyan-400" />}
+              title="Risk Management" 
+              description="Understand how to protect your capital with proven risk management techniques"
+              icon={<Shield className="w-12 h-12 text-red-400" />}
             />
             <FeatureCard 
-              title="Secure Trading" 
-              description="Bank-level security with encrypted transactions and secure data protection"
-              icon={<Shield className="w-12 h-12 text-red-400" />}
+              title="Market Psychology" 
+              description="Learn to control emotions and understand market sentiment for better trading decisions"
+              icon={<TrendingUp className="w-12 h-12 text-cyan-400" />}
             />
           </div>
         </div>
       </section>
 
-      {/* Demo Section */}
+      {/* Learning Path Section */}
       <section className="py-20">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-6">Try Our Demo</h2>
+          <h2 className="text-4xl font-bold mb-6">Start Your Trading Journey</h2>
           <p className="text-xl text-gray-300 mb-8">
-            Experience the power of AlphaSphere with our interactive demo
+            From beginner to advanced trader - we'll guide you every step of the way
           </p>
-          <Button size="lg" onClick={() => navigate('/dashboard')} className="bg-purple-600 hover:bg-purple-700 text-lg px-8 py-3">
-            Launch Demo
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" onClick={() => navigate('/auth')} className="bg-purple-600 hover:bg-purple-700 text-lg px-8 py-3">
+              Begin Learning
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button size="lg" onClick={() => navigate('/dashboard')} className="bg-gray-600 hover:bg-gray-700 text-lg px-8 py-3">
+              Explore Demo
+              <Play className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -152,9 +172,9 @@ const HomePage: React.FC = () => {
       <footer className="py-12 bg-gray-900/50 border-t border-gray-800">
         <div className="container mx-auto px-4 text-center">
           <div className="text-2xl font-bold mb-4">AlphaSphere</div>
-          <p className="text-gray-400 mb-4">Advanced AI-powered trading platform</p>
+          <p className="text-gray-400 mb-4">Learn trading with AI-powered education platform</p>
           <p className="text-sm text-gray-500">
-            © 2024 AlphaSphere. All rights reserved. Market data provided for informational purposes only.
+            © 2024 AlphaSphere. All rights reserved. Educational content for learning purposes only.
           </p>
         </div>
       </footer>
