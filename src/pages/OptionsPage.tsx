@@ -1,20 +1,17 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, ArrowLeft, LineChart, BarChart2, TrendingUp, BrainCircuit, Percent, Loader2, Wifi, WifiOff, Calculator } from 'lucide-react';
+import { Search, ArrowLeft, BrainCircuit, Percent, Wifi, WifiOff, Calculator } from 'lucide-react';
 import OptionChain from '@/components/OptionChain';
+import RealTimeStockChart from '@/components/RealTimeStockChart';
+import OptionsChart from '@/components/OptionsChart';
 import { usePolygonWebSocketData } from '@/hooks/usePolygonWebSocket';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 import { 
   getLatestQuote, 
-  getLatestQuotes, 
   AlpacaQuote, 
   AlpacaQuoteResponse, 
-  AlpacaMultiQuoteResponse,
   isMockDataMode 
 } from '../lib/alpacaApi';
 
@@ -69,7 +66,6 @@ const OptionsPage: React.FC = () => {
     isMockData: false
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [priceUpdated, setPriceUpdated] = useState<boolean>(false);
 
   const prevPriceRef = useRef<number>(0);
@@ -163,12 +159,6 @@ const OptionsPage: React.FC = () => {
             lastUpdated: Date.now(),
             isMockData: isMock
           });
-
-          const initialChartData = Array.from({ length: 20 }, (_, i) => ({
-            date: new Date(Date.now() - (20 - i) * 60 * 1000).toLocaleTimeString(),
-            price: price * (0.99 + Math.random() * 0.02)
-          }));
-          setChartData(initialChartData);
         } else {
           setStockData({ 
             symbol: currentSymbol, 
@@ -241,12 +231,12 @@ const OptionsPage: React.FC = () => {
           onClick={() => navigate(`/trading/${currentSymbol || 'AAPL'}`)}
           className="flex items-center"
         >
-          <TrendingUp className="h-4 w-4 mr-2" />
+          <BrainCircuit className="h-4 w-4 mr-2" />
           Stock Trading
         </Button>
       </div>
 
-      {/* Stock information */}
+      {/* Stock Header */}
       <div className="mb-6">
         <Card className="bg-black border border-gray-800">
           <CardHeader className="pb-3">
@@ -287,7 +277,7 @@ const OptionsPage: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSearch} className="flex gap-2 mb-4">
+            <form onSubmit={handleSearch} className="flex gap-2 mb-6">
               <div className="flex-1">
                 <Input
                   type="text"
@@ -302,70 +292,30 @@ const OptionsPage: React.FC = () => {
                 Search
               </Button>
             </form>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Options chart */}
-              <div className="h-[300px] bg-gray-800/50 rounded-lg p-4">
-                {chartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData}>
-                      <defs>
-                        <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <XAxis dataKey="date" />
-                      <YAxis domain={['auto', 'auto']} />
-                      <Tooltip />
-                      <Area type="monotone" dataKey="price" stroke="#8884d8" fillOpacity={1} fill="url(#colorPrice)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <LineChart className="h-10 w-10 text-primary/50 mx-auto mb-2" />
-                    <p className="text-muted-foreground">Loading chart data...</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Options metrics */}
-              <div className="h-[300px] bg-gray-800/50 rounded-lg p-4 overflow-y-auto">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">Options Metrics</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium">Implied Volatility</p>
-                      <p className="text-lg font-bold text-blue-400">24.3%</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Put/Call Ratio</p>
-                      <p className="text-lg font-bold text-yellow-400">0.87</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Max Pain</p>
-                      <p className="text-lg font-bold text-red-400">${(stockData.price * 0.98).toFixed(0)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Open Interest</p>
-                      <p className="text-lg font-bold text-green-400">45.2K</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Volume</p>
-                      <p className="text-lg font-bold text-purple-400">12.8K</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">30d HV</p>
-                      <p className="text-lg font-bold text-orange-400">28.1%</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Enhanced Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Stock Chart */}
+        <RealTimeStockChart
+          symbol={stockData.symbol}
+          currentPrice={stockData.price}
+          change={stockData.change}
+          changePercent={stockData.changePercent}
+          isRealTime={stockFeedConnected}
+          chartType="area"
+          height={350}
+        />
+
+        {/* Options Chart */}
+        <OptionsChart
+          symbol={stockData.symbol}
+          underlyingPrice={stockData.price}
+          expiryDate={selectedExpiry}
+          chartType="payoff"
+        />
       </div>
 
       {/* Options Chain and Sphere AI Advisor */}
