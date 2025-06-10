@@ -229,7 +229,14 @@ const PredictivePriceForecasting: React.FC<PredictivePriceForecastingProps> = ({
           </div>
         ) : currentForecast ? (
           <>
-            <div className="h-[200px] w-full mb-4">
+            <div
+              className="h-[200px] w-full mb-4"
+              style={{
+                background: 'linear-gradient(90deg, #e3ffe8 0%, #a8cfff 100%)',
+                borderRadius: 12,
+                padding: 8
+              }}
+            >
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={currentForecast.predictions}
@@ -237,27 +244,27 @@ const PredictivePriceForecasting: React.FC<PredictivePriceForecastingProps> = ({
                 >
                   <defs>
                     <linearGradient id="colorUpper" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8884d8" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#42a5f5" stopOpacity={0.5}/>
+                      <stop offset="95%" stopColor="#42a5f5" stopOpacity={0.1}/>
                     </linearGradient>
                     <linearGradient id="colorLower" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8884d8" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#66bb6a" stopOpacity={0.5}/>
+                      <stop offset="95%" stopColor="#66bb6a" stopOpacity={0.1}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#555" />
                   <XAxis 
                     dataKey="timestamp" 
                     tick={{ fontSize: 10 }}
-                    tickLine={{ stroke: '#555' }}
-                    axisLine={{ stroke: '#555' }}
+                    tickLine={{ stroke: '#aaa' }}
+                    axisLine={{ stroke: '#aaa' }}
                   />
                   <YAxis 
                     domain={['auto', 'auto']} 
                     tick={{ fontSize: 10 }}
                     tickFormatter={(value) => formatCurrency(value)}
-                    tickLine={{ stroke: '#555' }}
-                    axisLine={{ stroke: '#555' }}
+                    tickLine={{ stroke: '#aaa' }}
+                    axisLine={{ stroke: '#aaa' }}
                   />
                   <Tooltip 
                     formatter={(value) => formatCurrency(Number(value))}
@@ -270,21 +277,21 @@ const PredictivePriceForecasting: React.FC<PredictivePriceForecastingProps> = ({
                   <Area 
                     type="monotone" 
                     dataKey="upperBound" 
-                    stroke="none" 
+                    stroke="#42a5f5" 
                     fillOpacity={1}
                     fill="url(#colorUpper)" 
                   />
                   <Area 
                     type="monotone" 
                     dataKey="lowerBound" 
-                    stroke="none" 
+                    stroke="#66bb6a" 
                     fillOpacity={1}
                     fill="url(#colorLower)" 
                   />
                   <Line 
                     type="monotone" 
                     dataKey="price" 
-                    stroke="#8884d8" 
+                    stroke="#ff7043" 
                     dot={false} 
                     strokeWidth={2}
                   />

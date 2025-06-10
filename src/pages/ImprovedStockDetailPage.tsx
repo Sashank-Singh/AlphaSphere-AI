@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,13 @@ import StockPriceChart from '@/components/StockPriceChart';
 import TradeModal from '@/components/TradeModal';
 import AISentimentAnalysis from '@/components/AISentimentAnalysis';
 import PredictivePriceForecasting from '@/components/PredictivePriceForecasting';
+import AIFinancialHealthAnalysis from '@/components/AIFinancialHealthAnalysis';
+import AINewsImpactAnalysis from '@/components/AINewsImpactAnalysis';
+import AIFundamentalScore from '@/components/AIFundamentalScore';
+import AIPatternRecognition from '@/components/AIPatternRecognition';
+import AIEarningsPrediction from '@/components/AIEarningsPrediction';
+import AIInsiderTradingAnalysis from '@/components/AIInsiderTradingAnalysis';
+import AIOptionsFlowAnalysis from '@/components/AIOptionsFlowAnalysis';
 
 const ImprovedStockDetailPage: React.FC = () => {
   const params = useParams<{ symbol?: string; ticker?: string }>();
@@ -24,6 +30,8 @@ const ImprovedStockDetailPage: React.FC = () => {
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [companyInfo, setCompanyInfo] = useState(null);
+  const [loadingInfo, setLoadingInfo] = useState(true);
 
   // Memoize portfolio calculations to prevent unnecessary recalculations
   const portfolioData = useMemo(() => {
@@ -95,6 +103,18 @@ const ImprovedStockDetailPage: React.FC = () => {
     const intervalId = setInterval(updatePrice, 30000); // Every 30 seconds
     return () => clearInterval(intervalId);
   }, [stock?.symbol, isLoading]);
+
+  useEffect(() => {
+    if (!symbol) return;
+    setLoadingInfo(true);
+    fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=cvkbr89r01qu5brnrlngcvkbr89r01qu5brnrlo0`)
+      .then(res => res.json())
+      .then(data => {
+        setCompanyInfo(data);
+        setLoadingInfo(false);
+      })
+      .catch(() => setLoadingInfo(false));
+  }, [symbol]);
 
   const handleStockTrade = useCallback(async (quantity: number, price: number, type: 'buy' | 'sell') => {
     if (!stock) return;
@@ -189,13 +209,48 @@ const ImprovedStockDetailPage: React.FC = () => {
       </Card>
 
       {/* AI Analysis - Fixed Components */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
         <AISentimentAnalysis 
           symbol={stock.symbol} 
           stock={stock}
           className="h-full"
         />
         <PredictivePriceForecasting 
+          symbol={stock.symbol}
+          stock={stock}
+          className="h-full"
+        />
+        <AIFinancialHealthAnalysis 
+          symbol={stock.symbol}
+          stock={stock}
+          className="h-full"
+        />
+        <AINewsImpactAnalysis 
+          symbol={stock.symbol}
+          stock={stock}
+          className="h-full"
+        />
+        <AIFundamentalScore 
+          symbol={stock.symbol}
+          stock={stock}
+          className="h-full"
+        />
+        <AIPatternRecognition 
+          symbol={stock.symbol}
+          stock={stock}
+          className="h-full"
+        />
+        <AIEarningsPrediction 
+          symbol={stock.symbol}
+          stock={stock}
+          className="h-full"
+        />
+        <AIInsiderTradingAnalysis 
+          symbol={stock.symbol}
+          stock={stock}
+          className="h-full"
+        />
+        <AIOptionsFlowAnalysis
           symbol={stock.symbol}
           stock={stock}
           className="h-full"
@@ -226,6 +281,20 @@ const ImprovedStockDetailPage: React.FC = () => {
               <div className="font-semibold">{stock.volume?.toLocaleString() || 'N/A'}</div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Watchlist Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Watchlist</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div>Create a watchlist to track your favorite stocks.</div>
+          {/* Remove or comment out the buttons below */}
+          {/* <Button>Trade Stock</Button>
+          <Button>Trade with AI</Button>
+          <Button>Show Options</Button> */}
         </CardContent>
       </Card>
 

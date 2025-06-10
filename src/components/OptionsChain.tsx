@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -104,23 +103,23 @@ const OptionsChain: React.FC<OptionsChainProps> = ({ symbol }) => {
           {uniqueExpiries.map((expiry: string) => (
             <TabsContent key={expiry} value={expiry} className="space-y-4">
               <h4 className="text-sm font-semibold">Calls</h4>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+              <div className="overflow-x-auto scrollbar-none -mx-2">
+                <table className="min-w-[600px] w-full divide-y divide-gray-200 text-xs sm:text-sm">
                   <thead>
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-2 sm:px-6 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
                         Strike
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-2 sm:px-6 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
                         Bid
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-2 sm:px-6 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
                         Ask
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-2 sm:px-6 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
                         Volume
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-2 sm:px-6 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
                         Open Interest
                       </th>
                     </tr>
@@ -128,13 +127,13 @@ const OptionsChain: React.FC<OptionsChainProps> = ({ symbol }) => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {calls.map((call: OptionData) => (
                       <tr key={call.contractSymbol}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap font-medium text-gray-900">
                           {call.strike}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{call.bid}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{call.ask}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{call.volume}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{call.openInterest}</td>
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-gray-500">{call.bid}</td>
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-gray-500">{call.ask}</td>
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-gray-500">{call.volume}</td>
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-gray-500">{call.openInterest}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -142,23 +141,23 @@ const OptionsChain: React.FC<OptionsChainProps> = ({ symbol }) => {
               </div>
 
               <h4 className="text-sm font-semibold mt-4">Puts</h4>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+              <div className="overflow-x-auto scrollbar-none -mx-2">
+                <table className="min-w-[600px] w-full divide-y divide-gray-200 text-xs sm:text-sm">
                   <thead>
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-2 sm:px-6 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
                         Strike
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-2 sm:px-6 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
                         Bid
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-2 sm:px-6 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
                         Ask
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-2 sm:px-6 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
                         Volume
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-2 sm:px-6 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
                         Open Interest
                       </th>
                     </tr>
@@ -166,13 +165,13 @@ const OptionsChain: React.FC<OptionsChainProps> = ({ symbol }) => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {puts.map((put: OptionData) => (
                       <tr key={put.contractSymbol}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap font-medium text-gray-900">
                           {put.strike}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{put.bid}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{put.ask}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{put.volume}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{put.openInterest}</td>
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-gray-500">{put.bid}</td>
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-gray-500">{put.ask}</td>
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-gray-500">{put.volume}</td>
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-gray-500">{put.openInterest}</td>
                       </tr>
                     ))}
                   </tbody>

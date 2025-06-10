@@ -21,46 +21,31 @@ const StockCard: React.FC<StockCardProps> = ({ stock, showDetail = true }) => {
   };
   
   return (
-    <Card 
-      className={cn(
-        "overflow-hidden transition-all duration-300 cursor-pointer border-transparent hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5",
-        showDetail && "hover:translate-y-[-2px]"
-      )}
+    <div
+      className="bg-gray-800/70 border border-gray-700 rounded-xl shadow-sm p-3 sm:p-4 flex flex-col items-start min-w-[140px] max-w-full transition-colors duration-200 cursor-pointer select-none active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/50 hover:bg-gray-700/80"
       onClick={handleClick}
+      tabIndex={0}
+      role="button"
+      aria-label={`View details for ${stock.symbol}`}
+      style={{ WebkitTapHighlightColor: 'transparent' }}
     >
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold text-lg">{stock.symbol}</h3>
-              {showDetail && <ChevronRight className="h-4 w-4 text-muted-foreground/50" />}
-            </div>
-            {stock.name && (
-              <p className="text-sm text-muted-foreground truncate mt-0.5">
-                {stock.name}
-              </p>
-            )}
+      <div className="font-bold text-base sm:text-lg mb-1">{stock.symbol}</div>
+      <div className="text-xs sm:text-sm text-gray-400 truncate mb-2">{stock.name}</div>
+      {showDetail && (
+        <div className="flex flex-col gap-1 w-full">
+          <div className="flex justify-between w-full text-xs">
+            <span>Price:</span>
+            <span className="font-semibold">${stock.price.toFixed(2)}</span>
           </div>
-          
-          <div className="text-right flex flex-col items-end">
-            <div className="font-bold text-lg tracking-tight">
-              {formatCurrency(stock.price)}
-            </div>
-            <div className={cn(
-              "text-sm flex items-center gap-1.5 px-2 py-0.5 rounded-full",
-              isPositive ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-            )}>
-              {isPositive ? (
-                <TrendingUp className="h-3 w-3" />
-              ) : (
-                <TrendingDown className="h-3 w-3" />
-              )}
-              <span className="font-medium">{formatPercentage(stock.change)}</span>
-            </div>
+          <div className="flex justify-between w-full text-xs">
+            <span>Change:</span>
+            <span className={stock.change >= 0 ? 'text-green-500' : 'text-red-500'}>
+              {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)}
+            </span>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 };
 

@@ -14,6 +14,7 @@ import {
   AlpacaQuoteResponse, 
   isMockDataMode 
 } from '../lib/alpacaApi';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 interface ChartDataPoint {
   date: string;
@@ -212,340 +213,342 @@ const OptionsPage: React.FC = () => {
   const isRecentUpdate = timeSinceUpdate < 5;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center">
+    <TooltipProvider>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/dashboard')}
+              className="mr-2"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-2xl font-bold">Options Trading</h1>
+          </div>
+
           <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/dashboard')}
-            className="mr-2"
+            variant="outline"
+            onClick={() => navigate(`/trading/${currentSymbol || 'AAPL'}`)}
+            className="flex items-center"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <BrainCircuit className="h-4 w-4 mr-2" />
+            Stock Trading
           </Button>
-          <h1 className="text-2xl font-bold">Options Trading</h1>
         </div>
 
-        <Button
-          variant="outline"
-          onClick={() => navigate(`/trading/${currentSymbol || 'AAPL'}`)}
-          className="flex items-center"
-        >
-          <BrainCircuit className="h-4 w-4 mr-2" />
-          Stock Trading
-        </Button>
-      </div>
-
-      {/* Stock Header */}
-      <div className="mb-6">
-        <Card className="bg-black border border-gray-800">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-xl flex items-center">
-              <Percent className="h-5 w-5 mr-2 text-primary" />
-              {stockData.symbol}
-              <span className={`ml-4 text-lg ${priceUpdated ? 'animate-pulse' : ''} ${stockData.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                ${stockData.price.toFixed(2)}
-                <span className="ml-2">
-                  {stockData.change >= 0 ? '+' : ''}{stockData.change.toFixed(2)} ({stockData.changePercent.toFixed(2)}%)
+        {/* Stock Header */}
+        <div className="mb-6">
+          <Card className="bg-black border border-gray-800">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xl flex items-center">
+                <Percent className="h-5 w-5 mr-2 text-primary" />
+                {stockData.symbol}
+                <span className={`ml-4 text-lg ${priceUpdated ? 'animate-pulse' : ''} ${stockData.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  ${stockData.price.toFixed(2)}
+                  <span className="ml-2">
+                    {stockData.change >= 0 ? '+' : ''}{stockData.change.toFixed(2)} ({stockData.changePercent.toFixed(2)}%)
+                  </span>
                 </span>
-              </span>
-              <div className="ml-auto flex items-center gap-2">
-                {isRecentUpdate && (
-                  <div className="text-xs text-blue-400">
-                    Updated {timeSinceUpdate}s ago
-                  </div>
-                )}
-                {stockFeedConnected ? (
-                  <div className="flex items-center text-xs text-green-500">
-                    <Wifi className="h-3 w-3 mr-1" />
-                    <span>Live</span>
-                  </div>
-                ) : stockData.isMockData ? (
-                  <div className="flex items-center text-xs text-blue-400">
-                    <span>Simulated</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center text-xs text-yellow-500">
-                    <WifiOff className="h-3 w-3 mr-1" />
-                    <span>Delayed</span>
-                  </div>
-                )}
-              </div>
-            </CardTitle>
-            <CardDescription>
-              Options trading with real-time Greeks and advanced strategies
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSearch} className="flex gap-2 mb-6">
-              <div className="flex-1">
-                <Input
-                  type="text"
-                  placeholder="Search for a symbol (e.g., AAPL, MSFT, TSLA)"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1"
-                />
-              </div>
-              <Button type="submit">
-                <Search className="h-4 w-4 mr-2" />
-                Search
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Enhanced Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Stock Chart */}
-        <RealTimeStockChart
-          symbol={stockData.symbol}
-          currentPrice={stockData.price}
-          change={stockData.change}
-          changePercent={stockData.changePercent}
-          isRealTime={stockFeedConnected}
-          chartType="area"
-          height={350}
-        />
-
-        {/* Options Chart */}
-        <OptionsChart
-          symbol={stockData.symbol}
-          underlyingPrice={stockData.price}
-          expiryDate={selectedExpiry}
-          chartType="payoff"
-        />
-      </div>
-
-      {/* Options Chain and Sphere AI Advisor */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Options Chain - 2/3 width */}
-        <div className="lg:col-span-2">
-          <Card className="bg-black border border-gray-800">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Options Chain</CardTitle>
-                <div className="flex items-center space-x-2">
-                  <label htmlFor="expiry-select">Expiry:</label>
-                  <select 
-                    id="expiry-select"
-                    value={selectedExpiry} 
-                    onChange={(e) => setSelectedExpiry(e.target.value)}
-                    className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm"
-                  >
-                    {expirationDates.map((date) => (
-                      <option key={date} value={date}>
-                        {new Date(date).toLocaleDateString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric' 
-                        })}
-                      </option>
-                    ))}
-                  </select>
+                <div className="ml-auto flex items-center gap-2">
+                  {isRecentUpdate && (
+                    <div className="text-xs text-blue-400">
+                      Updated {timeSinceUpdate}s ago
+                    </div>
+                  )}
+                  {stockFeedConnected ? (
+                    <div className="flex items-center text-xs text-green-500">
+                      <Wifi className="h-3 w-3 mr-1" />
+                      <span>Live</span>
+                    </div>
+                  ) : stockData.isMockData ? (
+                    <div className="flex items-center text-xs text-blue-400">
+                      <span>Simulated</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center text-xs text-yellow-500">
+                      <WifiOff className="h-3 w-3 mr-1" />
+                      <span>Delayed</span>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <OptionChain
-                symbol={currentSymbol}
-                stockPrice={stockData.price}
-                expiryDate={selectedExpiry}
-                accountId={accountId}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Sphere AI Advisor - 1/3 width */}
-        <div>
-          <Card className="bg-black border border-gray-800 h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <BrainCircuit className="h-5 w-5 mr-2 text-primary" />
-                Sphere AI Options Advisor
               </CardTitle>
+              <CardDescription>
+                Options trading with real-time Greeks and advanced strategies
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <BrainCircuit className="h-8 w-8 text-white" />
+            <CardContent>
+              <form onSubmit={handleSearch} className="flex gap-2 mb-6">
+                <div className="flex-1">
+                  <Input
+                    type="text"
+                    placeholder="Search for a symbol (e.g., AAPL, MSFT, TSLA)"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1"
+                  />
                 </div>
-                <h3 className="font-semibold mb-2">AI Options Analysis</h3>
-              </div>
-
-              <div className="space-y-3">
-                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                  <div className="font-medium text-blue-400 mb-1">Contract Suggestion</div>
-                  <div className="text-sm">
-                    Call ${(stockData.price + 5).toFixed(0)} exp {selectedExpiry}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Bullish momentum detected
-                  </div>
-                </div>
-
-                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                  <div className="font-medium text-green-400 mb-1">IV Rank</div>
-                  <div className="text-sm">
-                    Medium (45th percentile)
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Good time for credit spreads
-                  </div>
-                </div>
-
-                <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                  <div className="font-medium text-yellow-400 mb-1">Risk Assessment</div>
-                  <div className="text-sm">
-                    Moderate volatility expected
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Consider protective puts
-                  </div>
-                </div>
-
-                <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-                  <div className="font-medium text-purple-400 mb-1">Strategy Idea</div>
-                  <div className="text-sm">
-                    Iron Condor ${(stockData.price - 10).toFixed(0)}-${(stockData.price + 10).toFixed(0)}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Neutral strategy for range-bound market
-                  </div>
-                </div>
-              </div>
-
-              <Button className="w-full" variant="outline">
-                <Calculator className="h-4 w-4 mr-2" />
-                Get Full Analysis
-              </Button>
+                <Button type="submit">
+                  <Search className="h-4 w-4 mr-2" />
+                  Search
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </div>
-      </div>
 
-      {/* Market Insights */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-4 flex items-center">
-          <BrainCircuit className="h-5 w-5 mr-2 text-primary" />
-          Options Market Insights
-        </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="bg-black border border-gray-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Volatility Surface</CardTitle>
-              <CardDescription>Implied volatility across strikes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span>ATM IV</span>
-                  <span className="text-blue-400">24.3%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>ITM Calls</span>
-                  <span className="text-green-400">22.1%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>OTM Calls</span>
-                  <span className="text-yellow-400">26.8%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>ITM Puts</span>
-                  <span className="text-red-400">25.5%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>OTM Puts</span>
-                  <span className="text-orange-400">27.2%</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Enhanced Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Stock Chart */}
+          <RealTimeStockChart
+            symbol={stockData.symbol}
+            currentPrice={stockData.price}
+            change={stockData.change}
+            changePercent={stockData.changePercent}
+            isRealTime={stockFeedConnected}
+            chartType="area"
+            height={350}
+          />
 
-          <Card className="bg-black border border-gray-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Options Flow</CardTitle>
-              <CardDescription>Unusual options activity</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center text-sm">
-                    <span>Large Call Sweeps</span>
-                    <span className="text-green-500">+15</span>
-                  </div>
-                  <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div className="absolute top-0 left-0 h-full bg-green-500" style={{ width: '60%' }} />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center text-sm">
-                    <span>Put Volume</span>
-                    <span className="text-red-500">+8</span>
-                  </div>
-                  <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div className="absolute top-0 left-0 h-full bg-red-500" style={{ width: '32%' }} />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center text-sm">
-                    <span>Dark Pool</span>
-                    <span className="text-purple-500">+3</span>
-                  </div>
-                  <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div className="absolute top-0 left-0 h-full bg-purple-500" style={{ width: '12%' }} />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Options Chart */}
+          <OptionsChart
+            symbol={stockData.symbol}
+            underlyingPrice={stockData.price}
+            expiryDate={selectedExpiry}
+            chartType="payoff"
+          />
+        </div>
 
-          <Card className="bg-black border border-gray-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">News & Events</CardTitle>
-              <CardDescription>Latest updates for {currentSymbol}</CardDescription>
-            </CardHeader>
-            <CardContent className="max-h-[200px] overflow-y-auto">
-              <div className="space-y-3">
-                {latestNews && latestNews.length > 0 ? (
-                  latestNews.map((newsItem, index) => (
-                    <div key={newsItem.id} className="border-b border-gray-800 pb-2">
-                      <a 
-                        href={newsItem.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="hover:underline font-medium text-sm"
-                      >
-                        {newsItem.headline}
-                      </a>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {newsItem.source} • {new Date(newsItem.created_at).toLocaleTimeString()}
+        {/* Options Chain and Sphere AI Advisor */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* Options Chain - 2/3 width */}
+          <div className="lg:col-span-2">
+            <Card className="bg-black border border-gray-800">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Options Chain</CardTitle>
+                  <div className="flex items-center space-x-2">
+                    <label htmlFor="expiry-select">Expiry:</label>
+                    <select 
+                      id="expiry-select"
+                      value={selectedExpiry} 
+                      onChange={(e) => setSelectedExpiry(e.target.value)}
+                      className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm"
+                    >
+                      {expirationDates.map((date) => (
+                        <option key={date} value={date}>
+                          {new Date(date).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <OptionChain
+                  symbol={currentSymbol}
+                  stockPrice={stockData.price}
+                  expiryDate={selectedExpiry}
+                  accountId={accountId}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sphere AI Advisor - 1/3 width */}
+          <div>
+            <Card className="bg-black border border-gray-800 h-full">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <BrainCircuit className="h-5 w-5 mr-2 text-primary" />
+                  Sphere AI Options Advisor
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <BrainCircuit className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="font-semibold mb-2">AI Options Analysis</h3>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                    <div className="font-medium text-blue-400 mb-1">Contract Suggestion</div>
+                    <div className="text-sm">
+                      Call ${(stockData.price + 5).toFixed(0)} exp {selectedExpiry}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Bullish momentum detected
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <div className="font-medium text-green-400 mb-1">IV Rank</div>
+                    <div className="text-sm">
+                      Medium (45th percentile)
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Good time for credit spreads
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                    <div className="font-medium text-yellow-400 mb-1">Risk Assessment</div>
+                    <div className="text-sm">
+                      Moderate volatility expected
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Consider protective puts
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                    <div className="font-medium text-purple-400 mb-1">Strategy Idea</div>
+                    <div className="text-sm">
+                      Iron Condor ${(stockData.price - 10).toFixed(0)}-${(stockData.price + 10).toFixed(0)}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Neutral strategy for range-bound market
+                    </div>
+                  </div>
+                </div>
+
+                <Button className="w-full" variant="outline">
+                  <Calculator className="h-4 w-4 mr-2" />
+                  Get Full Analysis
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Market Insights */}
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <BrainCircuit className="h-5 w-5 mr-2 text-primary" />
+            Options Market Insights
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="bg-black border border-gray-800">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Volatility Surface</CardTitle>
+                <CardDescription>Implied volatility across strikes</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span>ATM IV</span>
+                    <span className="text-blue-400">24.3%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>ITM Calls</span>
+                    <span className="text-green-400">22.1%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>OTM Calls</span>
+                    <span className="text-yellow-400">26.8%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>ITM Puts</span>
+                    <span className="text-red-400">25.5%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>OTM Puts</span>
+                    <span className="text-orange-400">27.2%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-black border border-gray-800">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Options Flow</CardTitle>
+                <CardDescription>Unusual options activity</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center text-sm">
+                      <span>Large Call Sweeps</span>
+                      <span className="text-green-500">+15</span>
+                    </div>
+                    <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div className="absolute top-0 left-0 h-full bg-green-500" style={{ width: '60%' }} />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center text-sm">
+                      <span>Put Volume</span>
+                      <span className="text-red-500">+8</span>
+                    </div>
+                    <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div className="absolute top-0 left-0 h-full bg-red-500" style={{ width: '32%' }} />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center text-sm">
+                      <span>Dark Pool</span>
+                      <span className="text-purple-500">+3</span>
+                    </div>
+                    <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div className="absolute top-0 left-0 h-full bg-purple-500" style={{ width: '12%' }} />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-black border border-gray-800">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">News & Events</CardTitle>
+                <CardDescription>Latest updates for {currentSymbol}</CardDescription>
+              </CardHeader>
+              <CardContent className="max-h-[200px] overflow-y-auto">
+                <div className="space-y-3">
+                  {latestNews && latestNews.length > 0 ? (
+                    latestNews.map((newsItem, index) => (
+                      <div key={newsItem.id} className="border-b border-gray-800 pb-2">
+                        <a 
+                          href={newsItem.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="hover:underline font-medium text-sm"
+                        >
+                          {newsItem.headline}
+                        </a>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {newsItem.source} • {new Date(newsItem.created_at).toLocaleTimeString()}
+                        </div>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <>
-                    <div className="border-b border-gray-800 pb-2">
-                      <a href="#" className="hover:underline font-medium text-sm">Options volume surges ahead of earnings</a>
-                      <div className="text-xs text-muted-foreground mt-1">Options Flow • 2h ago</div>
-                    </div>
-                    <div className="border-b border-gray-800 pb-2">
-                      <a href="#" className="hover:underline font-medium text-sm">Unusual call activity detected in tech sector</a>
-                      <div className="text-xs text-muted-foreground mt-1">Market Watch • 4h ago</div>
-                    </div>
-                    <div className="border-b border-gray-800 pb-2">
-                      <a href="#" className="hover:underline font-medium text-sm">Volatility compression signals potential breakout</a>
-                      <div className="text-xs text-muted-foreground mt-1">Trading View • 5h ago</div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                    ))
+                  ) : (
+                    <>
+                      <div className="border-b border-gray-800 pb-2">
+                        <a href="#" className="hover:underline font-medium text-sm">Options volume surges ahead of earnings</a>
+                        <div className="text-xs text-muted-foreground mt-1">Options Flow • 2h ago</div>
+                      </div>
+                      <div className="border-b border-gray-800 pb-2">
+                        <a href="#" className="hover:underline font-medium text-sm">Unusual call activity detected in tech sector</a>
+                        <div className="text-xs text-muted-foreground mt-1">Market Watch • 4h ago</div>
+                      </div>
+                      <div className="border-b border-gray-800 pb-2">
+                        <a href="#" className="hover:underline font-medium text-sm">Volatility compression signals potential breakout</a>
+                        <div className="text-xs text-muted-foreground mt-1">Trading View • 5h ago</div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
 

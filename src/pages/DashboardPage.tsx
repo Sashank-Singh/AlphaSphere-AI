@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,9 +25,6 @@ import { usePortfolio } from '@/context/PortfolioContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { formatCurrency } from '@/lib/utils';
 import ImprovedSphereAI from '@/components/ImprovedSphereAI';
-import AIMarketSentiment from '@/components/AIMarketSentiment';
-import SmartNotifications from '@/components/SmartNotifications';
-import MobileRealTimeDashboard from '@/components/MobileRealTimeDashboard';
 import { useRealTimeStock } from '@/hooks/useRealTimeStock';
 import MarketSentimentCard from '@/components/MarketSentimentCard';
 import SectorPerformanceCard from '@/components/SectorPerformanceCard';
@@ -80,7 +76,7 @@ const DashboardPage: React.FC = () => {
 
   return (
     <Layout>
-      <div className="space-y-6 p-4 pb-20">
+      <div className="space-y-6 p-4 pb-20 bg-black min-h-screen">
         {/* Welcome Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -124,7 +120,7 @@ const DashboardPage: React.FC = () => {
 
         {/* Portfolio Overview & Market Pulse */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2 bg-gradient-to-br from-blue-600 to-cyan-700 text-white">
+          <Card className="lg:col-span-2 bg-black text-white border border-gray-800">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 Portfolio Overview
@@ -159,7 +155,7 @@ const DashboardPage: React.FC = () => {
           </Card>
 
           {/* Market Pulse */}
-          <Card>
+          <Card className="bg-black text-white border border-gray-800">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Activity className="h-5 w-5" />
@@ -203,10 +199,10 @@ const DashboardPage: React.FC = () => {
             <LineChart className="h-5 w-5" />
             Market Intelligence
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <MarketSentimentCard />
-            <SectorPerformanceCard />
-            <TopMoversCard />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <MarketSentimentCard className="bg-black text-white border border-gray-800" />
+            <SectorPerformanceCard className="bg-black text-white border border-gray-800" />
+            <TopMoversCard className="bg-black text-white border border-gray-800" />
           </div>
         </div>
 
@@ -217,8 +213,8 @@ const DashboardPage: React.FC = () => {
             Market Analytics
           </h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SectorHeatmapCard />
-            <Card>
+            <SectorHeatmapCard className="bg-black text-white border border-gray-800" />
+            <Card className="bg-black text-white border border-gray-800">
               <CardHeader>
                 <CardTitle>Market News</CardTitle>
                 <p className="text-sm text-muted-foreground">Latest market updates</p>
@@ -317,7 +313,7 @@ const DashboardPage: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="ai-insights">
-            <AIMarketSentiment />
+            <ImprovedSphereAI />
           </TabsContent>
 
           <TabsContent value="community">
@@ -331,7 +327,7 @@ const DashboardPage: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="alerts">
-            <SmartNotifications />
+            <ImprovedSphereAI />
           </TabsContent>
         </Tabs>
 

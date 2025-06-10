@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,12 +24,12 @@ export default function Home() {
         <div className="absolute inset-0 z-0 bg-gradient-to-b from-blue-900/20 to-black/80"></div>
         <div className="absolute inset-0 z-0 bg-[url('/stock-bg.jpg')] bg-cover bg-center opacity-30"></div>
         
-        <div className="container mx-auto px-4 py-20 relative z-10">
+        <div className="container mx-auto px-2 sm:px-4 py-16 sm:py-20 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
               Real-Time Stock Analysis with AI Insights
             </h1>
-            <p className="text-xl text-gray-300 mb-8">
+            <p className="text-base sm:text-xl text-gray-300 mb-8">
               Track stocks, analyze options, and get AI-powered trading recommendations
               all in one powerful platform.
             </p>
@@ -41,11 +40,11 @@ export default function Home() {
             </div>
             
             {/* Popular Stocks */}
-            <div className="mt-10">
-              <h2 className="text-lg font-medium mb-4">Popular Stocks</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="mt-8 sm:mt-10">
+              <h2 className="text-base sm:text-lg font-medium mb-4">Popular Stocks</h2>
+              <div className="flex sm:grid sm:grid-cols-2 md:grid-cols-4 gap-3 overflow-x-auto scrollbar-none pb-2 -mx-2 px-2">
                 {popularStocks.map((stock) => (
-                  <Link to={`/stocks/${stock.symbol}`} key={stock.symbol}>
+                  <Link to={`/stocks/${stock.symbol}`} key={stock.symbol} className="min-w-[140px] sm:min-w-0">
                     <Card className="bg-gray-800/50 border-gray-700 hover:bg-gray-700/50 transition-colors duration-200">
                       <CardContent className="p-4">
                         <div className="font-bold">{stock.symbol}</div>
@@ -61,11 +60,11 @@ export default function Home() {
       </section>
       
       {/* Features Section */}
-      <section className="py-20 bg-gradient-to-b from-black to-gray-900">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-12 text-center">Powerful Trading Tools</h2>
+      <section className="py-10 sm:py-20 bg-gradient-to-b from-black to-gray-900">
+        <div className="container mx-auto px-2 sm:px-4">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-8 sm:mb-12 text-center">Powerful Trading Tools</h2>
           
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="flex flex-col gap-6 md:grid md:grid-cols-3 md:gap-8">
             <FeatureCard 
               title="Real-Time Analysis" 
               description="Get up-to-the-second stock data with live refreshing charts and indicators"
@@ -87,7 +86,7 @@ export default function Home() {
       
       {/* Footer */}
       <footer className="py-8 bg-gray-900 border-t border-gray-800">
-        <div className="container mx-auto px-4 text-center text-gray-400 text-sm">
+        <div className="container mx-auto px-2 sm:px-4 text-center text-gray-400 text-xs sm:text-sm">
           <p>Powered by Yahoo Finance and TradingView</p>
           <p className="mt-2">All market data is provided for informational purposes only</p>
         </div>

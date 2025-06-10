@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowUpDown, TrendingUp, TrendingDown, Wifi, WifiOff } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { useOptionsWebSocket, OptionQuote } from '@/hooks/useAlpacaWebSocket';
+import { Tooltip } from '@/components/ui/tooltip';
 
 interface OptionContract {
   strike: number;
@@ -210,6 +211,22 @@ const OptionChain: React.FC<OptionChainProps> = ({
       <TrendingDown className="h-4 w-4 ml-1 text-primary" />;
   };
 
+  // Tooltip content for Greeks
+  const greekTooltips = {
+    iv: 'Implied Volatility: Market expectation of future volatility.',
+    delta: 'Delta: Sensitivity to price changes in the underlying.',
+    gamma: 'Gamma: Rate of change of delta.',
+    theta: 'Theta: Time decay of the option.',
+    vega: 'Vega: Sensitivity to volatility changes.'
+  };
+
+  // Show option details on Buy/Sell
+  const handleTrade = (option: OptionContract, action: 'Buy' | 'Sell') => {
+    window.alert(
+      `${action} ${option.type.toUpperCase()}\nStrike: $${option.strike}\nExpiry: ${option.expiryDate}\nLast: $${option.last}\nBid: $${option.bid}\nAsk: $${option.ask}`
+    );
+  };
+
   return (
     <Card className="bg-black border border-gray-800">
       <CardHeader className="pb-3">
@@ -251,14 +268,14 @@ const OptionChain: React.FC<OptionChainProps> = ({
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
+            <div className="shadow-lg border border-green-700 rounded-lg overflow-hidden">
               <h3 className="text-lg font-semibold mb-2 flex items-center">
                 <Badge className="bg-green-500/20 text-green-500 mr-2">CALLS</Badge>
                 {symbol} Call Options
               </h3>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto max-h-96">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="sticky top-0 z-10 bg-black/90">
                     <TableRow>
                       <TableHead className="cursor-pointer" onClick={() => requestSort('strike')}>
                         <div className="flex items-center">
@@ -286,16 +303,41 @@ const OptionChain: React.FC<OptionChainProps> = ({
                         </div>
                       </TableHead>
                       <TableHead className="cursor-pointer" onClick={() => requestSort('iv')}>
-                        <div className="flex items-center">
-                          IV {getSortIcon('iv')}
-                        </div>
+                        <Tooltip content={greekTooltips.iv}>
+                          <div className="flex items-center">
+                            IV {getSortIcon('iv')}
+                          </div>
+                        </Tooltip>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => requestSort('delta')}>
+                        <Tooltip content={greekTooltips.delta}>
+                          <div className="flex items-center">Δ</div>
+                        </Tooltip>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => requestSort('gamma')}>
+                        <Tooltip content={greekTooltips.gamma}>
+                          <div className="flex items-center">Γ</div>
+                        </Tooltip>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => requestSort('theta')}>
+                        <Tooltip content={greekTooltips.theta}>
+                          <div className="flex items-center">Θ</div>
+                        </Tooltip>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => requestSort('vega')}>
+                        <Tooltip content={greekTooltips.vega}>
+                          <div className="flex items-center">Vega</div>
+                        </Tooltip>
                       </TableHead>
                       <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {options.calls.map((option) => (
-                      <TableRow key={`call-${option.strike}`} className={option.strike < stockPrice ? 'bg-green-500/10' : ''}>
+                      <TableRow
+                        key={`call-${option.strike}`}
+                        className={`transition-colors ${option.strike < stockPrice ? 'bg-green-500/10' : ''} hover:bg-green-700/10 cursor-pointer`}
+                      >
                         <TableCell className="font-medium">{option.strike}</TableCell>
                         <TableCell>{formatCurrency(option.last)}</TableCell>
                         <TableCell className={option.change >= 0 ? 'text-green-500' : 'text-red-500'}>
@@ -304,12 +346,16 @@ const OptionChain: React.FC<OptionChainProps> = ({
                         <TableCell>{formatCurrency(option.bid)}</TableCell>
                         <TableCell>{formatCurrency(option.ask)}</TableCell>
                         <TableCell>{(option.iv * 100).toFixed(1)}%</TableCell>
+                        <TableCell>{option.delta.toFixed(2)}</TableCell>
+                        <TableCell>{option.gamma.toFixed(3)}</TableCell>
+                        <TableCell>{option.theta.toFixed(3)}</TableCell>
+                        <TableCell>{option.vega.toFixed(3)}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs">
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => handleTrade(option, 'Buy')}>
                               Buy
                             </Button>
-                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs">
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => handleTrade(option, 'Sell')}>
                               Sell
                             </Button>
                           </div>
@@ -321,14 +367,14 @@ const OptionChain: React.FC<OptionChainProps> = ({
               </div>
             </div>
 
-            <div>
+            <div className="shadow-lg border border-red-700 rounded-lg overflow-hidden">
               <h3 className="text-lg font-semibold mb-2 flex items-center">
                 <Badge className="bg-red-500/20 text-red-500 mr-2">PUTS</Badge>
                 {symbol} Put Options
               </h3>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto max-h-96">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="sticky top-0 z-10 bg-black/90">
                     <TableRow>
                       <TableHead className="cursor-pointer" onClick={() => requestSort('strike')}>
                         <div className="flex items-center">
@@ -356,16 +402,41 @@ const OptionChain: React.FC<OptionChainProps> = ({
                         </div>
                       </TableHead>
                       <TableHead className="cursor-pointer" onClick={() => requestSort('iv')}>
-                        <div className="flex items-center">
-                          IV {getSortIcon('iv')}
-                        </div>
+                        <Tooltip content={greekTooltips.iv}>
+                          <div className="flex items-center">
+                            IV {getSortIcon('iv')}
+                          </div>
+                        </Tooltip>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => requestSort('delta')}>
+                        <Tooltip content={greekTooltips.delta}>
+                          <div className="flex items-center">Δ</div>
+                        </Tooltip>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => requestSort('gamma')}>
+                        <Tooltip content={greekTooltips.gamma}>
+                          <div className="flex items-center">Γ</div>
+                        </Tooltip>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => requestSort('theta')}>
+                        <Tooltip content={greekTooltips.theta}>
+                          <div className="flex items-center">Θ</div>
+                        </Tooltip>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => requestSort('vega')}>
+                        <Tooltip content={greekTooltips.vega}>
+                          <div className="flex items-center">Vega</div>
+                        </Tooltip>
                       </TableHead>
                       <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {options.puts.map((option) => (
-                      <TableRow key={`put-${option.strike}`} className={option.strike > stockPrice ? 'bg-red-500/10' : ''}>
+                      <TableRow
+                        key={`put-${option.strike}`}
+                        className={`transition-colors ${option.strike > stockPrice ? 'bg-red-500/10' : ''} hover:bg-red-700/10 cursor-pointer`}
+                      >
                         <TableCell className="font-medium">{option.strike}</TableCell>
                         <TableCell>{formatCurrency(option.last)}</TableCell>
                         <TableCell className={option.change >= 0 ? 'text-green-500' : 'text-red-500'}>
@@ -374,12 +445,16 @@ const OptionChain: React.FC<OptionChainProps> = ({
                         <TableCell>{formatCurrency(option.bid)}</TableCell>
                         <TableCell>{formatCurrency(option.ask)}</TableCell>
                         <TableCell>{(option.iv * 100).toFixed(1)}%</TableCell>
+                        <TableCell>{option.delta.toFixed(2)}</TableCell>
+                        <TableCell>{option.gamma.toFixed(3)}</TableCell>
+                        <TableCell>{option.theta.toFixed(3)}</TableCell>
+                        <TableCell>{option.vega.toFixed(3)}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs">
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => handleTrade(option, 'Buy')}>
                               Buy
                             </Button>
-                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs">
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => handleTrade(option, 'Sell')}>
                               Sell
                             </Button>
                           </div>

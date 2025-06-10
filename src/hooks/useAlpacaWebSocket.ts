@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 
 export interface OptionQuote {
@@ -88,29 +87,61 @@ export const useOptionsWebSocket = (symbols: string | string[]): UseOptionsWebSo
 
   useEffect(() => {
     setIsConnected(true);
-    
     const symbolArray = Array.isArray(symbols) ? symbols : [symbols];
-    
-    const mockOptions: OptionQuote[] = symbolArray.map(symbol => ({
-      symbol: `${symbol}240315C00150000`,
-      strike: 150,
-      type: 'call' as const,
-      expiration: '2024-03-15',
-      expirationDate: '2024-03-15',
-      bid: 5.20,
-      ask: 5.40,
-      bidPrice: 5.20,
-      askPrice: 5.40,
-      last: 5.30,
-      lastPrice: 5.30,
-      volume: 1250,
-      openInterest: 3400,
-      impliedVolatility: 0.28
-    }));
-    
+    const mockOptions: OptionQuote[] = [];
+    symbolArray.forEach(symbol => {
+      // Generate a range of strikes around 150
+      const baseStrike = 150;
+      for (let i = -5; i <= 5; i++) {
+        const strike = baseStrike + i * 5;
+        // Call
+        mockOptions.push({
+          symbol: `${symbol}240315C${String(strike).padStart(6, '0')}`,
+          strike,
+          type: 'call',
+          expiration: '2024-03-15',
+          expirationDate: '2024-03-15',
+          bid: +(Math.random() * 10 + 1).toFixed(2),
+          ask: +(Math.random() * 10 + 1.5).toFixed(2),
+          bidPrice: +(Math.random() * 10 + 1).toFixed(2),
+          askPrice: +(Math.random() * 10 + 1.5).toFixed(2),
+          last: +(Math.random() * 10 + 1.2).toFixed(2),
+          lastPrice: +(Math.random() * 10 + 1.2).toFixed(2),
+          volume: Math.floor(Math.random() * 2000),
+          openInterest: Math.floor(Math.random() * 5000),
+          impliedVolatility: +(Math.random() * 0.2 + 0.2).toFixed(2),
+          delta: +(0.3 + Math.random() * 0.7).toFixed(2),
+          gamma: +(Math.random() * 0.1).toFixed(3),
+          theta: +(-Math.random() * 0.1).toFixed(3),
+          vega: +(Math.random() * 0.2).toFixed(3),
+          rho: +(Math.random() * 0.1).toFixed(3)
+        });
+        // Put
+        mockOptions.push({
+          symbol: `${symbol}240315P${String(strike).padStart(6, '0')}`,
+          strike,
+          type: 'put',
+          expiration: '2024-03-15',
+          expirationDate: '2024-03-15',
+          bid: +(Math.random() * 10 + 1).toFixed(2),
+          ask: +(Math.random() * 10 + 1.5).toFixed(2),
+          bidPrice: +(Math.random() * 10 + 1).toFixed(2),
+          askPrice: +(Math.random() * 10 + 1.5).toFixed(2),
+          last: +(Math.random() * 10 + 1.2).toFixed(2),
+          lastPrice: +(Math.random() * 10 + 1.2).toFixed(2),
+          volume: Math.floor(Math.random() * 2000),
+          openInterest: Math.floor(Math.random() * 5000),
+          impliedVolatility: +(Math.random() * 0.2 + 0.2).toFixed(2),
+          delta: +(-0.3 - Math.random() * 0.7).toFixed(2),
+          gamma: +(Math.random() * 0.1).toFixed(3),
+          theta: +(-Math.random() * 0.1).toFixed(3),
+          vega: +(Math.random() * 0.2).toFixed(3),
+          rho: +(-Math.random() * 0.1).toFixed(3)
+        });
+      }
+    });
     setOptionsData(mockOptions);
     setData({ optionsData: mockOptions });
-
     return () => {
       setIsConnected(false);
     };

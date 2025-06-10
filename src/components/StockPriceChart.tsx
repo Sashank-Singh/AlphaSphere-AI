@@ -339,253 +339,254 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
   }
 
   return (
-    <div className="flex flex-col space-y-4 text-white">
-      {/* Chart controls row */}
-      <div className="flex flex-wrap gap-2 items-center mb-2">
-        <ToggleGroup type="single" value={interval} onValueChange={(value) => value && setInterval(value)}>
-          <ToggleGroupItem value="1" size="sm">1D</ToggleGroupItem>
-          <ToggleGroupItem value="W" size="sm">1W</ToggleGroupItem>
-          <ToggleGroupItem value="M" size="sm">1M</ToggleGroupItem>
-          <ToggleGroupItem value="3M" size="sm">3M</ToggleGroupItem>
-          <ToggleGroupItem value="12M" size="sm">1Y</ToggleGroupItem>
-          <ToggleGroupItem value="60M" size="sm">5Y</ToggleGroupItem>
-        </ToggleGroup>
+    <div className="w-full min-w-0 overflow-x-auto px-0 sm:px-2">
+      <div className="bg-black rounded-lg border border-gray-800 p-2 sm:p-4 w-full min-w-0">
+        {/* Chart header and controls */}
+        <div className="flex flex-wrap gap-2 items-center mb-2">
+          <ToggleGroup type="single" value={interval} onValueChange={(value) => value && setInterval(value)}>
+            <ToggleGroupItem value="1" size="sm">1D</ToggleGroupItem>
+            <ToggleGroupItem value="W" size="sm">1W</ToggleGroupItem>
+            <ToggleGroupItem value="M" size="sm">1M</ToggleGroupItem>
+            <ToggleGroupItem value="3M" size="sm">3M</ToggleGroupItem>
+            <ToggleGroupItem value="12M" size="sm">1Y</ToggleGroupItem>
+            <ToggleGroupItem value="60M" size="sm">5Y</ToggleGroupItem>
+          </ToggleGroup>
 
-        <div className="flex gap-2 ml-auto">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center"
-              >
-                <LineChart className="mr-1 h-4 w-4" />
-                Indicators
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 p-3">
-              <div className="space-y-4">
-                {/* Trend Indicators */}
-                <div>
-                  <h4 className="font-medium mb-2 text-sm">Trend</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="sma" checked={activeIndicators.SMA} onCheckedChange={() => toggleIndicator('SMA')} />
-                      <Label htmlFor="sma">Simple MA</Label>
+          <div className="flex gap-2 ml-auto">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center"
+                >
+                  <LineChart className="mr-1 h-4 w-4" />
+                  Indicators
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-3">
+                <div className="space-y-4">
+                  {/* Trend Indicators */}
+                  <div>
+                    <h4 className="font-medium mb-2 text-sm">Trend</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="sma" checked={activeIndicators.SMA} onCheckedChange={() => toggleIndicator('SMA')} />
+                        <Label htmlFor="sma">Simple MA</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="ema" checked={activeIndicators.EMA} onCheckedChange={() => toggleIndicator('EMA')} />
+                        <Label htmlFor="ema">Exp. MA</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="bb" checked={activeIndicators.BB} onCheckedChange={() => toggleIndicator('BB')} />
+                        <Label htmlFor="bb">Bollinger Bands</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="ichimoku" checked={activeIndicators.Ichimoku} onCheckedChange={() => toggleIndicator('Ichimoku')} />
+                        <Label htmlFor="ichimoku">Ichimoku Cloud</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="psar" checked={activeIndicators.ParabolicSAR} onCheckedChange={() => toggleIndicator('ParabolicSAR')} />
+                        <Label htmlFor="psar">Parabolic SAR</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="zigzag" checked={activeIndicators.ZigZag} onCheckedChange={() => toggleIndicator('ZigZag')} />
+                        <Label htmlFor="zigzag">ZigZag</Label>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="ema" checked={activeIndicators.EMA} onCheckedChange={() => toggleIndicator('EMA')} />
-                      <Label htmlFor="ema">Exp. MA</Label>
+                  </div>
+
+                  {/* Momentum Indicators */}
+                  <div>
+                    <h4 className="font-medium mb-2 text-sm">Momentum</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="rsi" checked={activeIndicators.RSI} onCheckedChange={() => toggleIndicator('RSI')} />
+                        <Label htmlFor="rsi">RSI</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="macd" checked={activeIndicators.MACD} onCheckedChange={() => toggleIndicator('MACD')} />
+                        <Label htmlFor="macd">MACD</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="stoch" checked={activeIndicators.Stochastic} onCheckedChange={() => toggleIndicator('Stochastic')} />
+                        <Label htmlFor="stoch">Stochastic</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="cci" checked={activeIndicators.CCI} onCheckedChange={() => toggleIndicator('CCI')} />
+                        <Label htmlFor="cci">CCI</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="mfi" checked={activeIndicators.MFI} onCheckedChange={() => toggleIndicator('MFI')} />
+                        <Label htmlFor="mfi">Money Flow Index</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="roc" checked={activeIndicators.ROC} onCheckedChange={() => toggleIndicator('ROC')} />
+                        <Label htmlFor="roc">Rate of Change</Label>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="bb" checked={activeIndicators.BB} onCheckedChange={() => toggleIndicator('BB')} />
-                      <Label htmlFor="bb">Bollinger Bands</Label>
+                  </div>
+
+                  {/* Volume Indicators */}
+                  <div>
+                    <h4 className="font-medium mb-2 text-sm">Volume</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="obv" checked={activeIndicators.OBV} onCheckedChange={() => toggleIndicator('OBV')} />
+                        <Label htmlFor="obv">On-Balance Volume</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="accdist" checked={activeIndicators.AccDist} onCheckedChange={() => toggleIndicator('AccDist')} />
+                        <Label htmlFor="accdist">Acc/Dist Line</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="cmf" checked={activeIndicators.CMF} onCheckedChange={() => toggleIndicator('CMF')} />
+                        <Label htmlFor="cmf">Chaikin Money Flow</Label>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="ichimoku" checked={activeIndicators.Ichimoku} onCheckedChange={() => toggleIndicator('Ichimoku')} />
-                      <Label htmlFor="ichimoku">Ichimoku Cloud</Label>
+                  </div>
+
+                  {/* Volatility Indicators */}
+                  <div>
+                    <h4 className="font-medium mb-2 text-sm">Volatility</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="atr" checked={activeIndicators.ATR} onCheckedChange={() => toggleIndicator('ATR')} />
+                        <Label htmlFor="atr">Average True Range</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="stddev" checked={activeIndicators.StdDev} onCheckedChange={() => toggleIndicator('StdDev')} />
+                        <Label htmlFor="stddev">Standard Deviation</Label>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="psar" checked={activeIndicators.ParabolicSAR} onCheckedChange={() => toggleIndicator('ParabolicSAR')} />
-                      <Label htmlFor="psar">Parabolic SAR</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="zigzag" checked={activeIndicators.ZigZag} onCheckedChange={() => toggleIndicator('ZigZag')} />
-                      <Label htmlFor="zigzag">ZigZag</Label>
+                  </div>
+
+                  {/* Oscillators */}
+                  <div>
+                    <h4 className="font-medium mb-2 text-sm">Oscillators</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="williamsr" checked={activeIndicators.WilliamsR} onCheckedChange={() => toggleIndicator('WilliamsR')} />
+                        <Label htmlFor="williamsr">Williams %R</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="momentum" checked={activeIndicators.Momentum} onCheckedChange={() => toggleIndicator('Momentum')} />
+                        <Label htmlFor="momentum">Momentum</Label>
+                      </div>
                     </div>
                   </div>
                 </div>
+              </PopoverContent>
+            </Popover>
 
-                {/* Momentum Indicators */}
-                <div>
-                  <h4 className="font-medium mb-2 text-sm">Momentum</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="rsi" checked={activeIndicators.RSI} onCheckedChange={() => toggleIndicator('RSI')} />
-                      <Label htmlFor="rsi">RSI</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="macd" checked={activeIndicators.MACD} onCheckedChange={() => toggleIndicator('MACD')} />
-                      <Label htmlFor="macd">MACD</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="stoch" checked={activeIndicators.Stochastic} onCheckedChange={() => toggleIndicator('Stochastic')} />
-                      <Label htmlFor="stoch">Stochastic</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="cci" checked={activeIndicators.CCI} onCheckedChange={() => toggleIndicator('CCI')} />
-                      <Label htmlFor="cci">CCI</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="mfi" checked={activeIndicators.MFI} onCheckedChange={() => toggleIndicator('MFI')} />
-                      <Label htmlFor="mfi">Money Flow Index</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="roc" checked={activeIndicators.ROC} onCheckedChange={() => toggleIndicator('ROC')} />
-                      <Label htmlFor="roc">Rate of Change</Label>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Volume Indicators */}
-                <div>
-                  <h4 className="font-medium mb-2 text-sm">Volume</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="obv" checked={activeIndicators.OBV} onCheckedChange={() => toggleIndicator('OBV')} />
-                      <Label htmlFor="obv">On-Balance Volume</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="accdist" checked={activeIndicators.AccDist} onCheckedChange={() => toggleIndicator('AccDist')} />
-                      <Label htmlFor="accdist">Acc/Dist Line</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="cmf" checked={activeIndicators.CMF} onCheckedChange={() => toggleIndicator('CMF')} />
-                      <Label htmlFor="cmf">Chaikin Money Flow</Label>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Volatility Indicators */}
-                <div>
-                  <h4 className="font-medium mb-2 text-sm">Volatility</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="atr" checked={activeIndicators.ATR} onCheckedChange={() => toggleIndicator('ATR')} />
-                      <Label htmlFor="atr">Average True Range</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="stddev" checked={activeIndicators.StdDev} onCheckedChange={() => toggleIndicator('StdDev')} />
-                      <Label htmlFor="stddev">Standard Deviation</Label>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Oscillators */}
-                <div>
-                  <h4 className="font-medium mb-2 text-sm">Oscillators</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="williamsr" checked={activeIndicators.WilliamsR} onCheckedChange={() => toggleIndicator('WilliamsR')} />
-                      <Label htmlFor="williamsr">Williams %R</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="momentum" checked={activeIndicators.Momentum} onCheckedChange={() => toggleIndicator('Momentum')} />
-                      <Label htmlFor="momentum">Momentum</Label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowVolume(!showVolume)}
-            className="flex items-center"
-          >
-            {showVolume ? <Volume2 className="mr-1 h-4 w-4" /> : <VolumeX className="mr-1 h-4 w-4" />}
-            {showVolume ? 'Hide Volume' : 'Show Volume'}
-          </Button>
-        </div>
-      </div>
-
-      {/* TradingView Chart - main content */}
-      <div className="rounded-lg overflow-hidden border border-gray-800 bg-black">
-        <div
-          id="tradingview_chart"
-          ref={chartContainerRef}
-          style={{ height: '550px' }} // Increased height by 50px
-          className="bg-black"
-        />
-      </div>
-
-      {/* Stock info and analysis grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        <div>
-          <StockInfoCard symbol={symbol} />
-        </div>
-        <div className="lg:col-span-2">
-          <StockAnalysisPanel symbol={symbol} />
-        </div>
-      </div>
-
-      {/* Trading buttons */}
-      <div className="grid grid-cols-2 gap-4 mt-4">
-        <Button
-          onClick={() => setIsTradeModalOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white py-2"
-        >
-          <BarChart2 className="mr-2 h-5 w-5" />
-          Trade Stock
-        </Button>
-        <Button
-          onClick={() => setIsAITradeModalOpen(true)}
-          className="bg-green-600 hover:bg-green-700 text-white py-2"
-        >
-          <Sparkles className="mr-2 h-5 w-5" />
-          Trade with AI
-        </Button>
-      </div>
-
-      {/* Options chain toggle */}
-      <div className="mt-2">
-        <Button
-          variant="outline"
-          onClick={() => setShowOptions(!showOptions)}
-          className="w-full flex items-center justify-center"
-        >
-          {showOptions ? (
-            <>
-              <ChevronsUp className="mr-2 h-5 w-5" />
-              Hide Options
-            </>
-          ) : (
-            <>
-              <ChevronsDown className="mr-2 h-5 w-5" />
-              Show Options
-              </>
-            )}
-        </Button>
-      </div>
-
-      {/* Options chain data */}
-      {showOptions && (
-        <div className="rounded-lg border border-gray-800 bg-black p-4 mt-4">
-          <h3 className="text-xl font-bold mb-4">Options Chain</h3>
-          <div className="text-center text-gray-400 py-12">
-            Options data will be displayed here
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowVolume(!showVolume)}
+              className="flex items-center"
+            >
+              {showVolume ? <Volume2 className="mr-1 h-4 w-4" /> : <VolumeX className="mr-1 h-4 w-4" />}
+              {showVolume ? 'Hide Volume' : 'Show Volume'}
+            </Button>
           </div>
         </div>
-      )}
 
-      {/* Footer */}
-      <div className="text-xs text-gray-500 pt-4 pb-8 text-center">
-        Chart data provided by TradingView · Stock data from Yahoo Finance
+        {/* TradingView Chart - main content */}
+        <div className="w-full min-w-0" style={{ height: '320px', maxHeight: '60vw', minHeight: '200px' }}>
+          <div
+            id="tradingview_chart"
+            ref={chartContainerRef}
+            className="bg-black"
+          />
+        </div>
+
+        {/* Stock info and analysis grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+          <div>
+            <StockInfoCard symbol={symbol} />
+          </div>
+          <div className="lg:col-span-2">
+            <StockAnalysisPanel symbol={symbol} />
+          </div>
+        </div>
+
+        {/* Trading buttons */}
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <Button
+            onClick={() => setIsTradeModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white py-2"
+          >
+            <BarChart2 className="mr-2 h-5 w-5" />
+            Trade Stock
+          </Button>
+          <Button
+            onClick={() => setIsAITradeModalOpen(true)}
+            className="bg-green-600 hover:bg-green-700 text-white py-2"
+          >
+            <Sparkles className="mr-2 h-5 w-5" />
+            Trade with AI
+          </Button>
+        </div>
+
+        {/* Options chain toggle */}
+        <div className="mt-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowOptions(!showOptions)}
+            className="w-full flex items-center justify-center"
+          >
+            {showOptions ? (
+              <>
+                <ChevronsUp className="mr-2 h-5 w-5" />
+                Hide Options
+              </>
+            ) : (
+              <>
+                <ChevronsDown className="mr-2 h-5 w-5" />
+                Show Options
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* Options chain data */}
+        {showOptions && (
+          <div className="rounded-lg border border-gray-800 bg-black p-4 mt-4">
+            <h3 className="text-xl font-bold mb-4">Options Chain</h3>
+            <div className="text-center text-gray-400 py-12">
+              Options data will be displayed here
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="text-xs text-gray-500 pt-4 pb-8 text-center">
+          Chart data provided by TradingView · Stock data from Yahoo Finance
+        </div>
+
+        {/* Modals */}
+        {isTradeModalOpen && currentPrice && (
+          <TradeModal
+            stock={getStockObject()}
+            open={isTradeModalOpen}
+            onClose={() => setIsTradeModalOpen(false)}
+            onTrade={async (quantity, price, type) => {
+              console.log(`Trade executed: ${type} ${quantity} shares at ${price}`);
+              setIsTradeModalOpen(false);
+            }}
+          />
+        )}
+
+        {isAITradeModalOpen && currentPrice && (
+          <AITradeModal
+            stock={getStockObject()}
+            open={isAITradeModalOpen}
+            onClose={() => setIsAITradeModalOpen(false)}
+            onTrade={handleOptionTrade}
+          />
+        )}
       </div>
-
-      {/* Modals */}
-      {isTradeModalOpen && currentPrice && (
-        <TradeModal
-          stock={getStockObject()}
-          open={isTradeModalOpen}
-          onClose={() => setIsTradeModalOpen(false)}
-          onTrade={async (quantity, price, type) => {
-            console.log(`Trade executed: ${type} ${quantity} shares at ${price}`);
-            setIsTradeModalOpen(false);
-          }}
-        />
-      )}
-
-      {isAITradeModalOpen && currentPrice && (
-        <AITradeModal
-          stock={getStockObject()}
-          open={isAITradeModalOpen}
-          onClose={() => setIsAITradeModalOpen(false)}
-          onTrade={handleOptionTrade}
-        />
-      )}
     </div>
   );
 };
