@@ -8,7 +8,8 @@ import {
   User,
   ChevronDown,
   Plus,
-  RefreshCw
+  RefreshCw,
+  Menu
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { formatCurrency } from '@/lib/utils';
@@ -33,6 +34,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import SearchSuggestions from './SearchSuggestions';
 import { Stock } from '@/types';
+import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
+import Sidebar from './Sidebar';
 
 interface TopBarProps {
   onSearch?: (query: string) => void;
@@ -112,6 +115,20 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch }) => {
   return (
     <div className="border-b">
       <div className="flex h-16 items-center px-4 gap-4">
+        {/* Mobile sidebar toggle */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="md:hidden">
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle navigation</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 md:hidden w-64 bg-card text-card-foreground shadow-lg">
+            {/* We render the same Sidebar inside the sheet for mobile */}
+            <Sidebar collapsed={false} onToggle={() => { }} />
+          </SheetContent>
+        </Sheet>
+
         {/* Search Form */}
         <form onSubmit={handleSearch} className="flex-1 flex gap-2">
           <div className="relative flex-1 search-container">
@@ -135,10 +152,10 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch }) => {
           </Button>
         </form>
 
-        {/* Notifications */}
+        {/* Notifications (hidden on mobile) */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="relative">
+            <Button variant="outline" size="icon" className="relative hidden md:inline-flex">
               <Bell className="h-4 w-4" />
               {notifications.some(n => !n.isRead) && (
                 <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full" />
@@ -158,10 +175,10 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch }) => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Settings */}
+        {/* Settings (hidden on mobile) */}
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" className="hidden md:inline-flex">
               <Settings className="h-4 w-4" />
             </Button>
           </DialogTrigger>
@@ -249,10 +266,10 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch }) => {
           </DialogContent>
         </Dialog>
 
-        {/* Account */}
+        {/* Account (hidden on mobile) */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2 hidden md:inline-flex">
               <User className="h-4 w-4" />
               <span>Account</span>
               <ChevronDown className="h-4 w-4" />

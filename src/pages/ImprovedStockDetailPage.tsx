@@ -102,7 +102,7 @@ const ImprovedStockDetailPage: React.FC = () => {
     // Less frequent updates to reduce flickering
     const intervalId = setInterval(updatePrice, 30000); // Every 30 seconds
     return () => clearInterval(intervalId);
-  }, [stock?.symbol, isLoading]);
+  }, [stock?.symbol, isLoading, stock]);
 
   useEffect(() => {
     if (!symbol) return;

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
@@ -42,10 +41,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         />
       </div>
       
-      <div className={cn(
-        "flex-1 flex flex-col overflow-hidden",
-        isMobile ? "pb-16" : "" // Add padding for bottom nav on mobile
-      )}>
+      <div
+        className={cn(
+          "flex-1 flex flex-col overflow-hidden",
+          isMobile ? "pb-16 safe-bottom" : "" // Add padding for bottom nav on mobile with safe area consideration
+        )}
+      >
         <TopBar onSearch={handleSearch} />
         <main className="flex-1 overflow-auto">
           {children}

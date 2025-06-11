@@ -89,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           <Button
             variant="ghost"
             size="icon"
-            className="ml-auto"
+            className="ml-auto hidden md:inline-flex"
             onClick={onToggle}
           >
             {collapsed ? (

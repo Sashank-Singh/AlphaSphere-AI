@@ -32,6 +32,7 @@ import TopMoversCard from '@/components/TopMoversCard';
 import SectorHeatmapCard from '@/components/SectorHeatmapCard';
 import CommunityPage from '@/pages/CommunityPage';
 import Layout from '@/components/Layout';
+import MobileRealTimeDashboard from '@/components/MobileRealTimeDashboard';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -200,9 +201,15 @@ const DashboardPage: React.FC = () => {
             Market Intelligence
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <MarketSentimentCard className="bg-black text-white border border-gray-800" />
-            <SectorPerformanceCard className="bg-black text-white border border-gray-800" />
-            <TopMoversCard className="bg-black text-white border border-gray-800" />
+          <div className="bg-black text-white border border-gray-800">
+            <MarketSentimentCard />
+          </div>
+          <div className="bg-black text-white border border-gray-800">
+            <SectorPerformanceCard />
+          </div>
+          <div className="bg-black text-white border border-gray-800">
+            <TopMoversCard />
+          </div>
           </div>
         </div>
 
@@ -213,7 +220,9 @@ const DashboardPage: React.FC = () => {
             Market Analytics
           </h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SectorHeatmapCard className="bg-black text-white border border-gray-800" />
+            <div className="bg-black text-white border border-gray-800">
+            <SectorHeatmapCard />
+          </div>
             <Card className="bg-black text-white border border-gray-800">
               <CardHeader>
                 <CardTitle>Market News</CardTitle>

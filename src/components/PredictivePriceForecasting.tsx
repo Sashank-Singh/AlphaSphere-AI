@@ -176,7 +176,7 @@ const PredictivePriceForecasting: React.FC<PredictivePriceForecastingProps> = ({
     
     const interval = setInterval(fetchForecastData, 900000); // refresh every 15 minutes
     return () => clearInterval(interval);
-  }, [symbol, stock?.price]);
+  }, [symbol, stock?.price, fetchForecastData]);
   
   const currentForecast = forecastData[timeframe];
   

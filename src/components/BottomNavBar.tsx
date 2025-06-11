@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -39,7 +38,10 @@ const BottomNavBar: React.FC = () => {
   ];
   
   return (
-    <div className="fixed bottom-4 left-4 right-4 bg-background/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-xl z-50">
+    <div
+      className="fixed left-4 right-4 bg-background/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-xl z-50 safe-bottom"
+      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}
+    >
       <div className="max-w-md mx-auto flex justify-around items-center h-16">
         {navItems.map(item => {
           const isActive = location.pathname === item.path;
