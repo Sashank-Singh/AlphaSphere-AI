@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -98,12 +98,13 @@ export default function Home() {
 // Stock Search Component
 function StockSearch() {
   const [search, setSearch] = useState('');
+  const navigate = useNavigate();
   
   // Simple client-side form handling
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (search.trim()) {
-      window.location.href = `/stocks/${search.trim().toUpperCase()}`;
+      navigate(`/stocks/${search.trim().toUpperCase()}`);
     }
   };
   

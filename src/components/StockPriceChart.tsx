@@ -181,7 +181,7 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
 
   // TradingView widget setup with price data callback
   useEffect(() => {
-    if (!chartContainerRef.current) return;
+    if (!chartContainerRef.current || !symbol) return;
 
     // Clear previous chart if any
     chartContainerRef.current.innerHTML = '';
@@ -230,7 +230,7 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
         const config: TVWidgetConfig = {
           autosize: true,
           symbol: `NASDAQ:${symbol}`,
-          interval: interval,
+          interval: interval || "D",
           timezone: "exchange",
           theme: "dark",
           style: "1",
@@ -250,7 +250,9 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
           save_image: false
         };
 
-        new window.TradingView.widget(config);
+        console.log('Creating TradingView widget with config:', config);
+        const widget = new window.TradingView.widget(config);
+        tvWidgetRef.current = widget;
       }
     };
 
@@ -353,7 +355,7 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
         {/* Chart header and controls */}
         <div className="flex flex-wrap gap-2 items-center mb-2">
           <ToggleGroup type="single" value={interval} onValueChange={(value) => value && setInterval(value)}>
-            <ToggleGroupItem value="1" size="sm">1D</ToggleGroupItem>
+            <ToggleGroupItem value="D" size="sm">1D</ToggleGroupItem>
             <ToggleGroupItem value="W" size="sm">1W</ToggleGroupItem>
             <ToggleGroupItem value="M" size="sm">1M</ToggleGroupItem>
             <ToggleGroupItem value="3M" size="sm">3M</ToggleGroupItem>

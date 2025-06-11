@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, BarChart2 } from 'lucide-react';
 
@@ -43,6 +44,7 @@ const formatChange = (change: number) => (
 );
 
 const MarketPage: React.FC = () => {
+  const navigate = useNavigate();
   const [indices, setIndices] = useState(mockIndices);
   const [sectors, setSectors] = useState(mockSectors);
   const [stocks, setStocks] = useState(mockStocks);
@@ -142,7 +144,7 @@ const MarketPage: React.FC = () => {
                     <div
                       key={stock.symbol}
                       className="p-3 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors border border-gray-700 flex flex-col items-center cursor-pointer"
-                      onClick={() => window.location.href = `/stocks/${stock.symbol}`}
+                      onClick={() => navigate(`/stocks/${stock.symbol}`)}
                       title={`Go to ${stock.symbol} details`}
                     >
                       <div className="font-bold text-lg">{stock.symbol}</div>
