@@ -156,7 +156,7 @@ const ImprovedStockDetailPage: React.FC = () => {
   const safeChangePercent = stock.changePercent ?? 0;
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-6xl">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
@@ -202,58 +202,56 @@ const ImprovedStockDetailPage: React.FC = () => {
       </Card>
 
       {/* Chart */}
-      <Card className="mb-6">
-        <CardContent className="p-6">
-          <StockPriceChart symbol={symbol} />
-        </CardContent>
-      </Card>
+      <div className="mb-12">
+        <StockPriceChart symbol={symbol} />
+      </div>
 
       {/* AI Analysis - Fixed Components */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-12 mb-16">
         <AISentimentAnalysis 
           symbol={stock.symbol} 
           stock={stock}
-          className="h-full"
+          className="w-full"
         />
         <PredictivePriceForecasting 
           symbol={stock.symbol}
           stock={stock}
-          className="h-full"
+          className="w-full"
         />
         <AIFinancialHealthAnalysis 
           symbol={stock.symbol}
           stock={stock}
-          className="h-full"
+          className="w-full"
         />
         <AINewsImpactAnalysis 
           symbol={stock.symbol}
           stock={stock}
-          className="h-full"
+          className="w-full"
         />
         <AIFundamentalScore 
           symbol={stock.symbol}
           stock={stock}
-          className="h-full"
+          className="w-full"
         />
         <AIPatternRecognition 
           symbol={stock.symbol}
           stock={stock}
-          className="h-full"
+          className="w-full"
         />
         <AIEarningsPrediction 
           symbol={stock.symbol}
           stock={stock}
-          className="h-full"
+          className="w-full"
         />
         <AIInsiderTradingAnalysis 
           symbol={stock.symbol}
           stock={stock}
-          className="h-full"
+          className="w-full"
         />
         <AIOptionsFlowAnalysis
           symbol={stock.symbol}
           stock={stock}
-          className="h-full"
+          className="w-full"
         />
       </div>
 

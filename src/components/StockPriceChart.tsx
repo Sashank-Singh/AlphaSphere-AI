@@ -103,7 +103,16 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
   const [showOptions, setShowOptions] = useState(false);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
-  const [priceData, setPriceData] = useState<any[]>([]);
+  const [priceData, setPriceData] = useState<Array<{
+    date: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+    change?: number;
+    changePercent?: number;
+  }>>([]);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [isAITradeModalOpen, setIsAITradeModalOpen] = useState(false);
@@ -493,11 +502,12 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
         </div>
 
         {/* TradingView Chart - main content */}
-        <div className="w-full min-w-0" style={{ height: '320px', maxHeight: '60vw', minHeight: '200px' }}>
+        <div className="w-full h-full min-w-0" style={{ height: '1000px', maxHeight: '95vh', minHeight: '800px' }}>
           <div
             id="tradingview_chart"
             ref={chartContainerRef}
-            className="bg-black"
+            className="bg-black w-full h-full"
+            style={{ height: '100%', width: '100%' }}
           />
         </div>
 
