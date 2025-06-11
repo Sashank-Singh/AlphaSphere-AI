@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { BarChart2, TrendingUp, TrendingDown, Zap } from 'lucide-react';
 import { Stock } from '@/types';
-import { getFinnhubOptionsChain } from '../../lib/finnhubApi';
+import { getFinnhubOptionsChain } from '../lib/finnhubApi';
 
 interface Props {
   symbol: string;
@@ -107,22 +107,6 @@ const AIOptionsFlowAnalysis: React.FC<Props> = ({ symbol, stock, className }) =>
   }
 
   if (!flow) return null; // Should not happen if isLoading is false and flow is null due to above condition, but as a safeguard.
-
-  const flowScore = calcFlowScore(flow);
-    return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart2 className="h-4 w-4 text-blue-400" />
-            AI Options Flow Analysis
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-sm text-muted-foreground">Analyzing options flow for <span className="font-semibold">{symbol}</span>...</div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   const flowScore = calcFlowScore(flow);
   const flowLabel = flowScore > 60 ? 'Bullish' : flowScore < 40 ? 'Bearish' : 'Neutral';

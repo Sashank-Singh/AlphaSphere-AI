@@ -29,7 +29,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Stock } from '@/types';
-import { getFinnhubQuote, getFinnhubHistoricalCandles, FinnhubCandle } from '../../lib/finnhubApi'; // FinnhubCandle might be needed for type checks
+import { getFinnhubQuote, getFinnhubHistoricalCandles } from '../lib/finnhubApi';
 
 interface PredictivePriceForecastingProps {
   symbol: string;
