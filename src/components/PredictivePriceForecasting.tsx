@@ -29,6 +29,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Stock } from '@/types';
+import { getFinnhubQuote, getFinnhubHistoricalCandles, FinnhubCandle } from '../../lib/finnhubApi'; // FinnhubCandle might be needed for type checks
 
 interface PredictivePriceForecastingProps {
   symbol: string;
@@ -64,25 +65,9 @@ const PredictivePriceForecasting: React.FC<PredictivePriceForecastingProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [timeframe, setTimeframe] = useState<'1d' | '1w' | '1m'>('1d');
-  const [forecastData, setForecastData] = useState<Record<string, ForecastData>>({});
+  const [forecastData, setForecastData] = useState<Record<string, ForecastData | null>>({}); // Allow null for initial state per timeframe
   
-  const fetchForecastData = async () => {
-    setIsLoading(true);
-    
-    // In a real app, this would fetch from an API
-    setTimeout(() => {
-      const mockData: Record<string, ForecastData> = {
-        '1d': generateMockForecastData('1d', stock?.price || 150),
-        '1w': generateMockForecastData('1w', stock?.price || 150),
-        '1m': generateMockForecastData('1m', stock?.price || 150)
-      };
-      
-      setForecastData(mockData);
-      setIsLoading(false);
-    }, 1200);
-  };
-  
-  // Generate mock forecast data
+  // This is the primary generateMockForecastData, the duplicate will be removed by this search block.
   const generateMockForecastData = (timeframe: '1d' | '1w' | '1m', basePrice: number): ForecastData => {
     const baseDirection = Math.random() > 0.5 ? 'up' : 'down';
     const directionMultiplier = baseDirection === 'up' ? 1 : -1;
@@ -143,6 +128,79 @@ const PredictivePriceForecasting: React.FC<PredictivePriceForecastingProps> = ({
     };
   };
   
+  const fetchForecastData = async (targetTimeframe: '1d' | '1w' | '1m') => {
+    if (!symbol) return;
+    setIsLoading(true);
+
+    try {
+      let currentBasePrice = stock?.price;
+      if (!currentBasePrice) {
+        const quote = await getFinnhubQuote(symbol);
+        if (quote && quote.c) {
+          currentBasePrice = quote.c;
+        } else {
+          console.warn(`Could not fetch current price for ${symbol} to use as base. Falling back to mock for ${targetTimeframe}.`);
+          setForecastData(prevData => ({ ...prevData, [targetTimeframe]: generateMockForecastData(targetTimeframe, 150) }));
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      const now = Math.floor(Date.now() / 1000);
+      let resolution = 'D';
+      let from = now - 7 * 24 * 60 * 60; // Default to 1w (7 days)
+
+      if (targetTimeframe === '1d') {
+        resolution = '60'; // Hourly data for 1 day
+        from = now - 1 * 24 * 60 * 60;
+      } else if (targetTimeframe === '1w') {
+        resolution = 'D';  // Daily data for 1 week
+        from = now - 7 * 24 * 60 * 60;
+      } else if (targetTimeframe === '1m') {
+        resolution = 'D';  // Daily data for 1 month
+        from = now - 30 * 24 * 60 * 60;
+      }
+
+      const finnhubCandles = await getFinnhubHistoricalCandles(symbol, resolution, from, now);
+
+      if (finnhubCandles && finnhubCandles.s === 'ok' && finnhubCandles.c.length > 0) {
+        const predictions = finnhubCandles.t.map((ts, i) => ({
+          timestamp: resolution === '60'
+            ? new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : new Date(ts * 1000).toLocaleDateString([], { month: 'short', day: 'numeric' }),
+          price: finnhubCandles.c[i],
+          // TODO: Implement proper upper/lower bound calculations based on volatility or other indicators
+          upperBound: finnhubCandles.h[i], // Using high for upper bound for now
+          lowerBound: finnhubCandles.l[i], // Using low for lower bound for now
+        }));
+
+        // Use mock summary for now, but with the potentially updated base price
+        // TODO: Generate summary from actual Finnhub data if possible
+        const mockSummaryData = generateMockForecastData(targetTimeframe, currentBasePrice || predictions[0]?.price || 150);
+
+        const newForecast: ForecastData = {
+          timeframe: targetTimeframe,
+          predictions,
+          summary: mockSummaryData.summary, // Using mock summary
+          lastUpdated: new Date(),
+        };
+        setForecastData(prevData => ({ ...prevData, [targetTimeframe]: newForecast }));
+      } else {
+        if (finnhubCandles?.s === 'no_data') {
+          console.log(`Finnhub returned 'no_data' for ${symbol} (${targetTimeframe}). Falling back to mock.`);
+        } else {
+          console.warn(`Failed to fetch from Finnhub or empty data for ${symbol} (${targetTimeframe}). Falling back to mock.`);
+        }
+        setForecastData(prevData => ({ ...prevData, [targetTimeframe]: generateMockForecastData(targetTimeframe, currentBasePrice || 150) }));
+      }
+    } catch (error) {
+      console.error(`Error fetching forecast data for ${symbol} (${targetTimeframe}):`, error);
+      setForecastData(prevData => ({ ...prevData, [targetTimeframe]: generateMockForecastData(targetTimeframe, stock?.price || 150) }));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Helper to generate realistic timestamps based on timeframe
   const getTimestampForPoint = (timeframe: string, index: number): string => {
     const date = new Date();
@@ -171,13 +229,18 @@ const PredictivePriceForecasting: React.FC<PredictivePriceForecastingProps> = ({
   
   useEffect(() => {
     if (symbol) {
-      fetchForecastData();
+      fetchForecastData(timeframe); // Fetch for the initially selected timeframe
     }
     
-    const interval = setInterval(fetchForecastData, 900000); // refresh every 15 minutes
+    // Optional: set up an interval to refresh data for the current timeframe
+    const interval = setInterval(() => {
+      if (symbol) {
+        fetchForecastData(timeframe);
+      }
+    }, 900000); // refresh every 15 minutes
     return () => clearInterval(interval);
-  }, [symbol, stock?.price]);
-  
+  }, [symbol, timeframe]); // React to symbol or timeframe changes
+
   const currentForecast = forecastData[timeframe];
   
   return (
@@ -193,7 +256,7 @@ const PredictivePriceForecasting: React.FC<PredictivePriceForecastingProps> = ({
             <Button 
               variant={timeframe === '1d' ? 'default' : 'outline'} 
               size="sm" 
-              onClick={() => setTimeframe('1d')} 
+              onClick={() => { setTimeframe('1d'); fetchForecastData('1d'); }}
               className="h-7 px-2 text-xs"
             >
               1D
@@ -201,7 +264,7 @@ const PredictivePriceForecasting: React.FC<PredictivePriceForecastingProps> = ({
             <Button 
               variant={timeframe === '1w' ? 'default' : 'outline'} 
               size="sm" 
-              onClick={() => setTimeframe('1w')} 
+              onClick={() => { setTimeframe('1w'); fetchForecastData('1w'); }}
               className="h-7 px-2 text-xs"
             >
               1W
@@ -209,7 +272,7 @@ const PredictivePriceForecasting: React.FC<PredictivePriceForecastingProps> = ({
             <Button 
               variant={timeframe === '1m' ? 'default' : 'outline'} 
               size="sm" 
-              onClick={() => setTimeframe('1m')} 
+              onClick={() => { setTimeframe('1m'); fetchForecastData('1m'); }}
               className="h-7 px-2 text-xs"
             >
               1M
@@ -387,6 +450,13 @@ const PredictivePriceForecasting: React.FC<PredictivePriceForecastingProps> = ({
                   <RefreshCcw className="h-3 w-3" />
                 </Button>
               </div>
+              {/* Ensure currentForecast is not null before accessing lastUpdated */}
+              {currentForecast?.lastUpdated && (
+                <div className="text-muted-foreground">
+                  <Calendar className="h-3 w-3 inline mr-1" />
+                  Last updated: {currentForecast.lastUpdated.toLocaleTimeString()}
+                </div>
+              )}
               
               <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded-sm flex items-start gap-2">
                 <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
@@ -396,7 +466,9 @@ const PredictivePriceForecasting: React.FC<PredictivePriceForecastingProps> = ({
           </>
         ) : (
           <div className="text-center py-4">
-            <p className="text-muted-foreground text-sm">Unable to load forecast data</p>
+            <p className="text-muted-foreground text-sm">
+              {forecastData[timeframe] === null ? `No forecast data available for ${timeframe}.` : 'Unable to load forecast data.'}
+            </p>
           </div>
         )}
       </CardContent>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { BarChart2, TrendingUp, TrendingDown, Zap } from 'lucide-react';
 import { Stock } from '@/types';
+import { getFinnhubOptionsChain } from '../../lib/finnhubApi';
 
 interface Props {
   symbol: string;
@@ -44,14 +45,70 @@ const calcFlowScore = (data: FlowData) => {
 
 const AIOptionsFlowAnalysis: React.FC<Props> = ({ symbol, stock, className }) => {
   const [flow, setFlow] = useState<FlowData | null>(null);
+  const [isLoading, setIsLoading] = useState(true); // Add isLoading state
 
   useEffect(() => {
-    setTimeout(() => {
-      setFlow(mockFlowData(symbol));
-    }, 900);
+    const fetchData = async () => {
+      if (!symbol) return;
+      setIsLoading(true);
+      try {
+        const optionsData = await getFinnhubOptionsChain(symbol);
+        if (optionsData) {
+          console.log('Fetched Finnhub Options Chain Data for:', symbol, optionsData);
+          // TODO: Process optionsData from Finnhub to calculate actual FlowData
+          // For now, still using mock data for display:
+          setFlow(mockFlowData(symbol));
+        } else {
+          // Fallback to mock if API fails or returns no data
+          console.warn(`No options data from Finnhub for ${symbol}, using mock.`);
+          setFlow(mockFlowData(symbol));
+        }
+      } catch (error) {
+        console.error(`Error fetching options data for ${symbol}:`, error);
+        setFlow(mockFlowData(symbol)); // Fallback to mock on error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, [symbol]);
 
-  if (!flow) {
+  if (isLoading) { // Updated loading condition
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart2 className="h-4 w-4 text-blue-400" />
+            AI Options Flow Analysis
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-muted-foreground">Analyzing options flow for <span className="font-semibold">{symbol}</span>...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!flow && !isLoading) { // Show if no flow data and not loading
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart2 className="h-4 w-4 text-blue-400" />
+            AI Options Flow Analysis
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-muted-foreground">Could not load options flow data for <span className="font-semibold">{symbol}</span>.</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!flow) return null; // Should not happen if isLoading is false and flow is null due to above condition, but as a safeguard.
+
+  const flowScore = calcFlowScore(flow);
     return (
       <Card className={className}>
         <CardHeader>
