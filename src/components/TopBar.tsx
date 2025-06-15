@@ -14,6 +14,7 @@ import {
 import { usePortfolio } from '@/context/PortfolioContext';
 import { formatCurrency } from '@/lib/utils';
 import { mockStocks, refreshStockPrices } from '@/data/mockData';
+import { getCompanyLogo } from '@/lib/companyLogos';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,14 +52,19 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch }) => {
   const [showSettings, setShowSettings] = useState(false);
   const navigate = useNavigate();
 
-  // Filter stocks based on search query
+  // Filter stocks based on search query and add logos
   const filterStocks = useCallback((query: string) => {
     if (!query.trim()) return [];
     const normalizedQuery = query.toLowerCase().trim();
-    return mockStocks.filter(stock => 
-      stock.symbol.toLowerCase().includes(normalizedQuery) ||
-      stock.name.toLowerCase().includes(normalizedQuery)
-    );
+    return mockStocks
+      .filter(stock => 
+        stock.symbol.toLowerCase().includes(normalizedQuery) ||
+        stock.name.toLowerCase().includes(normalizedQuery)
+      )
+      .map(stock => ({
+        ...stock,
+        logo: stock.logo || getCompanyLogo(stock.symbol)
+      }));
   }, []);
 
   // Update suggestions when search query changes
@@ -72,7 +78,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch }) => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery) {
-      navigate(`/market?search=${encodeURIComponent(searchQuery)}`);
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
       setShowSuggestions(false);
     }
   };
@@ -99,7 +105,6 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch }) => {
   // Handle refresh
   const handleRefresh = () => {
     const updatedStocks = refreshStockPrices();
-    // You might want to update your global state here
     console.log('Stocks refreshed:', updatedStocks);
   };
 
@@ -124,7 +129,6 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch }) => {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="p-0 md:hidden w-64 bg-card text-card-foreground shadow-lg">
-            {/* We render the same Sidebar inside the sheet for mobile */}
             <Sidebar collapsed={false} onToggle={() => { }} />
           </SheetContent>
         </Sheet>
@@ -138,7 +142,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch }) => {
               className="pl-8"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setShowSuggestions(true)}
+              onFocus={() => setShowSuggestions(searchQuery.length > 0)}
             />
             <SearchSuggestions
               suggestions={suggestions}
@@ -148,7 +152,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch }) => {
           </div>
           <Button variant="outline" onClick={handleRefresh}>
             <RefreshCw className="h-4 w-4" />
-            <span className="ml-2">Refresh</span>
+            <span className="ml-2 hidden sm:inline">Refresh</span>
           </Button>
         </form>
 
@@ -299,4 +303,4 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch }) => {
   );
 };
 
-export default TopBar; 
+export default TopBar;

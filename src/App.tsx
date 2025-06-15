@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import HomePage from '@/pages/HomePage';
@@ -10,6 +11,7 @@ import CommunityPage from '@/pages/CommunityPage';
 import TradingPage from '@/pages/TradingPage';
 import AuthPage from '@/pages/AuthPage';
 import AnalyticsPage from '@/pages/AnalyticsPage';
+import SearchPage from '@/pages/SearchPage';
 import { AuthProvider } from '@/context/AuthContext';
 import { PortfolioProvider } from '@/context/PortfolioContext';
 import ImprovedStockDetailPage from '@/pages/ImprovedStockDetailPage';
@@ -24,6 +26,7 @@ const App: React.FC = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/search" element={<SearchPage />} />
             <Route path="/market" element={
               <Layout>
                 <MarketPage />

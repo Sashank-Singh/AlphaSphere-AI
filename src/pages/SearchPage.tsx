@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { ChevronLeft, Search as SearchIcon, X, TrendingUp } from 'lucide-react';
 import StockCard from '@/components/StockCard';
 import { mockStocks } from '@/data/mockData';
+import Layout from '@/components/Layout';
 
 const SearchPage: React.FC = () => {
   const navigate = useNavigate();
@@ -37,86 +39,97 @@ const SearchPage: React.FC = () => {
   const trendingStocks = mockStocks.slice(0, 6);
   
   return (
-    <div className="pb-20">
-      {/* Header */}
-      <div className="p-4 flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ChevronLeft className="h-6 w-6" />
-        </Button>
-        
-        <form onSubmit={handleSearch} className="flex-1 relative">
-          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search symbols or companies"
-            className="pl-9 pr-9"
-          />
-          
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute left-0 top-0 h-full px-3 hover:bg-transparent"
-              aria-label="Clear search"
-              onClick={clearSearch}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
+    <Layout>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Search Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">Search Stocks</h1>
+          <p className="text-muted-foreground">Find and analyze stocks, ETFs, and market data</p>
+        </div>
+
+        {/* Search Form */}
+        <form onSubmit={handleSearch} className="mb-8">
+          <div className="relative">
+            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search symbols or companies (e.g., AAPL, Apple)"
+              className="pl-9 pr-9 h-12 text-lg"
+            />
+            
+            {searchQuery && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                onClick={clearSearch}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </form>
-      </div>
-      
-      {/* Search Results */}
-      {isSearching ? (
-        <div className="px-4">
-          <h2 className="text-lg font-medium mb-3">Search Results</h2>
-          
-          {filteredStocks.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">No results found for "{searchQuery}"</p>
+        
+        {/* Search Results */}
+        {isSearching ? (
+          <div>
+            <h2 className="text-xl font-semibold mb-4">
+              Search Results for "{searchQuery}"
+            </h2>
+            
+            {filteredStocks.length === 0 ? (
+              <div className="text-center py-12">
+                <SearchIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-lg text-muted-foreground mb-2">No results found</p>
+                <p className="text-sm text-muted-foreground">Try searching with different keywords or stock symbols</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredStocks.map(stock => (
+                  <StockCard key={stock.id} stock={stock} />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <div className="flex items-center mb-4">
+              <TrendingUp className="h-5 w-5 mr-2" />
+              <h2 className="text-xl font-semibold">Popular Stocks</h2>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-3">
-              {filteredStocks.map(stock => (
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+              {trendingStocks.map(stock => (
                 <StockCard key={stock.id} stock={stock} />
               ))}
             </div>
-          )}
-        </div>
-      ) : (
-        <div className="px-4">
-          <div className="flex items-center mb-3">
-            <TrendingUp className="h-5 w-5 mr-2" />
-            <h2 className="text-lg font-medium">Popular Stocks</h2>
+            
+            <Separator className="my-8" />
+            
+            <h2 className="text-xl font-semibold mb-4">Browse By Sector</h2>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {['Technology', 'Finance', 'Healthcare', 'Consumer', 'Energy', 'Industrial'].map(sector => (
+                <Button
+                  key={sector}
+                  variant="outline"
+                  className="h-16 flex flex-col justify-center hover:bg-primary/10 transition-colors"
+                  onClick={() => {
+                    setSearchQuery(sector);
+                    setIsSearching(true);
+                  }}
+                >
+                  <span className="font-medium">{sector}</span>
+                </Button>
+              ))}
+            </div>
           </div>
-          
-          <div className="grid grid-cols-2 gap-3">
-            {trendingStocks.map(stock => (
-              <StockCard key={stock.id} stock={stock} />
-            ))}
-          </div>
-          
-          <Separator className="my-6" />
-          
-          <h2 className="text-lg font-medium mb-3">Browse By Sector</h2>
-          
-          <div className="grid grid-cols-2 gap-3">
-            {['Technology', 'Finance', 'Healthcare', 'Consumer', 'Energy', 'Industrial'].map(sector => (
-              <Button
-                key={sector}
-                variant="outline"
-                className="h-16 flex flex-col justify-center"
-                onClick={() => setSearchQuery(sector)}
-              >
-                <span>{sector}</span>
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </Layout>
   );
 };
 
