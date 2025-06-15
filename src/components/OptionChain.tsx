@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowUpDown, TrendingUp, TrendingDown, Wifi, WifiOff } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { useOptionsWebSocket, OptionQuote } from '@/hooks/useAlpacaWebSocket';
-import { Tooltip } from '@/components/ui/tooltip';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface OptionContract {
   strike: number;
@@ -228,247 +228,299 @@ const OptionChain: React.FC<OptionChainProps> = ({
   };
 
   return (
-    <Card className="bg-black border border-gray-800">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg">Option Chain for {symbol}</CardTitle>
-            <CardDescription>
-              Expiration: {expiryDate ? new Date(expiryDate).toLocaleDateString('en-US', {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-              }) : 'Select an expiration date'}
-            </CardDescription>
-          </div>
-          <div className="flex items-center text-xs">
-            <span className="mr-1">Data:</span>
-            {isConnected ? (
-              <span className="flex items-center text-green-500">
-                <Wifi className="h-3 w-3 mr-1" />
-                Live
-              </span>
-            ) : (
-              <span className="flex items-center text-yellow-500">
-                <WifiOff className="h-3 w-3 mr-1" />
-                Delayed
-              </span>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-            <p className="text-sm text-muted-foreground">
-              Loading option chain...
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="shadow-lg border border-green-700 rounded-lg overflow-hidden">
-              <h3 className="text-lg font-semibold mb-2 flex items-center">
-                <Badge className="bg-green-500/20 text-green-500 mr-2">CALLS</Badge>
-                {symbol} Call Options
-              </h3>
-              <div className="overflow-x-auto max-h-96">
-                <Table>
-                  <TableHeader className="sticky top-0 z-10 bg-black/90">
-                    <TableRow>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('strike')}>
-                        <div className="flex items-center">
-                          Strike {getSortIcon('strike')}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('last')}>
-                        <div className="flex items-center">
-                          Last {getSortIcon('last')}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('change')}>
-                        <div className="flex items-center">
-                          Change {getSortIcon('change')}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('bid')}>
-                        <div className="flex items-center">
-                          Bid {getSortIcon('bid')}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('ask')}>
-                        <div className="flex items-center">
-                          Ask {getSortIcon('ask')}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('iv')}>
-                        <Tooltip content={greekTooltips.iv}>
-                          <div className="flex items-center">
-                            IV {getSortIcon('iv')}
-                          </div>
-                        </Tooltip>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('delta')}>
-                        <Tooltip content={greekTooltips.delta}>
-                          <div className="flex items-center">Δ</div>
-                        </Tooltip>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('gamma')}>
-                        <Tooltip content={greekTooltips.gamma}>
-                          <div className="flex items-center">Γ</div>
-                        </Tooltip>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('theta')}>
-                        <Tooltip content={greekTooltips.theta}>
-                          <div className="flex items-center">Θ</div>
-                        </Tooltip>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('vega')}>
-                        <Tooltip content={greekTooltips.vega}>
-                          <div className="flex items-center">Vega</div>
-                        </Tooltip>
-                      </TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {options.calls.map((option) => (
-                      <TableRow
-                        key={`call-${option.strike}`}
-                        className={`transition-colors ${option.strike < stockPrice ? 'bg-green-500/10' : ''} hover:bg-green-700/10 cursor-pointer`}
-                      >
-                        <TableCell className="font-medium">{option.strike}</TableCell>
-                        <TableCell>{formatCurrency(option.last)}</TableCell>
-                        <TableCell className={option.change >= 0 ? 'text-green-500' : 'text-red-500'}>
-                          {option.change >= 0 ? '+' : ''}{option.change.toFixed(2)}
-                        </TableCell>
-                        <TableCell>{formatCurrency(option.bid)}</TableCell>
-                        <TableCell>{formatCurrency(option.ask)}</TableCell>
-                        <TableCell>{(option.iv * 100).toFixed(1)}%</TableCell>
-                        <TableCell>{option.delta.toFixed(2)}</TableCell>
-                        <TableCell>{option.gamma.toFixed(3)}</TableCell>
-                        <TableCell>{option.theta.toFixed(3)}</TableCell>
-                        <TableCell>{option.vega.toFixed(3)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => handleTrade(option, 'Buy')}>
-                              Buy
-                            </Button>
-                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => handleTrade(option, 'Sell')}>
-                              Sell
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+    <TooltipProvider>
+      <Card className="bg-black border border-gray-800">
+        <CardHeader className="pb-3">
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-lg">Option Chain for {symbol}</CardTitle>
+              <CardDescription>
+                Expiration: {expiryDate ? new Date(expiryDate).toLocaleDateString('en-US', {
+                  weekday: 'short',
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                }) : 'Select an expiration date'}
+              </CardDescription>
             </div>
+            <div className="flex items-center text-xs">
+              <span className="mr-1">Data:</span>
+              {isConnected ? (
+                <span className="flex items-center text-green-500">
+                  <Wifi className="h-3 w-3 mr-1" />
+                  Live
+                </span>
+              ) : (
+                <span className="flex items-center text-yellow-500">
+                  <WifiOff className="h-3 w-3 mr-1" />
+                  Delayed
+                </span>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+              <p className="text-sm text-muted-foreground">
+                Loading option chain...
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="shadow-lg border border-green-700 rounded-lg overflow-hidden">
+                <h3 className="text-lg font-semibold mb-2 flex items-center">
+                  <Badge className="bg-green-500/20 text-green-500 mr-2">CALLS</Badge>
+                  {symbol} Call Options
+                </h3>
+                <div className="overflow-x-auto max-h-96">
+                  <Table>
+                    <TableHeader className="sticky top-0 z-10 bg-black/90">
+                      <TableRow>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('strike')}>
+                          <div className="flex items-center">
+                            Strike {getSortIcon('strike')}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('last')}>
+                          <div className="flex items-center">
+                            Last {getSortIcon('last')}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('change')}>
+                          <div className="flex items-center">
+                            Change {getSortIcon('change')}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('bid')}>
+                          <div className="flex items-center">
+                            Bid {getSortIcon('bid')}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('ask')}>
+                          <div className="flex items-center">
+                            Ask {getSortIcon('ask')}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('iv')}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center cursor-help">
+                                IV {getSortIcon('iv')}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{greekTooltips.iv}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('delta')}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center cursor-help">Δ</div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{greekTooltips.delta}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('gamma')}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center cursor-help">Γ</div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{greekTooltips.gamma}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('theta')}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center cursor-help">Θ</div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{greekTooltips.theta}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('vega')}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center cursor-help">Vega</div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{greekTooltips.vega}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableHead>
+                        <TableHead></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {options.calls.map((option) => (
+                        <TableRow
+                          key={`call-${option.strike}`}
+                          className={`transition-colors ${option.strike < stockPrice ? 'bg-green-500/10' : ''} hover:bg-green-700/10 cursor-pointer`}
+                        >
+                          <TableCell className="font-medium">{option.strike}</TableCell>
+                          <TableCell>{formatCurrency(option.last)}</TableCell>
+                          <TableCell className={option.change >= 0 ? 'text-green-500' : 'text-red-500'}>
+                            {option.change >= 0 ? '+' : ''}{option.change.toFixed(2)}
+                          </TableCell>
+                          <TableCell>{formatCurrency(option.bid)}</TableCell>
+                          <TableCell>{formatCurrency(option.ask)}</TableCell>
+                          <TableCell>{(option.iv * 100).toFixed(1)}%</TableCell>
+                          <TableCell>{option.delta.toFixed(2)}</TableCell>
+                          <TableCell>{option.gamma.toFixed(3)}</TableCell>
+                          <TableCell>{option.theta.toFixed(3)}</TableCell>
+                          <TableCell>{option.vega.toFixed(3)}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => handleTrade(option, 'Buy')}>
+                                Buy
+                              </Button>
+                              <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => handleTrade(option, 'Sell')}>
+                                Sell
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
 
-            <div className="shadow-lg border border-red-700 rounded-lg overflow-hidden">
-              <h3 className="text-lg font-semibold mb-2 flex items-center">
-                <Badge className="bg-red-500/20 text-red-500 mr-2">PUTS</Badge>
-                {symbol} Put Options
-              </h3>
-              <div className="overflow-x-auto max-h-96">
-                <Table>
-                  <TableHeader className="sticky top-0 z-10 bg-black/90">
-                    <TableRow>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('strike')}>
-                        <div className="flex items-center">
-                          Strike {getSortIcon('strike')}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('last')}>
-                        <div className="flex items-center">
-                          Last {getSortIcon('last')}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('change')}>
-                        <div className="flex items-center">
-                          Change {getSortIcon('change')}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('bid')}>
-                        <div className="flex items-center">
-                          Bid {getSortIcon('bid')}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('ask')}>
-                        <div className="flex items-center">
-                          Ask {getSortIcon('ask')}
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('iv')}>
-                        <Tooltip content={greekTooltips.iv}>
+              <div className="shadow-lg border border-red-700 rounded-lg overflow-hidden">
+                <h3 className="text-lg font-semibold mb-2 flex items-center">
+                  <Badge className="bg-red-500/20 text-red-500 mr-2">PUTS</Badge>
+                  {symbol} Put Options
+                </h3>
+                <div className="overflow-x-auto max-h-96">
+                  <Table>
+                    <TableHeader className="sticky top-0 z-10 bg-black/90">
+                      <TableRow>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('strike')}>
                           <div className="flex items-center">
-                            IV {getSortIcon('iv')}
+                            Strike {getSortIcon('strike')}
                           </div>
-                        </Tooltip>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('delta')}>
-                        <Tooltip content={greekTooltips.delta}>
-                          <div className="flex items-center">Δ</div>
-                        </Tooltip>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('gamma')}>
-                        <Tooltip content={greekTooltips.gamma}>
-                          <div className="flex items-center">Γ</div>
-                        </Tooltip>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('theta')}>
-                        <Tooltip content={greekTooltips.theta}>
-                          <div className="flex items-center">Θ</div>
-                        </Tooltip>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('vega')}>
-                        <Tooltip content={greekTooltips.vega}>
-                          <div className="flex items-center">Vega</div>
-                        </Tooltip>
-                      </TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {options.puts.map((option) => (
-                      <TableRow
-                        key={`put-${option.strike}`}
-                        className={`transition-colors ${option.strike > stockPrice ? 'bg-red-500/10' : ''} hover:bg-red-700/10 cursor-pointer`}
-                      >
-                        <TableCell className="font-medium">{option.strike}</TableCell>
-                        <TableCell>{formatCurrency(option.last)}</TableCell>
-                        <TableCell className={option.change >= 0 ? 'text-green-500' : 'text-red-500'}>
-                          {option.change >= 0 ? '+' : ''}{option.change.toFixed(2)}
-                        </TableCell>
-                        <TableCell>{formatCurrency(option.bid)}</TableCell>
-                        <TableCell>{formatCurrency(option.ask)}</TableCell>
-                        <TableCell>{(option.iv * 100).toFixed(1)}%</TableCell>
-                        <TableCell>{option.delta.toFixed(2)}</TableCell>
-                        <TableCell>{option.gamma.toFixed(3)}</TableCell>
-                        <TableCell>{option.theta.toFixed(3)}</TableCell>
-                        <TableCell>{option.vega.toFixed(3)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => handleTrade(option, 'Buy')}>
-                              Buy
-                            </Button>
-                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => handleTrade(option, 'Sell')}>
-                              Sell
-                            </Button>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('last')}>
+                          <div className="flex items-center">
+                            Last {getSortIcon('last')}
                           </div>
-                        </TableCell>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('change')}>
+                          <div className="flex items-center">
+                            Change {getSortIcon('change')}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('bid')}>
+                          <div className="flex items-center">
+                            Bid {getSortIcon('bid')}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('ask')}>
+                          <div className="flex items-center">
+                            Ask {getSortIcon('ask')}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('iv')}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center cursor-help">
+                                IV {getSortIcon('iv')}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{greekTooltips.iv}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('delta')}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center cursor-help">Δ</div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{greekTooltips.delta}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('gamma')}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center cursor-help">Γ</div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{greekTooltips.gamma}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('theta')}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center cursor-help">Θ</div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{greekTooltips.theta}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => requestSort('vega')}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center cursor-help">Vega</div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{greekTooltips.vega}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableHead>
+                        <TableHead></TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {options.puts.map((option) => (
+                        <TableRow
+                          key={`put-${option.strike}`}
+                          className={`transition-colors ${option.strike > stockPrice ? 'bg-red-500/10' : ''} hover:bg-red-700/10 cursor-pointer`}
+                        >
+                          <TableCell className="font-medium">{option.strike}</TableCell>
+                          <TableCell>{formatCurrency(option.last)}</TableCell>
+                          <TableCell className={option.change >= 0 ? 'text-green-500' : 'text-red-500'}>
+                            {option.change >= 0 ? '+' : ''}{option.change.toFixed(2)}
+                          </TableCell>
+                          <TableCell>{formatCurrency(option.bid)}</TableCell>
+                          <TableCell>{formatCurrency(option.ask)}</TableCell>
+                          <TableCell>{(option.iv * 100).toFixed(1)}%</TableCell>
+                          <TableCell>{option.delta.toFixed(2)}</TableCell>
+                          <TableCell>{option.gamma.toFixed(3)}</TableCell>
+                          <TableCell>{option.theta.toFixed(3)}</TableCell>
+                          <TableCell>{option.vega.toFixed(3)}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => handleTrade(option, 'Buy')}>
+                                Buy
+                              </Button>
+                              <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => handleTrade(option, 'Sell')}>
+                                Sell
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 };
 

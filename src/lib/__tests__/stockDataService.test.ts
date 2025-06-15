@@ -1,4 +1,3 @@
-
 import { stockDataService } from '../stockDataService';
 import { StockQuote } from '../api';
 
@@ -22,7 +21,8 @@ const createMockResponse = (data: any): Response => {
     formData: jest.fn(),
     text: jest.fn(),
     clone: jest.fn(),
-    json: jest.fn().mockResolvedValue(data)
+    json: jest.fn().mockResolvedValue(data),
+    bytes: jest.fn()
   } as Response;
 };
 
