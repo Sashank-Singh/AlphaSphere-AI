@@ -12,9 +12,7 @@ const MarketAnalytics: React.FC = () => {
         Market Analytics
       </h2>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card border border-border rounded-lg">
-          <SectorHeatmapCard />
-        </div>
+        <SectorHeatmapCard />
         <Card className="bg-card border-border">
           <CardHeader className="pb-4">
             <CardTitle className="text-xl">Market News</CardTitle>
