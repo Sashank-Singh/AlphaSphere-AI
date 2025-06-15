@@ -81,10 +81,10 @@ const AIMarketSentiment: React.FC = () => {
   };
 
   return (
-    <Card className="bg-gradient-to-br from-blue-900/20 to-indigo-900/20 border-blue-500/20">
+    <Card className="h-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <PieChart className="h-5 w-5 text-blue-400" />
+          <PieChart className="h-5 w-5 text-primary" />
           AI Portfolio Optimizer
           <Badge variant="secondary" className="ml-auto">
             <Zap className="h-3 w-3 mr-1" />
@@ -95,7 +95,7 @@ const AIMarketSentiment: React.FC = () => {
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Brain className="h-4 w-4 text-blue-400" />
+            <Brain className="h-4 w-4 text-primary" />
             <span className="font-semibold">Optimization Score</span>
           </div>
           <div className="text-right">
@@ -126,7 +126,7 @@ const AIMarketSentiment: React.FC = () => {
                 <span className="text-muted-foreground">{allocation.current.toFixed(0)}%</span>
                 <div className="w-8 h-1 bg-muted rounded">
                   <div 
-                    className="h-full bg-blue-400 rounded" 
+                    className="h-full bg-primary rounded" 
                     style={{ width: `${(allocation.current / 50) * 100}%` }}
                   />
                 </div>
