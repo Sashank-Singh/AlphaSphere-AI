@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { usePortfolio } from '@/context/PortfolioContext';
@@ -8,8 +9,8 @@ import MarketPulse from '@/components/dashboard/MarketPulse';
 import MainContentTabs from '@/components/dashboard/MainContentTabs';
 import MarketIntelligence from '@/components/dashboard/MarketIntelligence';
 import MarketAnalytics from '@/components/dashboard/MarketAnalytics';
-import SmartNotifications from '@/components/dashboard/SmartNotifications';
-import SocialTrading from '@/components/dashboard/SocialTrading';
+import SmartNotifications from '@/components/SmartNotifications';
+import SocialTrading from '@/components/SocialTrading';
 import QuickActions from '@/components/dashboard/QuickActions';
 
 const DashboardPage: React.FC = () => {
