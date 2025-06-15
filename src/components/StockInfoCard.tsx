@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Building2, Users, Globe, Calendar } from 'lucide-react';
+import { mockStockService } from '@/lib/mockStockService';
 
 interface CompanyInfo {
   symbol: string;
@@ -23,13 +24,61 @@ interface StockInfoCardProps {
   companyInfo?: CompanyInfo;
 }
 
-const StockInfoCard: React.FC<StockInfoCardProps> = ({ symbol, companyInfo }) => {
+const StockInfoCard: React.FC<StockInfoCardProps> = ({ symbol, companyInfo: propCompanyInfo }) => {
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(propCompanyInfo || null);
+  const [loading, setLoading] = useState(!propCompanyInfo);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!propCompanyInfo && symbol) {
+      const fetchCompanyInfo = async () => {
+        try {
+          setLoading(true);
+          setError(null);
+          const info = await mockStockService.getCompanyInfo(symbol);
+          setCompanyInfo(info);
+        } catch (err) {
+          console.error('Error fetching company info:', err);
+          setError('Failed to load company information');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchCompanyInfo();
+    }
+  }, [symbol, propCompanyInfo]);
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <div className="text-muted-foreground">
+            Loading company information for {symbol}...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <div className="text-destructive">
+            {error}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!companyInfo) {
     return (
       <Card>
         <CardContent className="p-6 text-center">
           <div className="text-muted-foreground">
-            Loading company information...
+            No company information available for {symbol}
           </div>
         </CardContent>
       </Card>
