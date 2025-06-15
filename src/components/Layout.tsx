@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import BottomNavBar from './BottomNavBar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-
 import { Toaster } from '@/components/ui/toaster';
 
 interface LayoutProps {
@@ -44,7 +44,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <div
         className={cn(
           "flex-1 flex flex-col overflow-hidden",
-          isMobile ? "pb-16 safe-bottom" : "" // Add padding for bottom nav on mobile with safe area consideration
+          isMobile ? "pb-16 safe-bottom" : ""
         )}
       >
         <TopBar onSearch={handleSearch} />

@@ -12,6 +12,8 @@ import MarketAnalytics from '@/components/dashboard/MarketAnalytics';
 import SmartNotifications from '@/components/SmartNotifications';
 import SocialTrading from '@/components/SocialTrading';
 import QuickActions from '@/components/dashboard/QuickActions';
+import WelcomeHeader from '@/components/dashboard/WelcomeHeader';
+import AIMarketSentiment from '@/components/dashboard/AIMarketSentiment';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -25,14 +27,12 @@ const DashboardPage: React.FC = () => {
     <ProtectedRoute>
       <Layout>
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-          {/* Welcome Header - Responsive */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-              Welcome back, {user.email?.split('@')[0] || 'Trader'}
-            </h2>
-            <div className="flex items-center space-x-2">
-              <QuickActions />
-            </div>
+          {/* Welcome Header - Enhanced */}
+          <WelcomeHeader />
+
+          {/* Quick Actions Section */}
+          <div className="flex items-center justify-end">
+            <QuickActions />
           </div>
 
           {/* Portfolio Overview - Mobile optimized */}
@@ -52,6 +52,7 @@ const DashboardPage: React.FC = () => {
             </div>
             <div className="space-y-4">
               <MarketIntelligence />
+              <AIMarketSentiment />
             </div>
           </div>
 
