@@ -72,7 +72,7 @@ const AIMarketSentiment: React.FC = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Brain className="h-5 w-5 text-purple-400" />
-          AI Market Sentiment
+          AI Trading Insights
           <Badge variant="secondary" className="ml-auto">
             <Zap className="h-3 w-3 mr-1" />
             Live

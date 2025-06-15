@@ -29,8 +29,8 @@ const DashboardPage: React.FC = () => {
           {/* Welcome Header */}
           <WelcomeHeader />
 
-          {/* Quick Actions Section - Centered */}
-          <div className="flex justify-center">
+          {/* Quick Actions Section - Full Width Centered */}
+          <div className="w-full max-w-4xl mx-auto">
             <QuickActions />
           </div>
 
