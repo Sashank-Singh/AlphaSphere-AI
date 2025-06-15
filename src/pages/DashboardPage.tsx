@@ -10,7 +10,6 @@ import MainContentTabs from '@/components/dashboard/MainContentTabs';
 import MarketIntelligence from '@/components/dashboard/MarketIntelligence';
 import MarketAnalytics from '@/components/dashboard/MarketAnalytics';
 import SmartNotifications from '@/components/SmartNotifications';
-import SocialTrading from '@/components/SocialTrading';
 import QuickActions from '@/components/dashboard/QuickActions';
 import WelcomeHeader from '@/components/dashboard/WelcomeHeader';
 import AIMarketSentiment from '@/components/dashboard/AIMarketSentiment';
@@ -63,7 +62,6 @@ const DashboardPage: React.FC = () => {
             <MarketAnalytics />
             <div className="space-y-4">
               <SmartNotifications />
-              <SocialTrading />
             </div>
           </div>
         </div>
