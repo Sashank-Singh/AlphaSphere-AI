@@ -36,7 +36,23 @@ const StockInfoCard: React.FC<StockInfoCardProps> = ({ symbol, companyInfo: prop
           setLoading(true);
           setError(null);
           const info = await mockStockService.getCompanyInfo(symbol);
-          setCompanyInfo(info);
+          if (info) {
+            // Map the mock service response to our expected format
+            const mappedInfo: CompanyInfo = {
+              symbol: symbol,
+              name: info.name,
+              sector: info.sector,
+              industry: info.industry,
+              exchange: 'NASDAQ', // Default value since mock service doesn't provide this
+              marketCap: info.marketCap,
+              description: info.description,
+              employees: info.employees,
+              website: info.website,
+              ceo: 'Unknown', // Default value since mock service doesn't provide this
+              founded: '1970' // Default value since mock service doesn't provide this
+            };
+            setCompanyInfo(mappedInfo);
+          }
         } catch (err) {
           console.error('Error fetching company info:', err);
           setError('Failed to load company information');
