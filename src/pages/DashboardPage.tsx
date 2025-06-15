@@ -1,55 +1,70 @@
-
 import React from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { usePortfolio } from '@/context/PortfolioContext';
 import Layout from '@/components/Layout';
-import { useIsMobile } from '@/hooks/use-mobile';
-import MobileRealTimeDashboard from '@/components/MobileRealTimeDashboard';
-import ImprovedSphereAI from '@/components/ImprovedSphereAI';
-import WelcomeHeader from '@/components/dashboard/WelcomeHeader';
-import QuickActions from '@/components/dashboard/QuickActions';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import PortfolioOverview from '@/components/dashboard/PortfolioOverview';
 import MarketPulse from '@/components/dashboard/MarketPulse';
+import MainContentTabs from '@/components/dashboard/MainContentTabs';
 import MarketIntelligence from '@/components/dashboard/MarketIntelligence';
 import MarketAnalytics from '@/components/dashboard/MarketAnalytics';
-import MainContentTabs from '@/components/dashboard/MainContentTabs';
+import SmartNotifications from '@/components/dashboard/SmartNotifications';
+import SocialTrading from '@/components/dashboard/SocialTrading';
+import QuickActions from '@/components/dashboard/QuickActions';
 
 const DashboardPage: React.FC = () => {
-  const isMobile = useIsMobile();
+  const { user } = useAuth();
+  const { portfolio } = usePortfolio();
+
+  if (!user) {
+    return <ProtectedRoute><div>Loading...</div></ProtectedRoute>;
+  }
 
   return (
-    <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-        {/* Welcome Header */}
-        <WelcomeHeader />
+    <ProtectedRoute>
+      <Layout>
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+          {/* Welcome Header - Responsive */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+              Welcome back, {user.email?.split('@')[0] || 'Trader'}
+            </h2>
+            <div className="flex items-center space-x-2">
+              <QuickActions />
+            </div>
+          </div>
 
-        {/* Quick Actions */}
-        <QuickActions />
+          {/* Portfolio Overview - Mobile optimized */}
+          <div className="grid gap-4 md:gap-6 grid-cols-1 lg:grid-cols-3">
+            <div className="lg:col-span-2 space-y-4">
+              <PortfolioOverview />
+            </div>
+            <div className="space-y-4">
+              <MarketPulse />
+            </div>
+          </div>
 
-        {/* Mobile Real-Time Dashboard */}
-        {isMobile && (
-          <MobileRealTimeDashboard symbols={['AAPL', 'TSLA', 'NVDA', 'MSFT']} />
-        )}
+          {/* Main Content - Responsive tabs */}
+          <div className="grid gap-4 md:gap-6 grid-cols-1 xl:grid-cols-4">
+            <div className="xl:col-span-3 space-y-4">
+              <MainContentTabs />
+            </div>
+            <div className="space-y-4">
+              <MarketIntelligence />
+            </div>
+          </div>
 
-        {/* Portfolio Overview & Market Pulse */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <PortfolioOverview />
-          <MarketPulse />
+          {/* Bottom sections - Stack on mobile */}
+          <div className="grid gap-4 md:gap-6 grid-cols-1 lg:grid-cols-2">
+            <MarketAnalytics />
+            <div className="space-y-4">
+              <SmartNotifications />
+              <SocialTrading />
+            </div>
+          </div>
         </div>
-
-        {/* Market Intelligence Section */}
-        <MarketIntelligence />
-
-        {/* Market Analytics Section */}
-        <MarketAnalytics />
-
-        {/* Main Content Tabs */}
-        <MainContentTabs />
-
-        {/* Improved Sphere AI */}
-        <div>
-          <ImprovedSphereAI />
-        </div>
-      </div>
-    </Layout>
+      </Layout>
+    </ProtectedRoute>
   );
 };
 

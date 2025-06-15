@@ -16,76 +16,81 @@ import { AuthProvider } from '@/context/AuthContext';
 import { PortfolioProvider } from '@/context/PortfolioContext';
 import ImprovedStockDetailPage from '@/pages/ImprovedStockDetailPage';
 import Layout from '@/components/Layout';
+import { Toaster } from '@/components/ui/sonner';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <PortfolioProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/search" element={<SearchPage />} />
-            <Route path="/market" element={
-              <Layout>
-                <MarketPage />
-              </Layout>
-            } />
-            <Route path="/portfolio" element={
-              <Layout>
-                <PortfolioPage />
-              </Layout>
-            } />
-            <Route path="/stocks/:symbol" element={
-              <Layout>
-                <ImprovedStockDetailPage />
-              </Layout>
-            } />
-            <Route path="/stocks/:ticker" element={
-              <Layout>
-                <ImprovedStockDetailPage />
-              </Layout>
-            } />
-            <Route path="/trading" element={
-              <Layout>
-                <TradingPage />
-              </Layout>
-            } />
-            <Route path="/trading/:symbol" element={
-              <Layout>
-                <TradingPage />
-              </Layout>
-            } />
-            <Route path="/options" element={
-              <Layout>
-                <OptionsPage />
-              </Layout>
-            } />
-            <Route path="/options/:symbol" element={
-              <Layout>
-                <OptionsPage />
-              </Layout>
-            } />
-            <Route path="/analytics" element={
-              <Layout>
-                <AnalyticsPage />
-              </Layout>
-            } />
-            <Route path="/settings" element={
-              <Layout>
-                <SettingsPage />
-              </Layout>
-            } />
-            <Route path="/community" element={
-              <Layout>
-                <CommunityPage />
-              </Layout>
-            } />
-          </Routes>
-        </Router>
-      </PortfolioProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <PortfolioProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/search" element={<SearchPage />} />
+              <Route path="/market" element={
+                <Layout>
+                  <MarketPage />
+                </Layout>
+              } />
+              <Route path="/portfolio" element={
+                <Layout>
+                  <PortfolioPage />
+                </Layout>
+              } />
+              <Route path="/stocks/:symbol" element={
+                <Layout>
+                  <ImprovedStockDetailPage />
+                </Layout>
+              } />
+              <Route path="/stocks/:ticker" element={
+                <Layout>
+                  <ImprovedStockDetailPage />
+                </Layout>
+              } />
+              <Route path="/trading" element={
+                <Layout>
+                  <TradingPage />
+                </Layout>
+              } />
+              <Route path="/trading/:symbol" element={
+                <Layout>
+                  <TradingPage />
+                </Layout>
+              } />
+              <Route path="/options" element={
+                <Layout>
+                  <OptionsPage />
+                </Layout>
+              } />
+              <Route path="/options/:symbol" element={
+                <Layout>
+                  <OptionsPage />
+                </Layout>
+              } />
+              <Route path="/analytics" element={
+                <Layout>
+                  <AnalyticsPage />
+                </Layout>
+              } />
+              <Route path="/settings" element={
+                <Layout>
+                  <SettingsPage />
+                </Layout>
+              } />
+              <Route path="/community" element={
+                <Layout>
+                  <CommunityPage />
+                </Layout>
+              } />
+            </Routes>
+            <Toaster />
+          </Router>
+        </PortfolioProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 };
 
