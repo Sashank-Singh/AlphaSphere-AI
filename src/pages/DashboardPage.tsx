@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -77,271 +78,283 @@ const DashboardPage: React.FC = () => {
 
   return (
     <Layout>
-      <div className="space-y-6 p-4 pb-20 bg-black min-h-screen">
-        {/* Welcome Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">
-              Welcome back, {user?.name.split(' ')[0]}!
-            </h1>
-            <p className="text-muted-foreground">
-              Here's what's happening in your portfolio today
-            </p>
+      <div className="min-h-screen bg-black text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+          {/* Welcome Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div className="space-y-2">
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
+                Welcome back, {user?.name.split(' ')[0]}!
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                Here's what's happening in your portfolio today
+              </p>
+            </div>
+            
+            {isMobile && (
+              <Badge variant="secondary" className="gap-2 px-3 py-1">
+                <Smartphone className="h-4 w-4" />
+                Mobile Optimized
+              </Badge>
+            )}
           </div>
-          
+
+          {/* Quick Actions - Mobile First */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <Zap className="h-5 w-5" />
+              Quick Actions
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {quickActions.map((action, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  className="h-20 flex-col gap-3 hover:scale-105 transition-transform border-gray-700 hover:border-gray-600"
+                  onClick={action.action}
+                >
+                  <div className={`p-3 rounded-full ${action.color}`}>
+                    <action.icon className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="text-sm font-medium">{action.label}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile Real-Time Dashboard */}
           {isMobile && (
-            <Badge variant="secondary" className="gap-1">
-              <Smartphone className="h-3 w-3" />
-              Mobile Optimized
-            </Badge>
+            <div className="mb-8">
+              <MobileRealTimeDashboard symbols={['AAPL', 'TSLA', 'NVDA', 'MSFT']} />
+            </div>
           )}
-        </div>
 
-        {/* Quick Actions - Mobile First */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {quickActions.map((action, index) => (
-            <Button
-              key={index}
-              variant="outline"
-              className="h-16 flex-col gap-2 hover:scale-105 transition-transform"
-              onClick={action.action}
-            >
-              <div className={`p-2 rounded-full ${action.color}`}>
-                <action.icon className="h-4 w-4 text-white" />
-              </div>
-              <span className="text-xs font-medium">{action.label}</span>
-            </Button>
-          ))}
-        </div>
-
-        {/* Mobile Real-Time Dashboard */}
-        {isMobile && (
-          <MobileRealTimeDashboard symbols={['AAPL', 'TSLA', 'NVDA', 'MSFT']} />
-        )}
-
-        {/* Portfolio Overview & Market Pulse */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2 bg-black text-white border border-gray-800">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Portfolio Overview
-                <Badge variant="secondary" className="text-black">
-                  <Activity className="h-3 w-3 mr-1" />
-                  Live
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <div className="text-3xl font-bold">{formatCurrency(portfolio.totalValue)}</div>
+          {/* Portfolio Overview & Market Pulse */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <Card className="lg:col-span-2 bg-black text-white border-gray-800">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center justify-between text-xl">
+                  Portfolio Overview
+                  <Badge variant="secondary" className="text-black gap-1">
+                    <Activity className="h-3 w-3" />
+                    Live
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-3">
+                  <div className="text-4xl font-bold">{formatCurrency(portfolio.totalValue)}</div>
                   <div className="flex items-center gap-2 text-green-300">
                     <TrendingUp className="h-4 w-4" />
-                    <span>+2.4% (+${((portfolio.totalValue * 0.024)).toFixed(2)}) today</span>
+                    <span className="text-lg">+2.4% (+${((portfolio.totalValue * 0.024)).toFixed(2)}) today</span>
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                <div className="grid grid-cols-2 gap-6 pt-4">
+                  <div className="space-y-2">
                     <div className="text-sm opacity-80">Available Cash</div>
-                    <div className="text-xl font-semibold">{formatCurrency(portfolio.cash)}</div>
+                    <div className="text-2xl font-semibold">{formatCurrency(portfolio.cash)}</div>
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <div className="text-sm opacity-80">Positions</div>
-                    <div className="text-xl font-semibold">{portfolio.positions.length}</div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Market Pulse */}
-          <Card className="bg-black text-white border border-gray-800">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                Market Pulse
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">S&P 500</span>
-                <div className="flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3 text-green-500" />
-                  <span className="text-green-500 font-semibold">
-                    +{marketStats.spyChange.toFixed(2)}%
-                  </span>
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm">VIX</span>
-                <span className="font-semibold">{marketStats.vixLevel.toFixed(1)}</span>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Active Traders</span>
-                <div className="flex items-center gap-1">
-                  <Users className="h-3 w-3 text-blue-500" />
-                  <span className="font-semibold">{marketStats.activeTraders.toLocaleString()}</span>
-                </div>
-              </div>
-              
-              <Button className="w-full mt-4" onClick={() => navigate('/market')}>
-                View Full Market
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Market Intelligence Section */}
-        <div>
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <LineChart className="h-5 w-5" />
-            Market Intelligence
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-black text-white border border-gray-800">
-            <MarketSentimentCard />
-          </div>
-          <div className="bg-black text-white border border-gray-800">
-            <SectorPerformanceCard />
-          </div>
-          <div className="bg-black text-white border border-gray-800">
-            <TopMoversCard />
-          </div>
-          </div>
-        </div>
-
-        {/* Market Analytics Section */}
-        <div>
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            Market Analytics
-          </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-black text-white border border-gray-800">
-            <SectorHeatmapCard />
-          </div>
-            <Card className="bg-black text-white border border-gray-800">
-              <CardHeader>
-                <CardTitle>Market News</CardTitle>
-                <p className="text-sm text-muted-foreground">Latest market updates</p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <h4 className="font-semibold text-sm">Fed Maintains Interest Rates</h4>
-                    <p className="text-xs text-muted-foreground mt-1">Markets react positively to stable monetary policy...</p>
-                    <span className="text-xs text-muted-foreground">2 hours ago</span>
-                  </div>
-                  <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <h4 className="font-semibold text-sm">Tech Earnings Beat Expectations</h4>
-                    <p className="text-xs text-muted-foreground mt-1">Major tech companies report strong quarterly results...</p>
-                    <span className="text-xs text-muted-foreground">4 hours ago</span>
-                  </div>
-                  <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <h4 className="font-semibold text-sm">Oil Prices Surge on Supply Concerns</h4>
-                    <p className="text-xs text-muted-foreground mt-1">Energy sector sees significant gains amid geopolitical tensions...</p>
-                    <span className="text-xs text-muted-foreground">6 hours ago</span>
+                    <div className="text-2xl font-semibold">{portfolio.positions.length}</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Market Pulse */}
+            <Card className="bg-black text-white border-gray-800">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Activity className="h-5 w-5" />
+                  Market Pulse
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-sm">S&P 500</span>
+                  <div className="flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3 text-green-500" />
+                    <span className="text-green-500 font-semibold">
+                      +{marketStats.spyChange.toFixed(2)}%
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-sm">VIX</span>
+                  <span className="font-semibold">{marketStats.vixLevel.toFixed(1)}</span>
+                </div>
+                
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-sm">Active Traders</span>
+                  <div className="flex items-center gap-1">
+                    <Users className="h-3 w-3 text-blue-500" />
+                    <span className="font-semibold">{marketStats.activeTraders.toLocaleString()}</span>
+                  </div>
+                </div>
+                
+                <Button className="w-full mt-6" onClick={() => navigate('/market')}>
+                  View Full Market
+                </Button>
+              </CardContent>
+            </Card>
           </div>
-        </div>
 
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="positions" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
-            <TabsTrigger value="positions">Positions</TabsTrigger>
-            <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
-            <TabsTrigger value="community">Community</TabsTrigger>
-            <TabsTrigger value="alerts">Alerts</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="positions" className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {portfolioPositions.map((position) => (
-                <Card key={position.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-semibold">{position.symbol}</h3>
-                        <p className="text-sm text-muted-foreground">{position.name}</p>
-                      </div>
-                      <Badge variant={position.currentPrice > position.averagePrice ? "default" : "destructive"}>
-                        {position.quantity} shares
-                      </Badge>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm">Current</span>
-                        <span className="font-semibold">${position.currentPrice.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Avg Cost</span>
-                        <span>${position.averagePrice.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">P&L</span>
-                        <span className={position.currentPrice > position.averagePrice ? 'text-green-500' : 'text-red-500'}>
-                          ${((position.currentPrice - position.averagePrice) * position.quantity).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full mt-3"
-                      onClick={() => navigate(`/stocks/${position.symbol}`)}
-                    >
-                      View Details
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+          {/* Market Intelligence Section */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
+              <LineChart className="h-6 w-6" />
+              Market Intelligence
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-black text-white border border-gray-800 rounded-lg">
+                <MarketSentimentCard />
+              </div>
+              <div className="bg-black text-white border border-gray-800 rounded-lg">
+                <SectorPerformanceCard />
+              </div>
+              <div className="bg-black text-white border border-gray-800 rounded-lg">
+                <TopMoversCard />
+              </div>
             </div>
-            
-            {portfolio.positions.length === 0 && (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <PieChart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">No positions yet</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Start building your portfolio by making your first trade
-                  </p>
-                  <Button onClick={() => navigate('/trading')}>
-                    Start Trading
-                  </Button>
+          </div>
+
+          {/* Market Analytics Section */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
+              <BarChart3 className="h-6 w-6" />
+              Market Analytics
+            </h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-black text-white border border-gray-800 rounded-lg">
+                <SectorHeatmapCard />
+              </div>
+              <Card className="bg-black text-white border-gray-800">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl">Market News</CardTitle>
+                  <p className="text-sm text-muted-foreground">Latest market updates</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="p-4 border border-gray-700 rounded-lg hover:bg-muted/10 transition-colors">
+                      <h4 className="font-semibold text-sm mb-2">Fed Maintains Interest Rates</h4>
+                      <p className="text-xs text-muted-foreground mb-2">Markets react positively to stable monetary policy...</p>
+                      <span className="text-xs text-muted-foreground">2 hours ago</span>
+                    </div>
+                    <div className="p-4 border border-gray-700 rounded-lg hover:bg-muted/10 transition-colors">
+                      <h4 className="font-semibold text-sm mb-2">Tech Earnings Beat Expectations</h4>
+                      <p className="text-xs text-muted-foreground mb-2">Major tech companies report strong quarterly results...</p>
+                      <span className="text-xs text-muted-foreground">4 hours ago</span>
+                    </div>
+                    <div className="p-4 border border-gray-700 rounded-lg hover:bg-muted/10 transition-colors">
+                      <h4 className="font-semibold text-sm mb-2">Oil Prices Surge on Supply Concerns</h4>
+                      <p className="text-xs text-muted-foreground mb-2">Energy sector sees significant gains amid geopolitical tensions...</p>
+                      <span className="text-xs text-muted-foreground">6 hours ago</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="ai-insights">
-            <ImprovedSphereAI />
-          </TabsContent>
-
-          <TabsContent value="community">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <MessageSquare className="h-5 w-5" />
-                <h3 className="text-lg font-semibold">Trading Community</h3>
-              </div>
-              <CommunityPage />
             </div>
-          </TabsContent>
+          </div>
 
-          <TabsContent value="alerts">
+          {/* Main Content Tabs */}
+          <div className="mb-8">
+            <Tabs defaultValue="positions" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-12">
+                <TabsTrigger value="positions" className="text-sm">Positions</TabsTrigger>
+                <TabsTrigger value="ai-insights" className="text-sm">AI Insights</TabsTrigger>
+                <TabsTrigger value="community" className="text-sm">Community</TabsTrigger>
+                <TabsTrigger value="alerts" className="text-sm">Alerts</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="positions" className="space-y-6 mt-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {portfolioPositions.map((position) => (
+                    <Card key={position.id} className="hover:shadow-lg transition-shadow border-gray-700">
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="font-semibold text-lg">{position.symbol}</h3>
+                            <p className="text-sm text-muted-foreground">{position.name}</p>
+                          </div>
+                          <Badge variant={position.currentPrice > position.averagePrice ? "default" : "destructive"}>
+                            {position.quantity} shares
+                          </Badge>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-sm">Current</span>
+                            <span className="font-semibold">${position.currentPrice.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">Avg Cost</span>
+                            <span>${position.averagePrice.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">P&L</span>
+                            <span className={position.currentPrice > position.averagePrice ? 'text-green-500' : 'text-red-500'}>
+                              ${((position.currentPrice - position.averagePrice) * position.quantity).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full mt-4"
+                          onClick={() => navigate(`/stocks/${position.symbol}`)}
+                        >
+                          View Details
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                
+                {portfolio.positions.length === 0 && (
+                  <Card className="border-gray-700">
+                    <CardContent className="p-12 text-center">
+                      <PieChart className="h-16 w-16 mx-auto mb-6 text-muted-foreground" />
+                      <h3 className="text-xl font-semibold mb-3">No positions yet</h3>
+                      <p className="text-muted-foreground mb-6">
+                        Start building your portfolio by making your first trade
+                      </p>
+                      <Button onClick={() => navigate('/trading')}>
+                        Start Trading
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              <TabsContent value="ai-insights" className="mt-6">
+                <ImprovedSphereAI />
+              </TabsContent>
+
+              <TabsContent value="community" className="mt-6">
+                <div className="space-y-6">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-6 w-6" />
+                    <h3 className="text-xl font-semibold">Trading Community</h3>
+                  </div>
+                  <CommunityPage />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="alerts" className="mt-6">
+                <ImprovedSphereAI />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Improved Sphere AI */}
+          <div className="mb-8">
             <ImprovedSphereAI />
-          </TabsContent>
-        </Tabs>
-
-        {/* Improved Sphere AI */}
-        <ImprovedSphereAI />
+          </div>
+        </div>
       </div>
     </Layout>
   );
