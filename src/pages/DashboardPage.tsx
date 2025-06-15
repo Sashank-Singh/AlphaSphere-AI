@@ -45,13 +45,15 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Market Intelligence - Now positioned above the tabs */}
+          <MarketIntelligence />
+
           {/* Main Content - Responsive tabs */}
           <div className="grid gap-4 md:gap-6 grid-cols-1 xl:grid-cols-4">
             <div className="xl:col-span-3 space-y-4">
               <MainContentTabs />
             </div>
             <div className="space-y-4">
-              <MarketIntelligence />
               <AIMarketSentiment />
             </div>
           </div>
