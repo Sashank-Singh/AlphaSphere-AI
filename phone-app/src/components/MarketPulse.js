@@ -1,0 +1,136 @@
+
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+
+const MarketPulse = () => {
+  const [marketStats, setMarketStats] = useState({
+    spyChange: 0.85,
+    vixLevel: 18.4,
+    cryptoSentiment: 'bullish',
+    activeTraders: 15420,
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMarketStats(prev => ({
+        ...prev,
+        spyChange: prev.spyChange + (Math.random() - 0.5) * 0.1,
+        vixLevel: Math.max(10, Math.min(30, prev.vixLevel + (Math.random() - 0.5) * 0.5)),
+        activeTraders: prev.activeTraders + Math.floor((Math.random() - 0.5) * 100),
+      }));
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Feather name="activity" size={20} color="#3B82F6" />
+        <Text style={styles.title}>Market Pulse</Text>
+      </View>
+      
+      <View style={styles.content}>
+        <View style={styles.statRow}>
+          <Text style={styles.statLabel}>S&P 500</Text>
+          <View style={styles.statValue}>
+            <Feather name="trending-up" size={12} color="#10B981" />
+            <Text style={styles.positiveChange}>
+              +{marketStats.spyChange.toFixed(2)}%
+            </Text>
+          </View>
+        </View>
+        
+        <View style={styles.statRow}>
+          <Text style={styles.statLabel}>VIX</Text>
+          <Text style={styles.statNumber}>{marketStats.vixLevel.toFixed(1)}</Text>
+        </View>
+        
+        <View style={styles.statRow}>
+          <Text style={styles.statLabel}>Active Traders</Text>
+          <View style={styles.statValue}>
+            <Feather name="users" size={12} color="#3B82F6" />
+            <Text style={styles.statNumber}>
+              {marketStats.activeTraders.toLocaleString()}
+            </Text>
+          </View>
+        </View>
+        
+        <TouchableOpacity style={styles.button}>
+          <Text style={styles.buttonText}>View Full Market</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+    marginLeft: 8,
+  },
+  content: {
+    gap: 12,
+  },
+  statRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  statValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  positiveChange: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#10B981',
+  },
+  statNumber: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  button: {
+    backgroundColor: '#3B82F6',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
+
+export default MarketPulse;

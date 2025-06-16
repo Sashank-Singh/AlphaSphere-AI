@@ -1,0 +1,368 @@
+
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+
+const AIPortfolioOptimizer = () => {
+  const [optimization, setOptimization] = useState({
+    overallScore: 78,
+    riskLevel: 'medium',
+    diversificationScore: 85,
+    allocations: [
+      { sector: 'Technology', current: 45, recommended: 35, status: 'overweight' },
+      { sector: 'Healthcare', current: 15, recommended: 20, status: 'underweight' },
+      { sector: 'Finance', current: 25, recommended: 25, status: 'optimal' },
+      { sector: 'Energy', current: 15, recommended: 20, status: 'underweight' },
+    ],
+    recommendations: [
+      { type: 'reduce', action: 'Reduce tech exposure', impact: 85 },
+      { type: 'add', action: 'Increase healthcare allocation', impact: 70 },
+    ],
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setOptimization(prev => ({
+        ...prev,
+        overallScore: Math.max(60, Math.min(95, prev.overallScore + (Math.random() - 0.5) * 8)),
+        diversificationScore: Math.max(70, Math.min(100, prev.diversificationScore + (Math.random() - 0.5) * 6)),
+      }));
+    }, 12000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const getRiskColor = (risk) => {
+    switch (risk) {
+      case 'low': return '#10B981';
+      case 'high': return '#EF4444';
+      default: return '#F59E0B';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'optimal': return 'check-circle';
+      case 'overweight': return 'trending-up';
+      case 'underweight': return 'trending-down';
+      default: return 'circle';
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'optimal': return '#10B981';
+      case 'overweight': return '#EF4444';
+      case 'underweight': return '#F59E0B';
+      default: return '#6B7280';
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Feather name="pie-chart" size={20} color="#3B82F6" />
+        <Text style={styles.title}>AI Portfolio Optimizer</Text>
+        <View style={styles.liveBadge}>
+          <Feather name="zap" size={12} color="#F59E0B" />
+          <Text style={styles.liveText}>Live</Text>
+        </View>
+      </View>
+      
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.scoreSection}>
+          <View style={styles.scoreHeader}>
+            <View style={styles.scoreTitleContainer}>
+              <Feather name="cpu" size={16} color="#3B82F6" />
+              <Text style={styles.scoreTitle}>Optimization Score</Text>
+            </View>
+            <View style={styles.riskContainer}>
+              <Text style={styles.riskLabel}>Risk Level</Text>
+              <Text style={[styles.riskValue, { color: getRiskColor(optimization.riskLevel) }]}>
+                {optimization.riskLevel}
+              </Text>
+            </View>
+          </View>
+          
+          <View style={styles.progressContainer}>
+            <View style={styles.progressHeader}>
+              <Text style={styles.progressLabel}>Portfolio Score</Text>
+              <Text style={styles.progressValue}>{optimization.overallScore.toFixed(0)}%</Text>
+            </View>
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { width: `${optimization.overallScore}%` }
+                ]} 
+              />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.allocationsSection}>
+          <View style={styles.sectionHeader}>
+            <Feather name="target" size={16} color="#3B82F6" />
+            <Text style={styles.sectionTitle}>Asset Allocation</Text>
+          </View>
+          {optimization.allocations.map((allocation, index) => (
+            <View key={index} style={styles.allocationRow}>
+              <Text style={styles.allocationSector}>{allocation.sector}</Text>
+              <View style={styles.allocationRight}>
+                <Text style={styles.allocationCurrent}>{allocation.current.toFixed(0)}%</Text>
+                <View style={styles.allocationBar}>
+                  <View 
+                    style={[
+                      styles.allocationFill, 
+                      { width: `${(allocation.current / 50) * 100}%` }
+                    ]} 
+                  />
+                </View>
+                <Feather 
+                  name={getStatusIcon(allocation.status)} 
+                  size={12} 
+                  color={getStatusColor(allocation.status)} 
+                />
+              </View>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.recommendationsSection}>
+          <Text style={styles.sectionTitle}>AI Recommendations</Text>
+          {optimization.recommendations.map((rec, index) => (
+            <View key={index} style={styles.recommendationRow}>
+              <View style={[
+                styles.recommendationBadge,
+                { backgroundColor: rec.type === 'add' ? '#3B82F6' : '#EF4444' }
+              ]}>
+                <Feather 
+                  name={rec.type === 'add' ? 'trending-up' : 'bar-chart-2'} 
+                  size={12} 
+                  color="#FFFFFF" 
+                />
+                <Text style={styles.badgeText}>{rec.type.toUpperCase()}</Text>
+              </View>
+              <Text style={styles.recommendationAction}>{rec.action}</Text>
+              <Text style={styles.recommendationImpact}>{rec.impact}%</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.diversificationSection}>
+          <View style={styles.diversificationRow}>
+            <Text style={styles.diversificationLabel}>Diversification Score</Text>
+            <Text style={styles.diversificationValue}>
+              {optimization.diversificationScore.toFixed(0)}%
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+    marginLeft: 8,
+    flex: 1,
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  liveText: {
+    fontSize: 12,
+    color: '#F59E0B',
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  content: {
+    maxHeight: 400,
+  },
+  scoreSection: {
+    marginBottom: 16,
+  },
+  scoreHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  scoreTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  scoreTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginLeft: 8,
+  },
+  riskContainer: {
+    alignItems: 'flex-end',
+  },
+  riskLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  riskValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    textTransform: 'capitalize',
+  },
+  progressContainer: {
+    gap: 8,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  progressLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  progressValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 4,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#3B82F6',
+    borderRadius: 4,
+  },
+  allocationsSection: {
+    marginBottom: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+    marginLeft: 8,
+  },
+  allocationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  allocationSector: {
+    fontSize: 12,
+    color: '#111827',
+    flex: 1,
+  },
+  allocationRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  allocationCurrent: {
+    fontSize: 12,
+    color: '#6B7280',
+    width: 30,
+    textAlign: 'right',
+  },
+  allocationBar: {
+    width: 32,
+    height: 4,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 2,
+  },
+  allocationFill: {
+    height: '100%',
+    backgroundColor: '#3B82F6',
+    borderRadius: 2,
+  },
+  recommendationsSection: {
+    marginBottom: 16,
+  },
+  recommendationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  recommendationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 8,
+  },
+  badgeText: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  recommendationAction: {
+    fontSize: 12,
+    color: '#111827',
+    flex: 1,
+  },
+  recommendationImpact: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  diversificationSection: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  diversificationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  diversificationLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  diversificationValue: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#111827',
+  },
+});
+
+export default AIPortfolioOptimizer;
