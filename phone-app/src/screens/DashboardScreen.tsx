@@ -14,7 +14,11 @@ import AIPortfolioOptimizer from '../components/AIPortfolioOptimizer';
 import QuickActions from '../components/QuickActions';
 import WelcomeHeader from '../components/WelcomeHeader';
 
-const DashboardScreen = ({ navigation }) => {
+interface DashboardScreenProps {
+  navigation: any;
+}
+
+const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>

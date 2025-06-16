@@ -3,15 +3,26 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-const QuickActions = ({ navigation }) => {
-  const actions = [
+interface Action {
+  label: string;
+  icon: keyof typeof Feather.glyphMap;
+  screen?: string;
+  color: string;
+}
+
+interface QuickActionsProps {
+  navigation: any;
+}
+
+const QuickActions: React.FC<QuickActionsProps> = ({ navigation }) => {
+  const actions: Action[] = [
     { label: 'Quick Trade', icon: 'zap', screen: 'Trading', color: '#3B82F6' },
-    { label: 'AI Insights', icon: 'brain', color: '#10B981' },
+    { label: 'AI Insights', icon: 'cpu', color: '#10B981' },
     { label: 'Portfolio', icon: 'target', screen: 'Portfolio', color: '#F59E0B' },
     { label: 'Analytics', icon: 'bar-chart-2', color: '#06B6D4' },
   ];
 
-  const handleActionPress = (action) => {
+  const handleActionPress = (action: Action) => {
     if (action.screen) {
       navigation.navigate(action.screen);
     }

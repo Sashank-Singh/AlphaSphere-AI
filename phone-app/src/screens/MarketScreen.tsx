@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   View,
@@ -8,12 +7,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const PortfolioScreen = () => {
+const MarketScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
-        <Text style={styles.title}>Portfolio Management</Text>
-        <Text style={styles.subtitle}>Coming soon - Detailed portfolio analytics and management</Text>
+        <Text style={styles.title}>Market Overview</Text>
+        <Text style={styles.subtitle}>Coming soon - Real-time market data and analysis</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -41,4 +40,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PortfolioScreen;
+export default MarketScreen;

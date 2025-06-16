@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   View,
@@ -8,7 +7,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const SettingsScreen = () => {
+const SettingsScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>

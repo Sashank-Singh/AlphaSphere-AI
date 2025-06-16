@@ -17,7 +17,7 @@ import TabIcon from './src/components/TabIcon';
 
 const Tab = createBottomTabNavigator();
 
-export default function App() {
+export default function App(): JSX.Element {
   return (
     <SafeAreaProvider>
       <NavigationContainer>

@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-const WelcomeHeader = () => {
+const WelcomeHeader: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.headerContent}>

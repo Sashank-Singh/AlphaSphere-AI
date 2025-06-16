@@ -1,10 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-const MarketPulse = () => {
-  const [marketStats, setMarketStats] = useState({
+interface MarketStats {
+  spyChange: number;
+  vixLevel: number;
+  cryptoSentiment: string;
+  activeTraders: number;
+}
+
+const MarketPulse: React.FC = () => {
+  const [marketStats, setMarketStats] = useState<MarketStats>({
     spyChange: 0.85,
     vixLevel: 18.4,
     cryptoSentiment: 'bullish',

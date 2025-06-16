@@ -1,10 +1,17 @@
-
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-const PortfolioOverview = () => {
-  const portfolioData = {
+interface PortfolioData {
+  totalValue: number;
+  dailyChange: number;
+  dailyChangeAmount: number;
+  availableCash: number;
+  positions: number;
+}
+
+const PortfolioOverview: React.FC = () => {
+  const portfolioData: PortfolioData = {
     totalValue: 125420.50,
     dailyChange: 2.4,
     dailyChangeAmount: 3012.85,
@@ -12,7 +19,7 @@ const PortfolioOverview = () => {
     positions: 12,
   };
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',

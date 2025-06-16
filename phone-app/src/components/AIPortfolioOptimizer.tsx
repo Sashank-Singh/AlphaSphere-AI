@@ -1,10 +1,30 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-const AIPortfolioOptimizer = () => {
-  const [optimization, setOptimization] = useState({
+interface Allocation {
+  sector: string;
+  current: number;
+  recommended: number;
+  status: 'optimal' | 'overweight' | 'underweight';
+}
+
+interface Recommendation {
+  type: 'reduce' | 'add';
+  action: string;
+  impact: number;
+}
+
+interface Optimization {
+  overallScore: number;
+  riskLevel: 'low' | 'medium' | 'high';
+  diversificationScore: number;
+  allocations: Allocation[];
+  recommendations: Recommendation[];
+}
+
+const AIPortfolioOptimizer: React.FC = () => {
+  const [optimization, setOptimization] = useState<Optimization>({
     overallScore: 78,
     riskLevel: 'medium',
     diversificationScore: 85,
@@ -32,7 +52,7 @@ const AIPortfolioOptimizer = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const getRiskColor = (risk) => {
+  const getRiskColor = (risk: string): string => {
     switch (risk) {
       case 'low': return '#10B981';
       case 'high': return '#EF4444';
@@ -40,7 +60,7 @@ const AIPortfolioOptimizer = () => {
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string): keyof typeof Feather.glyphMap => {
     switch (status) {
       case 'optimal': return 'check-circle';
       case 'overweight': return 'trending-up';
@@ -49,7 +69,7 @@ const AIPortfolioOptimizer = () => {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string): string => {
     switch (status) {
       case 'optimal': return '#10B981';
       case 'overweight': return '#EF4444';
