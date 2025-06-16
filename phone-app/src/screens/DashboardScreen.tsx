@@ -15,7 +15,7 @@ import QuickActions from '../components/QuickActions';
 import WelcomeHeader from '../components/WelcomeHeader';
 
 interface DashboardScreenProps {
-  navigation: any;
+  navigation: { navigate: (screen: string) => void };
 }
 
 const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {

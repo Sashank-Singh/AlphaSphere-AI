@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { usePortfolio } from '@/context/PortfolioContext';
@@ -25,46 +24,29 @@ const DashboardPage: React.FC = () => {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-          {/* Welcome Header */}
+        <main className="flex-1 space-y-6 p-4 sm:p-6 lg:p-8">
           <WelcomeHeader />
 
-          {/* Quick Actions Section - Full Width Centered */}
           <div className="w-full max-w-4xl mx-auto">
             <QuickActions />
           </div>
 
-          {/* Portfolio Overview */}
-          <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
               <PortfolioOverview />
+              <MarketIntelligence />
+              <MarketAnalytics />
+              
             </div>
             <div className="space-y-6">
               <MarketPulse />
-            </div>
-          </div>
-
-          {/* Market Intelligence */}
-          <MarketIntelligence />
-
-          {/* Main Content */}
-          <div className="grid gap-6 grid-cols-1 xl:grid-cols-4">
-            <div className="xl:col-span-3 space-y-6">
-              <MainContentTabs />
-            </div>
-            <div className="space-y-6">
+              <SmartNotifications />
               <AIMarketSentiment />
             </div>
           </div>
 
-          {/* Bottom sections */}
-          <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-            <MarketAnalytics />
-            <div className="space-y-6">
-              <SmartNotifications />
-            </div>
-          </div>
-        </div>
+          <MainContentTabs />
+        </main>
       </Layout>
     </ProtectedRoute>
   );

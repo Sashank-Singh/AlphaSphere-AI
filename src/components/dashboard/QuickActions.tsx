@@ -15,17 +15,17 @@ const QuickActions: React.FC = () => {
   ];
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+    <div className="w-full text-left flex flex-col items-start">
+      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 justify-start">
         <Zap className="h-5 w-5" />
         Quick Actions
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="flex flex-row gap-4 w-full justify-start items-start">
         {quickActions.map((action, index) => (
           <Button
             key={index}
             variant="outline"
-            className="h-20 flex-col gap-3 hover:scale-105 transition-transform border-gray-700 hover:border-gray-600"
+            className="h-20 flex-col gap-3 hover:scale-105 transition-transform border-none min-w-[250px]"
             onClick={action.action}
           >
             <div className={`p-3 rounded-full ${action.color}`}>

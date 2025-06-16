@@ -1,6 +1,4 @@
-
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Target, TrendingUp, Brain, BarChart3, Zap, PieChart } from 'lucide-react';
@@ -81,18 +79,16 @@ const AIMarketSentiment: React.FC = () => {
   };
 
   return (
-    <Card className="h-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <PieChart className="h-5 w-5 text-primary" />
-          AI Portfolio Optimizer
-          <Badge variant="secondary" className="ml-auto">
-            <Zap className="h-3 w-3 mr-1" />
-            Live
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div>
+      <h3 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2 mb-6">
+        <PieChart className="h-5 w-5 text-primary" />
+        AI Portfolio Optimizer
+        <Badge variant="secondary" className="ml-auto">
+          <Zap className="h-3 w-3 mr-1" />
+          Live
+        </Badge>
+      </h3>
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Brain className="h-4 w-4 text-primary" />
@@ -160,8 +156,8 @@ const AIMarketSentiment: React.FC = () => {
             <span className="font-semibold">{optimization.diversificationScore.toFixed(0)}%</span>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

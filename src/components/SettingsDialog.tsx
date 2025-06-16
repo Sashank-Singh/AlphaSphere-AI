@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
 import {
@@ -13,6 +13,24 @@ import {
 } from "@/components/ui/dialog"
 
 const SettingsDialog: React.FC = () => {
+  const [orderType, setOrderType] = useState('Market');
+  const [riskLevel, setRiskLevel] = useState('Medium');
+  const [priceAlerts, setPriceAlerts] = useState(true);
+  const [tradeConfirmations, setTradeConfirmations] = useState(true);
+  const [aiRecommendations, setAiRecommendations] = useState(true);
+
+  const handleSaveChanges = () => {
+    console.log('Saving settings:', {
+      orderType,
+      riskLevel,
+      priceAlerts,
+      tradeConfirmations,
+      aiRecommendations
+    });
+    // Here you would typically update a global state or call an API to persist settings
+    alert('Settings saved successfully!');
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -27,17 +45,19 @@ const SettingsDialog: React.FC = () => {
             Configure your trading preferences and account settings.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4">
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-sm font-medium mb-2">Trading Preferences</h4>
-              <div className="space-y-2">
+        <div className="py-6">
+          <div className="space-y-6">
+            <div className="p-4 bg-muted rounded-lg">
+              <h4 className="text-base font-medium mb-3 text-foreground">Trading Preferences</h4>
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label htmlFor="orderType" className="text-sm">Default Order Type</label>
+                  <label htmlFor="orderType" className="text-sm text-foreground">Default Order Type</label>
                   <select 
                     id="orderType"
                     name="orderType"
-                    className="text-sm border rounded p-1"
+                    value={orderType}
+                    onChange={(e) => setOrderType(e.target.value)}
+                    className="text-sm border border-input rounded-md p-2 bg-background focus:ring-2 focus:ring-ring focus:outline-none"
                     aria-label="Select default order type"
                   >
                     <option>Market</option>
@@ -46,11 +66,13 @@ const SettingsDialog: React.FC = () => {
                   </select>
                 </div>
                 <div className="flex items-center justify-between">
-                  <label htmlFor="riskLevel" className="text-sm">Risk Level</label>
+                  <label htmlFor="riskLevel" className="text-sm text-foreground">Risk Level</label>
                   <select
                     id="riskLevel"
                     name="riskLevel"
-                    className="text-sm border rounded p-1"
+                    value={riskLevel}
+                    onChange={(e) => setRiskLevel(e.target.value)}
+                    className="text-sm border border-input rounded-md p-2 bg-background focus:ring-2 focus:ring-ring focus:outline-none"
                     aria-label="Select risk level"
                   >
                     <option>Low</option>
@@ -60,36 +82,42 @@ const SettingsDialog: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div>
-              <h4 className="text-sm font-medium mb-2">Notifications</h4>
-              <div className="space-y-2">
+            <div className="p-4 bg-muted rounded-lg">
+              <h4 className="text-base font-medium mb-3 text-foreground">Notifications</h4>
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label htmlFor="priceAlerts" className="text-sm">Price Alerts</label>
+                  <label htmlFor="priceAlerts" className="text-sm text-foreground">Price Alerts</label>
                   <input 
                     type="checkbox" 
                     id="priceAlerts"
                     name="priceAlerts"
-                    defaultChecked 
+                    checked={priceAlerts}
+                    onChange={() => setPriceAlerts(!priceAlerts)}
+                    className="h-4 w-4 text-primary focus:ring-primary border-input rounded"
                     aria-label="Enable price alerts"
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <label htmlFor="tradeConfirmations" className="text-sm">Trade Confirmations</label>
+                  <label htmlFor="tradeConfirmations" className="text-sm text-foreground">Trade Confirmations</label>
                   <input 
                     type="checkbox" 
                     id="tradeConfirmations"
                     name="tradeConfirmations"
-                    defaultChecked 
+                    checked={tradeConfirmations}
+                    onChange={() => setTradeConfirmations(!tradeConfirmations)}
+                    className="h-4 w-4 text-primary focus:ring-primary border-input rounded"
                     aria-label="Enable trade confirmations"
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <label htmlFor="aiRecommendations" className="text-sm">AI Recommendations</label>
+                  <label htmlFor="aiRecommendations" className="text-sm text-foreground">AI Recommendations</label>
                   <input 
                     type="checkbox" 
                     id="aiRecommendations"
                     name="aiRecommendations"
-                    defaultChecked 
+                    checked={aiRecommendations}
+                    onChange={() => setAiRecommendations(!aiRecommendations)}
+                    className="h-4 w-4 text-primary focus:ring-primary border-input rounded"
                     aria-label="Enable AI recommendations"
                   />
                 </div>
@@ -99,7 +127,7 @@ const SettingsDialog: React.FC = () => {
         </div>
         <DialogFooter>
           <Button variant="outline">Reset to Default</Button>
-          <Button>Save Changes</Button>
+          <Button onClick={handleSaveChanges}>Save Changes</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
