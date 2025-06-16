@@ -67,8 +67,8 @@ interface StockPriceChartProps {
 }
 
 const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
-  const [interval, setInterval] = useState('D');
-  const [showVolume, setShowVolume] = useState(false);
+  const [interval, setInterval] = useState('5');
+  const [showVolume, setShowVolume] = useState(true);
   const [showIndicators, setShowIndicators] = useState(false);
   const [activeIndicators, setActiveIndicators] = useState<{[key: string]: boolean}>({
     // Trend Indicators
@@ -355,12 +355,12 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
         {/* Chart header and controls */}
         <div className="flex flex-wrap gap-2 items-center mb-2">
           <ToggleGroup type="single" value={interval} onValueChange={(value) => value && setInterval(value)}>
+            <ToggleGroupItem value="5" size="sm">5m</ToggleGroupItem>
+            <ToggleGroupItem value="15" size="sm">15m</ToggleGroupItem>
+            <ToggleGroupItem value="60" size="sm">1H</ToggleGroupItem>
             <ToggleGroupItem value="D" size="sm">1D</ToggleGroupItem>
             <ToggleGroupItem value="W" size="sm">1W</ToggleGroupItem>
             <ToggleGroupItem value="M" size="sm">1M</ToggleGroupItem>
-            <ToggleGroupItem value="3M" size="sm">3M</ToggleGroupItem>
-            <ToggleGroupItem value="12M" size="sm">1Y</ToggleGroupItem>
-            <ToggleGroupItem value="60M" size="sm">5Y</ToggleGroupItem>
           </ToggleGroup>
 
           <div className="flex gap-2 ml-auto">
