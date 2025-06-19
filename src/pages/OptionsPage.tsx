@@ -9,6 +9,7 @@ import RealTimeStockChart from '@/components/RealTimeStockChart';
 import OptionsChart from '@/components/OptionsChart';
 import { usePolygonWebSocketData } from '@/hooks/usePolygonWebSocket';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { stockDataService } from '@/lib/stockDataService';
 
 interface ChartDataPoint {
   date: string;
@@ -120,45 +121,30 @@ const OptionsPage: React.FC = () => {
   useEffect(() => {
     const fetchDataForCurrentSymbol = async () => {
       setIsLoading(true);
-      
+
       const currentWsData: WsSymbolData | undefined = (wsStockData as PolygonWsData)?.[currentSymbol];
-      if (currentWsData && 
-          ((currentWsData.p ?? currentWsData.price ?? currentWsData.ap ?? currentWsData.bp) ?? 0) > 0) {
+      if (currentWsData && ((currentWsData.p ?? currentWsData.price ?? currentWsData.ap ?? currentWsData.bp) ?? 0) > 0) {
         setIsLoading(false);
         return;
       }
 
       try {
-        const alpacaResponse: AlpacaQuoteResponse = await getLatestQuote(currentSymbol);
-        if (alpacaResponse && alpacaResponse.quote) {
-          const quote: AlpacaQuote = alpacaResponse.quote;
-          const price = quote.ap ?? quote.bp ?? 0;
-          const previousClose = quote.pcp ?? 0;
+        const quote = await stockDataService.getStockQuote(currentSymbol);
 
-          let change = 0;
-          let changePercent = 0;
-
-          if (price !== 0 && previousClose !== 0) {
-            change = price - previousClose;
-            changePercent = (change / previousClose) * 100;
-          }
-
-          prevPriceRef.current = stockData.price;
-          const isMock = isMockDataMode();
-
+        if (quote) {
           setStockData({
-            symbol: alpacaResponse.symbol || currentSymbol,
-            price: price,
-            change: change,
-            changePercent: changePercent,
+            symbol: quote.symbol,
+            price: quote.price,
+            change: quote.change,
+            changePercent: quote.changePercent,
             lastUpdated: Date.now(),
-            isMockData: isMock
+            isMockData: false
           });
         } else {
-          setStockData({ 
-            symbol: currentSymbol, 
-            price: 0, 
-            change: 0, 
+          setStockData({
+            symbol: currentSymbol,
+            price: 0,
+            change: 0,
             changePercent: 0,
             lastUpdated: Date.now(),
             isMockData: true
@@ -166,10 +152,10 @@ const OptionsPage: React.FC = () => {
         }
       } catch (error) {
         console.error(`Error fetching stock data for ${currentSymbol}:`, error);
-        setStockData({ 
-          symbol: currentSymbol, 
-          price: 0, 
-          change: 0, 
+        setStockData({
+          symbol: currentSymbol,
+          price: 0,
+          change: 0,
           changePercent: 0,
           lastUpdated: Date.now(),
           isMockData: true
@@ -182,7 +168,7 @@ const OptionsPage: React.FC = () => {
     if (currentSymbol) {
       fetchDataForCurrentSymbol();
     }
-  }, [currentSymbol]); 
+  }, [currentSymbol]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -295,15 +281,17 @@ const OptionsPage: React.FC = () => {
         {/* Enhanced Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Stock Chart */}
-          <RealTimeStockChart
-            symbol={stockData.symbol}
-            currentPrice={stockData.price}
-            change={stockData.change}
-            changePercent={stockData.changePercent}
-            isRealTime={stockFeedConnected}
-            chartType="area"
-            height={350}
-          />
+          {stockData.price > 0 && (
+            <RealTimeStockChart
+              symbol={stockData.symbol}
+              currentPrice={stockData.price}
+              change={stockData.change}
+              changePercent={stockData.changePercent}
+              isRealTime={stockFeedConnected}
+              chartType="area"
+              height={350}
+            />
+          )}
 
           {/* Options Chart */}
           <OptionsChart

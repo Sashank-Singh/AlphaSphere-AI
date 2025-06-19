@@ -8,6 +8,8 @@ import TradingPanel from '@/components/TradingPanel';
 import AITradeAdvisor from '@/components/AITradeAdvisor';
 import RealTimeStockChart from '@/components/RealTimeStockChart';
 import { usePolygonWebSocketData } from '@/hooks/usePolygonWebSocket';
+import { stockDataService } from '@/lib/stockDataService';
+import { CompanyInfo } from '@/lib/stockDataService';
 
 // Define interfaces for the chart and company data
 interface ChartDataPoint {
@@ -125,45 +127,52 @@ const TradingPage: React.FC = () => {
   useEffect(() => {
     const fetchDataForCurrentSymbol = async () => {
       setIsLoading(true);
-      
+
       const currentWsData: WsSymbolData | undefined = (wsStockData as PolygonWsData)?.[currentSymbol];
-      if (currentWsData && 
-          ((currentWsData.p ?? currentWsData.price ?? currentWsData.ap ?? currentWsData.bp) ?? 0) > 0) {
+      if (currentWsData && ((currentWsData.p ?? currentWsData.price ?? currentWsData.ap ?? currentWsData.bp) ?? 0) > 0) {
         setIsLoading(false);
         return;
       }
 
       try {
-        const isMock = isMockDataMode();
+        const [quote, info] = await Promise.all([
+          stockDataService.getStockQuote(currentSymbol),
+          stockDataService.getCompanyInfo(currentSymbol)
+        ]);
 
+        if (quote) {
+          setStockData({
+            symbol: quote.symbol,
+            price: quote.price,
+            change: quote.change,
+            changePercent: quote.changePercent,
+            lastUpdated: Date.now(),
+            isMockData: false
+          });
+        }
+
+        if (info) {
+          setCompanyData({
+            description: info.description || `${info.name} is a publicly traded company.`,
+            marketCap: (info.marketCap || 0).toLocaleString(),
+            peRatio: (info.peRatio || 0).toFixed(2),
+            high52Week: (info.high52Week || 0).toFixed(2),
+            low52Week: (info.low52Week || 0).toFixed(2),
+            volume: (quote?.volume || 0).toLocaleString(),
+            avgVolume: (info.avgVolume || 0).toLocaleString()
+          });
+        }
+      } catch (error) {
+        console.error(`Error fetching stock data for ${currentSymbol}:`, error);
         setStockData({
           symbol: currentSymbol,
           price: 0,
           change: 0,
           changePercent: 0,
           lastUpdated: Date.now(),
-          isMockData: isMock
-        });
-
-        setCompanyData({
-          description: `${currentSymbol} is a publicly traded company.`,
-          marketCap: (0 * 1000000000).toLocaleString(),
-          peRatio: (15 + Math.random() * 10).toFixed(2),
-          high52Week: (0 * 1.2).toFixed(2),
-          low52Week: (0 * 0.8).toFixed(2),
-          volume: (0).toLocaleString(),
-          avgVolume: (0).toLocaleString()
-        });
-      } catch (error) {
-        console.error(`Error fetching stock data for ${currentSymbol}:`, error);
-        setStockData({ 
-          symbol: currentSymbol, 
-          price: 0, 
-          change: 0, 
-          changePercent: 0,
-          lastUpdated: Date.now(),
           isMockData: true
         });
+        setCompanyData(null);
       } finally {
         setIsLoading(false);
       }
@@ -172,7 +181,7 @@ const TradingPage: React.FC = () => {
     if (currentSymbol) {
       fetchDataForCurrentSymbol();
     }
-  }, [currentSymbol]); 
+  }, [currentSymbol]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -350,8 +359,6 @@ const TradingPage: React.FC = () => {
       <div className="mb-6">
         <AITradeAdvisor
           symbol={stockData.symbol}
-          price={stockData.price}
-          change={stockData.change}
           accountId={accountId}
         />
       </div>

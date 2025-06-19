@@ -2,7 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Users, Globe, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Building2, Users, Globe, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { stockDataService } from '@/lib/stockDataService';
 
 interface CompanyInfo {
@@ -28,6 +29,7 @@ const StockInfoCard: React.FC<StockInfoCardProps> = ({ symbol, companyInfo: prop
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(propCompanyInfo || null);
   const [loading, setLoading] = useState(!propCompanyInfo);
   const [error, setError] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     if (!propCompanyInfo && symbol) {
@@ -101,74 +103,106 @@ const StockInfoCard: React.FC<StockInfoCardProps> = ({ symbol, companyInfo: prop
     );
   }
 
+  const truncateDescription = (text: string, maxLength: number = 150) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
+  const shouldShowExpandButton = companyInfo?.description && companyInfo.description.length > 150;
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Building2 className="h-5 w-5" />
+    <Card className="h-fit">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Building2 className="h-4 w-4" />
           Company Information
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <h3 className="font-semibold text-lg">{companyInfo.name}</h3>
-          <Badge variant="secondary">{companyInfo.symbol}</Badge>
+      <CardContent className="space-y-3">
+        {/* Company Name and Symbol - Compact Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm truncate">{companyInfo.name}</h3>
+            <Badge variant="secondary" className="text-xs mt-1">{companyInfo.symbol}</Badge>
+          </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Key Metrics - Horizontal Layout */}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
           <div>
-            <label className="text-sm font-medium text-muted-foreground">Sector</label>
-            <p>{companyInfo.sector}</p>
+            <span className="text-muted-foreground">Sector</span>
+            <p className="font-medium truncate">{companyInfo.sector}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-muted-foreground">Industry</label>
-            <p>{companyInfo.industry}</p>
+            <span className="text-muted-foreground">Industry</span>
+            <p className="font-medium truncate">{companyInfo.industry}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-muted-foreground">Exchange</label>
-            <p>{companyInfo.exchange}</p>
+            <span className="text-muted-foreground">Exchange</span>
+            <p className="font-medium">{companyInfo.exchange}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-muted-foreground">Market Cap</label>
-            <p>${(companyInfo.marketCap / 1000000000).toFixed(2)}B</p>
+            <span className="text-muted-foreground">Market Cap</span>
+            <p className="font-medium">${(companyInfo.marketCap / 1000000000).toFixed(2)}B</p>
           </div>
         </div>
 
-        {companyInfo.description && (
-          <div>
-            <label className="text-sm font-medium text-muted-foreground">Description</label>
-            <p className="text-sm text-muted-foreground mt-1">
-              {companyInfo.description}
-            </p>
-          </div>
-        )}
-
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        {/* Additional Info - Compact Row */}
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {companyInfo.employees && (
             <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              {companyInfo.employees.toLocaleString()} employees
+              <Users className="h-3 w-3" />
+              <span>{(companyInfo.employees / 1000).toFixed(0)}K</span>
             </div>
           )}
           {companyInfo.founded && (
             <div className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              Founded {companyInfo.founded}
+              <Calendar className="h-3 w-3" />
+              <span>{companyInfo.founded}</span>
             </div>
           )}
-        </div>
-
-        {companyInfo.website && (
-          <div>
+          {companyInfo.website && (
             <a 
               href={companyInfo.website} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm"
+              className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
             >
-              <Globe className="h-4 w-4" />
-              Visit Website
+              <Globe className="h-3 w-3" />
+              <span>Website</span>
             </a>
+          )}
+        </div>
+
+        {/* Description - Expandable */}
+        {companyInfo.description && (
+          <div className="space-y-2">
+            <div className="text-xs">
+              <span className="text-muted-foreground">Description</span>
+              <p className="text-muted-foreground mt-1 leading-relaxed">
+                {isExpanded ? companyInfo.description : truncateDescription(companyInfo.description)}
+              </p>
+            </div>
+            {shouldShowExpandButton && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+              >
+                {isExpanded ? (
+                  <>
+                    <ChevronUp className="h-3 w-3 mr-1" />
+                    Show Less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-3 w-3 mr-1" />
+                    Show More
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         )}
       </CardContent>

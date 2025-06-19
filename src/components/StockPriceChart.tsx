@@ -69,7 +69,7 @@ interface StockPriceChartProps {
 
 const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
   const [interval, setInterval] = useState('5');
-  const [showVolume, setShowVolume] = useState(true);
+  const [showVolume, setShowVolume] = useState(false);
   const [showIndicators, setShowIndicators] = useState(false);
   const [activeIndicators, setActiveIndicators] = useState<{[key: string]: boolean}>({
     // Trend Indicators
@@ -144,7 +144,10 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
     document.body.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      // Safety check to prevent null parentNode error
+      if (script && script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
     };
   }, []);
 
@@ -253,16 +256,25 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
         save_image: false
       };
       
-      if (typeof (window as any).TradingView !== 'undefined') {
-        const widget = new (window as any).TradingView.widget(config);
-        tvWidgetRef.current = widget;
+      if (typeof (window as any).TradingView !== 'undefined' && chartContainerRef.current) {
+        // Ensure the container element exists and is in the DOM
+        const container = document.getElementById('tradingview_chart');
+        if (container && container.parentNode) {
+          const widget = new (window as any).TradingView.widget(config);
+          tvWidgetRef.current = widget;
+        }
       }
     }
 
     return () => {
       if (tvWidgetRef.current) {
-        tvWidgetRef.current.remove?.();
-        tvWidgetRef.current = null;
+        try {
+          tvWidgetRef.current.remove?.();
+        } catch (error) {
+          console.warn('Error removing TradingView widget:', error);
+        } finally {
+          tvWidgetRef.current = null;
+        }
       }
     };
   }, [loading, scriptLoaded, symbol, interval, showVolume, activeIndicators]);
@@ -573,11 +585,6 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
             </div>
           </div>
         )}
-
-        {/* Footer */}
-        <div className="text-xs text-gray-500 pt-4 pb-8 text-center">
-          Chart data provided by TradingView · Stock data from Yahoo Finance
-        </div>
 
         {/* Modals */}
         {isTradeModalOpen && currentPrice && (

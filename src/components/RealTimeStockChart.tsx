@@ -4,6 +4,8 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, ReferenceL
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, Activity, BarChart3 } from 'lucide-react';
+import { usePolygonWebSocketData } from '@/hooks/usePolygonWebSocket';
+import { stockDataService } from '@/lib/stockDataService';
 
 interface ChartDataPoint {
   time: string;
@@ -27,80 +29,161 @@ const RealTimeStockChart: React.FC<RealTimeStockChartProps> = ({
   currentPrice,
   change,
   changePercent,
-  isRealTime = false,
+  isRealTime = true, // Default to true for real-time data
   chartType = 'area',
   height = 400
 }) => {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [timeframe, setTimeframe] = useState<'1D' | '5D' | '1M' | '3M'>('1D');
   const [isLoading, setIsLoading] = useState(true);
+  const [realTimePrice, setRealTimePrice] = useState(currentPrice);
+  const [realTimeChange, setRealTimeChange] = useState(change);
+  const [realTimeChangePercent, setRealTimeChangePercent] = useState(changePercent);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Use Polygon WebSocket for real-time data
+  const { stockData, isConnected } = usePolygonWebSocketData([symbol]);
+  const realTimeStockData = stockData[symbol];
 
-  // Generate initial chart data
+  // Fetch historical chart data
   useEffect(() => {
-    const generateInitialData = () => {
+    const fetchHistoricalData = async () => {
+      setIsLoading(true);
+      try {
+        const days = timeframe === '1D' ? 1 : timeframe === '5D' ? 5 : timeframe === '1M' ? 30 : 90;
+        const historicalData = await stockDataService.getHistoricalPrices(symbol, days);
+        
+        console.log('Historical data received:', historicalData);
+        
+        if (historicalData && historicalData.length > 0) {
+          const formattedData: ChartDataPoint[] = historicalData.map((point, index) => {
+            const date = new Date(point.date);
+            return {
+              time: timeframe === '1D' 
+                ? date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+              price: point.close,
+              volume: point.volume,
+              timestamp: date.getTime()
+            };
+          });
+          
+          console.log('Formatted chart data:', formattedData);
+          setChartData(formattedData);
+        } else {
+          console.log('No historical data, using fallback');
+          const fallbackData = generateFallbackData();
+          setChartData(fallbackData);
+        }
+      } catch (error) {
+        console.error('Error fetching historical data:', error);
+        // Fallback to mock data if API fails
+        const fallbackData = generateFallbackData();
+        console.log('Using fallback data:', fallbackData);
+        setChartData(fallbackData);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const generateFallbackData = () => {
       const now = new Date();
-      const points = timeframe === '1D' ? 78 : timeframe === '5D' ? 390 : 780; // Trading hours data points
-      const intervalMinutes = timeframe === '1D' ? 5 : timeframe === '5D' ? 60 : 240;
-      
       const data: ChartDataPoint[] = [];
       let basePrice = currentPrice || 150;
       
-      for (let i = points; i >= 0; i--) {
-        const timestamp = now.getTime() - (i * intervalMinutes * 60 * 1000);
-        const time = new Date(timestamp);
+      if (timeframe === '1D') {
+        // Generate intraday data for current trading day (9:30 AM - 4:00 PM EST)
+        const today = new Date();
+        const marketOpen = new Date(today);
+        marketOpen.setHours(9, 30, 0, 0); // 9:30 AM
+        const marketClose = new Date(today);
+        marketClose.setHours(16, 0, 0, 0); // 4:00 PM
         
-        // Generate realistic price movement
-        const volatility = 0.02;
-        const randomChange = (Math.random() - 0.5) * volatility;
-        basePrice = basePrice * (1 + randomChange);
+        // Generate 5-minute intervals throughout trading day
+        const intervalMs = 5 * 60 * 1000; // 5 minutes
+        const currentTime = Math.min(now.getTime(), marketClose.getTime());
         
-        data.push({
-          time: timeframe === '1D' 
-            ? time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            : time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          price: Number(basePrice.toFixed(2)),
-          volume: Math.floor(Math.random() * 1000000),
-          timestamp
-        });
+        for (let timestamp = marketOpen.getTime(); timestamp <= currentTime; timestamp += intervalMs) {
+          const time = new Date(timestamp);
+          
+          const volatility = 0.015;
+          const randomChange = (Math.random() - 0.5) * volatility;
+          basePrice = basePrice * (1 + randomChange);
+          
+          data.push({
+            time: time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            price: Number(basePrice.toFixed(2)),
+            volume: Math.floor(Math.random() * 500000) + 100000,
+            timestamp
+          });
+        }
+      } else {
+        // Generate daily data for longer timeframes
+        const points = timeframe === '5D' ? 5 : timeframe === '1M' ? 30 : 90;
+        
+        for (let i = points; i >= 0; i--) {
+          const timestamp = now.getTime() - (i * 24 * 60 * 60 * 1000);
+          const time = new Date(timestamp);
+          
+          const volatility = 0.02;
+          const randomChange = (Math.random() - 0.5) * volatility;
+          basePrice = basePrice * (1 + randomChange);
+          
+          data.push({
+            time: time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            price: Number(basePrice.toFixed(2)),
+            volume: Math.floor(Math.random() * 1000000) + 500000,
+            timestamp
+          });
+        }
       }
       
-      setChartData(data);
-      setIsLoading(false);
+      return data;
     };
 
-    generateInitialData();
-  }, [timeframe, currentPrice, symbol]);
+    fetchHistoricalData();
+  }, [timeframe, symbol, currentPrice]);
 
-  // Real-time updates
+  // Debug log for chart data
   useEffect(() => {
-    if (isRealTime && currentPrice > 0) {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+    console.log('Chart data updated:', chartData);
+    console.log('Chart data length:', chartData.length);
+  }, [chartData]);
 
-      intervalRef.current = setInterval(() => {
+  // Update real-time price data from WebSocket
+  useEffect(() => {
+    if (realTimeStockData && isConnected) {
+      setRealTimePrice(realTimeStockData.price);
+      setRealTimeChange(realTimeStockData.change);
+      setRealTimeChangePercent(realTimeStockData.changePercent);
+      
+      // Add new data point to chart for 1D timeframe
+      if (timeframe === '1D') {
         setChartData(prevData => {
           const now = new Date();
           const newPoint: ChartDataPoint = {
             time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-            price: currentPrice,
-            volume: Math.floor(Math.random() * 1000000),
+            price: realTimeStockData.price,
+            volume: realTimeStockData.volume,
             timestamp: now.getTime()
           };
 
-          const updatedData = [...prevData.slice(-77), newPoint]; // Keep last 78 points for 1D
+          // Keep last 78 points for 1D view (6.5 hours of 5-minute intervals)
+          const updatedData = [...prevData.slice(-77), newPoint];
           return updatedData;
         });
-      }, 5000); // Update every 5 seconds
+      }
     }
+  }, [realTimeStockData, isConnected, timeframe]);
 
+  // Cleanup intervals on unmount
+  useEffect(() => {
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRealTime, currentPrice]);
+  }, []);
 
   const formatTooltipValue = (value: number, name: string) => {
     if (name === 'price') {
@@ -112,7 +195,12 @@ const RealTimeStockChart: React.FC<RealTimeStockChartProps> = ({
     return [value, name];
   };
 
-  const chartColor = change >= 0 ? '#10b981' : '#ef4444';
+  // Use real-time data if available, otherwise fall back to props
+  const displayPrice = realTimeStockData?.price ?? realTimePrice ?? currentPrice;
+  const displayChange = realTimeStockData?.change ?? realTimeChange ?? change;
+  const displayChangePercent = realTimeStockData?.changePercent ?? realTimeChangePercent ?? changePercent;
+  
+  const chartColor = displayChange >= 0 ? '#10b981' : '#ef4444';
   const gradientId = `gradient-${symbol}`;
 
   if (isLoading) {
@@ -134,9 +222,15 @@ const RealTimeStockChart: React.FC<RealTimeStockChartProps> = ({
             <BarChart3 className="h-5 w-5 mr-2 text-primary" />
             {symbol} Price Chart
             {isRealTime && (
-              <span className="ml-2 flex items-center text-xs text-green-500">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse mr-1" />
-                Live
+              <span className={`ml-2 flex items-center text-xs ${
+                isConnected ? 'text-green-500' : 'text-yellow-500'
+              }`}>
+                <div className={`w-2 h-2 rounded-full mr-1 ${
+                  isConnected 
+                    ? 'bg-green-500 animate-pulse' 
+                    : 'bg-yellow-500'
+                }`} />
+                {isConnected ? 'Live' : 'Connecting...'}
               </span>
             )}
           </CardTitle>
@@ -155,10 +249,9 @@ const RealTimeStockChart: React.FC<RealTimeStockChartProps> = ({
           </div>
         </div>
         <div className="flex items-center space-x-4 text-sm">
-          <span className="text-2xl font-bold">${currentPrice.toFixed(2)}</span>
-          <span className={`flex items-center ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {change >= 0 ? <TrendingUp className="h-4 w-4 mr-1" /> : <TrendingDown className="h-4 w-4 mr-1" />}
-            {change >= 0 ? '+' : ''}{change.toFixed(2)} ({changePercent.toFixed(2)}%)
+          <span className="text-2xl font-bold">${displayPrice.toFixed(2)}</span>
+          <span className={`flex items-center ${displayChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {displayChange >= 0 ? '↗' : '↘'} ${Math.abs(displayChange).toFixed(2)} ({Math.abs(displayChangePercent).toFixed(2)}%)
           </span>
         </div>
       </CardHeader>

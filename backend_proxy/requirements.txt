@@ -1,4 +1,6 @@
 Flask
 requests
 python-dotenv
-Flask-CORS 
+Flask-CORS
+yfinance
+pandas 

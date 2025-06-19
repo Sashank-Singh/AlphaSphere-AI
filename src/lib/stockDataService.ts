@@ -6,6 +6,7 @@ import { mockStocks } from '@/data/mockData';
 export type { StockQuote };
 
 // Constants
+const API_BASE_URL = '/api'; // Use a relative path for Vercel
 const YAHOO_FINANCE_API_URL = 'https://query1.finance.yahoo.com/v8/finance/chart';
 const YAHOO_QUOTE_API_URL = 'https://query1.finance.yahoo.com/v7/finance/quote';
 const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
@@ -61,6 +62,10 @@ export interface CompanyInfo {
   website: string;
   ceo: string;
   founded: string;
+  peRatio?: number;
+  high52Week?: number;
+  low52Week?: number;
+  avgVolume?: number;
 }
 
 class StockDataService {
@@ -144,95 +149,36 @@ class StockDataService {
     return StockDataService.instance;
   }
 
-  private async fetchYahooFinance(symbol: string, range: string = '1d', interval: string = '5m') {
-    const urls = [
-      `${YAHOO_FINANCE_API_URL}/${symbol}?range=${range}&interval=${interval}`,
-      `${CORS_PROXY}${encodeURIComponent(`${YAHOO_FINANCE_API_URL}/${symbol}?range=${range}&interval=${interval}`)}`
-    ];
-
-    for (const url of urls) {
-      try {
-        console.log(`Fetching from Yahoo Finance: ${url}`);
-        
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
-        
+  private async fetchWithFallBack(path: string) {
+    const url = `${API_BASE_URL}${path}`;
+    try {
+      const response = await fetch(url);
         if (!response.ok) {
-          console.warn(`Yahoo Finance API error (${response.status}) for URL: ${url}`);
-          continue;
-        }
-        
-        const data = await response.json();
-        if (data?.chart?.result?.[0]) {
-          return data;
-        }
-      } catch (error) {
-        console.warn(`Error fetching from ${url}:`, error);
-        continue;
+        throw new Error(`Backend error: ${response.statusText}`);
       }
+      return await response.json();
+      } catch (error) {
+      console.error(`Error fetching from backend at ${url}:`, error);
+      throw error;
     }
-    
-    console.error('All Yahoo Finance API endpoints failed');
-    return null;
   }
 
   // Fetch real-time quote data
   private async fetchRealTimeQuote(symbol: string): Promise<StockQuote | null> {
-    const urls = [
-      `${YAHOO_QUOTE_API_URL}?symbols=${symbol}`,
-      `${CORS_PROXY}${encodeURIComponent(`${YAHOO_QUOTE_API_URL}?symbols=${symbol}`)}`
-    ];
-
-    for (const url of urls) {
-      try {
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
-        
-        if (!response.ok) {
-          continue;
-        }
-        
-        const data = await response.json();
-        if (data?.quoteResponse?.result?.[0]) {
-          const quote = data.quoteResponse.result[0];
-          const stockQuote: StockQuote = {
-            symbol: quote.symbol,
-            price: quote.regularMarketPrice || quote.ask || quote.bid || 0,
-            open: quote.regularMarketOpen || 0,
-            high: quote.regularMarketDayHigh || 0,
-            low: quote.regularMarketDayLow || 0,
-            volume: quote.regularMarketVolume || 0,
-            previousClose: quote.regularMarketPreviousClose || 0,
-            change: quote.regularMarketChange || 0,
-            changePercent: quote.regularMarketChangePercent || 0,
-            latestTradingDay: new Date().toISOString().split('T')[0]
-          };
-
-          // Update cache
+    try {
+      const quote = await this.fetchWithFallBack(`/yahoo/quote/${symbol}`);
+      if (quote) {
           this.stockCache[symbol] = {
-            quote: stockQuote,
+          quote,
             lastUpdated: Date.now()
           };
-
-          return stockQuote;
+        return quote;
         }
+      return null;
       } catch (error) {
-        console.warn(`Error fetching real-time quote from ${url}:`, error);
-        continue;
-      }
-    }
-    
+      console.warn(`Error fetching real-time quote for ${symbol}:`, error);
     return null;
+    }
   }
 
   // Cache management
@@ -242,91 +188,97 @@ class StockDataService {
 
   // Company info methods
   public async getCompanyInfo(symbol: string): Promise<CompanyInfo | null> {
-    const urls = [
-      `${YAHOO_QUOTE_API_URL}?symbols=${symbol}`,
-      `${CORS_PROXY}${encodeURIComponent(`${YAHOO_QUOTE_API_URL}?symbols=${symbol}`)}`
-    ];
-
-    for (const url of urls) {
-      try {
-        const response = await fetch(url);
-        if (!response.ok) continue;
-
-        const data = await response.json();
-        const profile = data?.quoteResponse?.result?.[0];
-
-        if (profile) {
-          return {
-            symbol: profile.symbol,
-            name: profile.longName || profile.shortName,
-            sector: profile.sector || 'N/A',
-            industry: profile.industry || 'N/A',
-            exchange: profile.fullExchangeName || profile.exchange,
-            marketCap: profile.marketCap,
-            description: profile.longBusinessSummary || '',
-            website: profile.website || '',
-            // These might not be available in all quotes
-            employees: profile.fullTimeEmployees,
-            ceo: 'N/A',
-            founded: 'N/A',
-          };
-        }
-      } catch (error) {
-        console.warn(`Error fetching company info from ${url}:`, error);
-        continue;
-      }
+    try {
+      return await this.fetchWithFallBack(`/yahoo/info/${symbol}`);
+    } catch (error) {
+      console.warn(`Error fetching company info for ${symbol}:`, error);
+      return null;
     }
-
-    return null;
   }
 
   // Historical price data
   public async getHistoricalPrices(symbol: string, days: number = 30): Promise<{date: string, open: number, high: number, low: number, close: number, volume: number}[]> {
+    const period = `${days}d`;
+    // Use intraday intervals for 1-day charts, daily for longer periods
+    const interval = days === 1 ? '5m' : '1d';
     try {
-      // Try to get historical data from Yahoo Finance
-      const yahooData = await this.fetchYahooFinance(symbol, `${days}d`, '1d');
-      
-      if (yahooData?.chart?.result?.[0]) {
-        const result = yahooData.chart.result[0];
-        const timestamps = result.timestamp;
-        const quotes = result.indicators.quote[0];
-        
-        return timestamps.map((timestamp: number, index: number) => ({
-          date: new Date(timestamp * 1000).toISOString().split('T')[0],
-          open: quotes.open[index] || 0,
-          high: quotes.high[index] || 0,
-          low: quotes.low[index] || 0,
-          close: quotes.close[index] || 0,
-          volume: quotes.volume[index] || 0
-        })).filter(item => item.close > 0);
+      const data = await this.fetchWithFallBack(`/yahoo/history/${symbol}?period=${period}&interval=${interval}`);
+      console.log('API returned data:', data);
+      if (data && Array.isArray(data) && data.length > 0) {
+        return data;
       }
+      throw new Error('No data returned from API');
     } catch (error) {
-      console.error('Error fetching historical data:', error);
+      console.error('Error fetching historical data, using fallback:', error);
+      // Fallback to mock data on error
+      try {
+        const quote = await this.getStockQuote(symbol);
+        const basePrice = quote.price;
+        const prices = [];
+
+        if (days === 1) {
+          // Generate intraday data for 1-day chart
+          const now = new Date();
+          const marketOpen = new Date(now);
+          marketOpen.setHours(9, 30, 0, 0);
+          const marketClose = new Date(now);
+          marketClose.setHours(16, 0, 0, 0);
+          
+          const intervalMs = 5 * 60 * 1000; // 5 minutes
+          const currentTime = Math.min(now.getTime(), marketClose.getTime());
+          let currentPrice = basePrice;
+          
+          for (let timestamp = marketOpen.getTime(); timestamp <= currentTime; timestamp += intervalMs) {
+            const date = new Date(timestamp);
+            const volatility = 0.015;
+            const randomChange = (Math.random() - 0.5) * volatility;
+            currentPrice = currentPrice * (1 + randomChange);
+            
+            prices.push({
+              date: date.toISOString(),
+              open: currentPrice * 0.999,
+              high: currentPrice * 1.002,
+              low: currentPrice * 0.998,
+              close: currentPrice,
+              volume: Math.floor(Math.random() * 500000) + 100000
+            });
+          }
+        } else {
+          // Generate daily data for longer periods
+          let currentPrice = basePrice;
+          for (let i = days; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            
+            const dailyChange = (Math.random() - 0.5) * 0.04;
+            currentPrice = currentPrice * (1 + dailyChange);
+            
+            prices.push({
+              date: date.toISOString().split('T')[0],
+              open: currentPrice * 0.99,
+              high: currentPrice * 1.02,
+              low: currentPrice * 0.98,
+              close: currentPrice,
+              volume: Math.floor(Math.random() * 1000000) + 100000
+            });
+          }
+        }
+
+        console.log('Generated fallback data:', prices);
+        return prices;
+      } catch (fallbackError) {
+        console.error('Error generating fallback data:', fallbackError);
+        // Return minimal fallback data
+        return [{
+          date: new Date().toISOString(),
+          open: 150,
+          high: 155,
+          low: 145,
+          close: 150,
+          volume: 1000000
+        }];
+      }
     }
-
-    // Fallback: generate mock historical data
-    const quote = await this.getStockQuote(symbol);
-    const basePrice = quote.price;
-    const prices = [];
-
-    for (let i = days; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      
-      const dailyChange = (Math.random() - 0.5) * 2;
-      const price = basePrice * (1 + (dailyChange / 100) * i);
-      
-      prices.push({
-        date: date.toISOString().split('T')[0],
-        open: price * 0.99,
-        high: price * 1.02,
-        low: price * 0.98,
-        close: price,
-        volume: Math.floor(Math.random() * 1000000) + 100000
-      });
-    }
-
-    return prices;
   }
 
   // Popular stocks
@@ -345,58 +297,17 @@ class StockDataService {
     if (cachedData && this.isCacheValid(cachedData.lastUpdated)) {
       return cachedData.quote;
     }
-  
+
     try {
-      const yahooDataPromise = this.fetchYahooFinance(symbol);
-      const realTimeQuotePromise = this.fetchRealTimeQuote(symbol);
-  
-      const [yahooData, realTimeQuote] = await Promise.all([
-        yahooDataPromise,
-        realTimeQuotePromise,
-      ]);
-  
-      let stockQuote: StockQuote;
-  
-      if (yahooData?.chart?.result?.[0]) {
-        const result = yahooData.chart.result[0];
-        const quote = result.indicators.quote[0];
-        const meta = result.meta;
-        const latestIndex = result.timestamp.length - 1;
-        
-        const open = quote.open ? quote.open[latestIndex] : 0;
-        const high = quote.high ? quote.high[latestIndex] : 0;
-        const low = quote.low ? quote.low[latestIndex] : 0;
-        const volume = quote.volume ? quote.volume[latestIndex] : 0;
-        const previousClose = meta.previousClose || meta.chartPreviousClose || 0;
-        
-        const currentPrice = realTimeQuote?.price || meta.regularMarketPrice || (quote.close ? quote.close[latestIndex] : 0);
-        const change = currentPrice - previousClose;
-        const changePercent = previousClose !== 0 ? (change / previousClose) * 100 : 0;
-  
-        stockQuote = {
-          symbol: symbol,
-          price: currentPrice,
-          open: open,
-          high: high,
-          low: low,
-          volume: volume,
-          previousClose: previousClose,
-          change: change,
-          changePercent: changePercent,
-          latestTradingDay: new Date().toISOString().split('T')[0],
+      const stockQuote = await this.fetchRealTimeQuote(symbol);
+      if (stockQuote) {
+        this.stockCache[symbol] = {
+          quote: stockQuote,
+          lastUpdated: Date.now(),
         };
-      } else if (realTimeQuote) {
-        stockQuote = realTimeQuote;
-      } else {
-        throw new Error('Failed to fetch data from all sources');
+        return stockQuote;
       }
-  
-      this.stockCache[symbol] = {
-        quote: stockQuote,
-        lastUpdated: Date.now(),
-      };
-  
-      return stockQuote;
+      throw new Error('Failed to fetch quote from backend');
     } catch (error) {
       console.error('Error fetching combined stock quote:', error);
       if (cachedData) {

@@ -59,32 +59,6 @@ const StockAnalysisPanel: React.FC<StockAnalysisPanelProps> = ({
   
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Company Info</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-muted-foreground">Sector:</span>
-              <div>{isLoading ? '...' : companyInfo?.sector || '-'}</div>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Industry:</span>
-              <div>{isLoading ? '...' : companyInfo?.industry || '-'}</div>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Exchange:</span>
-              <div>{isLoading ? '...' : companyInfo?.exchange || 'NASDAQ'}</div>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Last updated:</span>
-              <div>{isLoading ? '...' : lastUpdated}</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Your Stock Position */}
       <Card>
         <CardHeader>

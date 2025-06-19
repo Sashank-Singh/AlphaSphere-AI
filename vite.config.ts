@@ -12,6 +12,13 @@ export default defineConfig(({ mode }) => ({
       '2011-104-249-165-77.ngrok-free.app', // Add your ngrok host here
       'localhost', // You can keep localhost if needed
     ],
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   plugins: [
     react(),

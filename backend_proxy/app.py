@@ -1,8 +1,14 @@
 import os
+import sys
 import requests
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from flask_cors import CORS
+
+# Add the current directory to the Python path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import yahoo_finance # Import the new module
 
 load_dotenv() # Load environment variables from .env file
 
@@ -63,6 +69,73 @@ def alpaca_proxy(endpoint):
         return jsonify({"error": "Failed to connect to Alpaca API", "details": str(req_err)}), 503 # Service Unavailable
     except Exception as e:
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
+
+# --- Yahoo Finance Routes ---
+
+@app.route('/api/yahoo/quote/<string:symbol>', methods=['GET'])
+def get_quote(symbol):
+    """
+    Endpoint to get a stock quote.
+    """
+    try:
+        quote = yahoo_finance.get_stock_quote(symbol)
+        if quote:
+            return jsonify(quote)
+        return jsonify({'error': 'Symbol not found or data unavailable'}), 404
+    except Exception as e:
+        return jsonify({'error': 'Failed to fetch quote', 'details': str(e)}), 500
+
+@app.route('/api/yahoo/info/<string:symbol>', methods=['GET'])
+def get_info(symbol):
+    """
+    Endpoint to get company information.
+    """
+    try:
+        info = yahoo_finance.get_company_info(symbol)
+        if info:
+            return jsonify(info)
+        return jsonify({'error': 'Symbol not found or data unavailable'}), 404
+    except Exception as e:
+        return jsonify({'error': 'Failed to fetch company info', 'details': str(e)}), 500
+
+@app.route('/api/yahoo/history/<string:symbol>', methods=['GET'])
+def get_history(symbol):
+    """
+    Endpoint to get historical price data.
+    """
+    try:
+        period = request.args.get('period', '1y')
+        interval = request.args.get('interval', '1d')
+        history = yahoo_finance.get_historical_prices(symbol, period, interval)
+        return jsonify(history)
+    except Exception as e:
+        return jsonify({'error': 'Failed to fetch history', 'details': str(e)}), 500
+
+@app.route('/api/yahoo/recommendation/<string:symbol>', methods=['GET'])
+def get_recommendation(symbol):
+    """
+    Endpoint to get a trade recommendation.
+    """
+    try:
+        recommendation = yahoo_finance.get_trade_recommendation(symbol)
+        if recommendation:
+            return jsonify(recommendation)
+        return jsonify({'error': 'Could not generate recommendation for symbol'}), 404
+    except Exception as e:
+        return jsonify({'error': 'Failed to generate recommendation', 'details': str(e)}), 500
+
+@app.route('/api/yahoo/options_recommendation/<string:symbol>', methods=['GET'])
+def get_options_recommendation_route(symbol):
+    """
+    Endpoint to get an options trading recommendation.
+    """
+    try:
+        recommendation = yahoo_finance.get_options_recommendation(symbol)
+        if recommendation:
+            return jsonify(recommendation)
+        return jsonify({'error': 'Could not generate options recommendation for symbol'}), 404
+    except Exception as e:
+        return jsonify({'error': 'Failed to generate options recommendation', 'details': str(e)}), 500
 
 if __name__ == '__main__':
     # Default port for Flask is 5000. You can change it if needed.
