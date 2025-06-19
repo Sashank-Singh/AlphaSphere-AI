@@ -5,7 +5,7 @@ import { AlertTriangle, TrendingDown, BarChart2, Target } from 'lucide-react';
 import { formatCurrency, formatPercentage, cn } from '@/lib/utils';
 import { Portfolio } from '@/types';
 import { getStockBySymbol } from '@/data/mockData';
-import { mockStockService } from '@/lib/mockStockService';
+import { stockDataService } from '@/lib/stockDataService';
 
 interface RiskManagementDashboardProps {
   portfolio: Portfolio;
@@ -50,7 +50,7 @@ const RiskManagementDashboard: React.FC<RiskManagementDashboardProps> = ({
         // Get mock quotes for all portfolio positions
         const symbols = portfolio.positions.map(pos => pos.symbol);
         const quotes = await Promise.all(
-          symbols.map(symbol => mockStockService.getStockQuote(symbol))
+          symbols.map(symbol => stockDataService.getStockQuote(symbol))
         );
         
         // Calculate portfolio value and risk metrics

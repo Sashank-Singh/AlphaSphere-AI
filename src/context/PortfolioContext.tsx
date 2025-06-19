@@ -15,8 +15,30 @@ const PortfolioContext = createContext<PortfolioContextType | undefined>(undefin
 
 export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [portfolio, setPortfolio] = useState<Portfolio>(mockPortfolio);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const loadPortfolio = async () => {
+      try {
+        const savedPortfolio = localStorage.getItem('tradingAppPortfolio');
+        if (savedPortfolio) {
+          const parsedPortfolio = JSON.parse(savedPortfolio);
+          // Ensure all fields are present, falling back to mock data if not
+          setPortfolio({
+            ...mockPortfolio,
+            ...parsedPortfolio,
+          });
+        }
+      } catch (error) {
+        console.error('Error loading portfolio from storage:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadPortfolio();
+  }, []);
 
   const executeStockTrade = async (symbol: string, quantity: number, price: number, type: 'buy' | 'sell'): Promise<boolean> => {
     try {
@@ -130,13 +152,16 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       );
       
       // Update portfolio
-      setPortfolio({
+      const newPortfolio = {
         ...portfolio,
         cash: newCash,
         totalValue: newCash + positionsValue + optionsValue,
         positions: updatedPositions,
         transactions: [transaction, ...portfolio.transactions]
-      });
+      };
+      
+      setPortfolio(newPortfolio);
+      localStorage.setItem('tradingAppPortfolio', JSON.stringify(newPortfolio));
       
       toast({
         title: "Trade Executed",
@@ -323,13 +348,16 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       );
       
       // Update portfolio state
-      setPortfolio(prev => ({
-        ...prev,
+      const updatedPortfolio = {
+        ...portfolio,
         cash: newCash,
         totalValue: newCash + positionsValue + optionsValue,
         optionPositions: updatedOptionPositions,
-        transactions: [transaction, ...prev.transactions]
-      }));
+        transactions: [transaction, ...portfolio.transactions]
+      };
+      
+      setPortfolio(updatedPortfolio);
+      localStorage.setItem('tradingAppPortfolio', JSON.stringify(updatedPortfolio));
       
       console.log('[PortfolioContext] Updating portfolio state. New cash:', newCash, 'New options value:', optionsValue);
       
@@ -356,6 +384,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const resetPortfolio = () => {
     setPortfolio(mockPortfolio);
+    localStorage.setItem('tradingAppPortfolio', JSON.stringify(mockPortfolio));
   };
 
   return (

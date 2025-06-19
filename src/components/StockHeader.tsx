@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { mockStockService, CompanyInfo } from '@/lib/mockStockService';
+import { stockDataService } from '@/lib/stockDataService';
+import { CompanyInfo } from '@/lib/mockStockService';
 import { ChevronLeft } from 'lucide-react';
 import TVQuoteWidget from './TVQuoteWidget';
 
@@ -18,7 +19,7 @@ const StockHeader: React.FC<StockHeaderProps> = ({ symbol }) => {
     const fetchCompanyData = async () => {
       try {
         setLoading(true);
-        const data = await mockStockService.getCompanyInfo(symbol);
+        const data = await stockDataService.getCompanyInfo(symbol);
         setCompanyInfo(data);
       } catch (error) {
         console.error('Error fetching company info:', error);
@@ -78,4 +79,4 @@ const StockHeader: React.FC<StockHeaderProps> = ({ symbol }) => {
   );
 };
 
-export default StockHeader; 
+export default StockHeader;

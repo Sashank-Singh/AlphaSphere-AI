@@ -1,125 +1,83 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Search, RefreshCw } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { mockStocks, refreshStockPrices } from '@/data/mockData';
-import { getCompanyLogo } from '@/lib/companyLogos';
+import { Button } from '@/components/ui/button';
 import SearchSuggestions from './SearchSuggestions';
-import { Stock } from '@/types';
-import { useAsyncOperation } from '@/hooks/useAsyncOperation';
-import SkeletonLoader from '@/components/ui/skeleton-loader';
+import { useNavigate } from 'react-router-dom';
 
 interface SearchFormProps {
   onSearch?: (query: string) => void;
+  className?: string;
 }
 
-const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
+const SearchForm: React.FC<SearchFormProps> = ({ onSearch, className = '' }) => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [query, setQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [suggestions, setSuggestions] = useState<Stock[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
-  // Use our async operation hook for refresh functionality
-  const { execute: handleRefresh, loading: refreshLoading } = useAsyncOperation(
-    async () => {
-      const updatedStocks = refreshStockPrices();
-      console.log('Stocks refreshed:', updatedStocks);
-      return updatedStocks;
-    },
-    {
-      showSuccessToast: true,
-      successMessage: 'Market data refreshed successfully',
-      errorMessage: 'Failed to refresh market data'
-    }
-  );
-
-  // Filter stocks based on search query and add logos
-  const filterStocks = useCallback((query: string) => {
-    if (!query.trim()) return [];
-    try {
-      const normalizedQuery = query.toLowerCase().trim();
-      return mockStocks
-        .filter(stock => 
-          stock.symbol.toLowerCase().includes(normalizedQuery) ||
-          stock.name.toLowerCase().includes(normalizedQuery)
-        )
-        .map(stock => ({
-          ...stock,
-          logo: stock.logo || getCompanyLogo(stock.symbol)
-        }));
-    } catch (error) {
-      console.error('Error filtering stocks:', error);
-      return [];
-    }
-  }, []);
-
-  // Update suggestions when search query changes
   useEffect(() => {
-    const filtered = filterStocks(searchQuery);
-    setSuggestions(filtered);
-    setShowSuggestions(searchQuery.length > 0);
-  }, [searchQuery, filterStocks]);
+    if (query.length > 0) {
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  }, [query]);
 
-  // Handle search
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    if (query) {
+      navigate(`/search?q=${encodeURIComponent(query)}`);
       setShowSuggestions(false);
     }
   };
 
-  // Handle stock selection
-  const handleStockSelect = (stock: Stock) => {
-    navigate(`/stocks/${stock.symbol}`);
-    setSearchQuery('');
+  const handleSelectStock = (symbol: string) => {
+    setQuery(symbol);
+    setShowSuggestions(false);
+    if (onSearch) {
+      onSearch(symbol);
+    }
+    navigate(`/stocks/${symbol}`);
+  };
+
+  const clearSearch = () => {
+    setQuery('');
     setShowSuggestions(false);
   };
 
-  // Handle click outside to close suggestions
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (!(e.target as HTMLElement).closest('.search-container')) {
-        setShowSuggestions(false);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
-
   return (
-    <form onSubmit={handleSearch} className="flex-1 flex gap-2">
-      <div className="relative flex-1 search-container">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+    <div className={`relative ${className}`} ref={searchRef}>
+      <form onSubmit={handleSearch} className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
         <Input
+          type="text"
           placeholder="Search stocks..."
-          className="pl-8"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onFocus={() => setShowSuggestions(searchQuery.length > 0)}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="pl-10 pr-10"
+          autoComplete="off"
         />
-        <SearchSuggestions
-          suggestions={suggestions}
-          onSelect={handleStockSelect}
-          visible={showSuggestions}
-        />
-      </div>
-      <Button 
-        type="button"
-        variant="outline" 
-        onClick={() => handleRefresh()}
-        disabled={refreshLoading}
-        className="flex-shrink-0"
-      >
-        <RefreshCw className={`h-4 w-4 ${refreshLoading ? 'animate-spin' : ''}`} />
-        <span className="ml-2 hidden sm:inline">
-          {refreshLoading ? 'Refreshing...' : 'Refresh'}
-        </span>
-      </Button>
-    </form>
+        {query && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={clearSearch}
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+        {showSuggestions && (
+          <SearchSuggestions
+            query={query}
+            onSelect={handleSelectStock}
+          />
+        )}
+      </form>
+    </div>
   );
 };
 

@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Loader2 } from 'lucide-react';
-import { marketBuyDollars, marketBuyShares, marketSellShares, limitBuyShares, limitSellShares } from '@/lib/alpacaTradingApi';
 
 interface TradingPanelProps {
   symbol?: string;

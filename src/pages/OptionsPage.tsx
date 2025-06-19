@@ -8,12 +8,6 @@ import OptionChain from '@/components/OptionChain';
 import RealTimeStockChart from '@/components/RealTimeStockChart';
 import OptionsChart from '@/components/OptionsChart';
 import { usePolygonWebSocketData } from '@/hooks/usePolygonWebSocket';
-import { 
-  getLatestQuote, 
-  AlpacaQuote, 
-  AlpacaQuoteResponse, 
-  isMockDataMode 
-} from '../lib/alpacaApi';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 interface ChartDataPoint {

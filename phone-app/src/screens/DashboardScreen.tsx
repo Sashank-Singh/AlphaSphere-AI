@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   View,
@@ -10,9 +9,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PortfolioOverview from '../components/PortfolioOverview';
 import MarketPulse from '../components/MarketPulse';
-import AIPortfolioOptimizer from '../components/AIPortfolioOptimizer';
 import QuickActions from '../components/QuickActions';
 import WelcomeHeader from '../components/WelcomeHeader';
+import MainContentTabs from '../components/MainContentTabs';
+import MarketIntelligence from '../components/MarketIntelligence';
+import MarketAnalytics from '../components/MarketAnalytics';
 
 interface DashboardScreenProps {
   navigation: { navigate: (screen: string) => void };
@@ -26,7 +27,9 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
         <QuickActions navigation={navigation} />
         <PortfolioOverview />
         <MarketPulse />
-        <AIPortfolioOptimizer />
+        <MainContentTabs />
+        <MarketIntelligence />
+        <MarketAnalytics />
       </ScrollView>
     </SafeAreaView>
   );
@@ -35,7 +38,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#000000',
   },
   scrollView: {
     flex: 1,

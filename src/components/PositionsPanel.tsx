@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw } from 'lucide-react';
-import { getPositions, closePosition, Position } from '@/lib/alpacaTradingApi';
 
 interface PositionsPanelProps {
   accountId: string;
@@ -19,8 +18,9 @@ const PositionsPanel: React.FC<PositionsPanelProps> = ({ accountId }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getPositions(accountId);
-      setPositions(data);
+      // Placeholder for the removed getPositions function
+      // Replace with actual implementation
+      setPositions([]);
     } catch (err) {
       console.error('Error fetching positions:', err);
       setError('Failed to load positions. Please try again.');
@@ -39,9 +39,8 @@ const PositionsPanel: React.FC<PositionsPanelProps> = ({ accountId }) => {
   const handleClosePosition = async (symbol: string) => {
     setClosingPositions(prev => ({ ...prev, [symbol]: true }));
     try {
-      await closePosition(accountId, symbol);
-      // Remove the position from the list
-      setPositions(positions.filter(p => p.symbol !== symbol));
+      // Placeholder for the removed closePosition function
+      // Replace with actual implementation
     } catch (err) {
       console.error(`Error closing position for ${symbol}:`, err);
       setError(`Failed to close position for ${symbol}. Please try again.`);

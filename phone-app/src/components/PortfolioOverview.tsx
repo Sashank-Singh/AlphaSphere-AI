@@ -31,7 +31,7 @@ const PortfolioOverview: React.FC = () => {
       <View style={styles.header}>
         <Text style={styles.title}>Portfolio Overview</Text>
         <View style={styles.liveBadge}>
-          <Feather name="activity" size={12} color="#10B981" />
+          <Feather name="activity" size={12} color="#34D399" />
           <Text style={styles.liveText}>Live</Text>
         </View>
       </View>
@@ -67,18 +67,10 @@ const PortfolioOverview: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1C1C1E',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   header: {
     flexDirection: 'row',
@@ -89,19 +81,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFFFFF',
   },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#064E3B',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
   liveText: {
     fontSize: 12,
-    color: '#10B981',
+    color: '#34D399',
     fontWeight: '500',
     marginLeft: 4,
   },
@@ -111,7 +103,7 @@ const styles = StyleSheet.create({
   totalValue: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#111827',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   changeContainer: {
@@ -131,20 +123,20 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopColor: '#374151',
   },
   statItem: {
     flex: 1,
   },
   statLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#AAB8C2',
     marginBottom: 4,
   },
   statValue: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFFFFF',
   },
 });
 

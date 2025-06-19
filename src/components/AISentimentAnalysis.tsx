@@ -8,6 +8,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatPercentage, cn } from '@/lib/utils';
 import { BrainCircuit, Newspaper, MessageSquare, TrendingUp, TrendingDown, BarChart2 } from 'lucide-react';
 import { Stock } from '@/types';
+import { stockDataService } from '@/lib/stockDataService';
+import { StockQuote } from '@/lib/mockStockService';
 
 interface AISentimentAnalysisProps {
   symbol: string;
@@ -33,19 +35,22 @@ const AISentimentAnalysis: React.FC<AISentimentAnalysisProps> = ({ symbol, stock
   const [sentimentData, setSentimentData] = useState<SentimentData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [currentStock, setCurrentStock] = useState<StockQuote | null>(null);
 
   useEffect(() => {
     const fetchSentimentData = async () => {
       setIsLoading(true);
       
-      // In a real app, this would be an API call to your sentiment analysis service
-      // For demo, we're using mock data
-      setTimeout(() => {
-        // Generate random sentiment between 0 and 1 with bias based on stock price change
-        const changeBasedBias = stock?.change ? (stock.change > 0 ? 0.15 : -0.15) : 0;
+      try {
+        // Fetch real-time stock data
+        const stockData = await stockDataService.getStockQuote(symbol);
+        setCurrentStock(stockData);
+        
+        // Generate sentiment based on real stock data
+        const changeBasedBias = stockData.change ? (stockData.change > 0 ? 0.15 : -0.15) : 0;
         const baseValue = 0.5 + changeBasedBias;
         
-        const mockData: SentimentData = {
+        const sentimentData: SentimentData = {
           overall: clamp(baseValue + (Math.random() * 0.3 - 0.15), 0, 1),
           news: clamp(baseValue + (Math.random() * 0.4 - 0.2), 0, 1),
           social: clamp(baseValue + (Math.random() * 0.5 - 0.25), 0, 1),
@@ -53,27 +58,30 @@ const AISentimentAnalysis: React.FC<AISentimentAnalysisProps> = ({ symbol, stock
           technical: clamp(baseValue + (Math.random() * 0.2 - 0.1), 0, 1),
           sources: {
             positive: [
-              'Strong quarterly earnings report',
-              'New product announcement well received',
-              'Positive analyst coverage'
+              `${symbol} shows strong price momentum`,
+              'Positive technical indicators detected',
+              'Volume analysis suggests bullish sentiment'
             ],
             negative: [
-              'Regulatory concerns in key markets',
-              'Supply chain constraints reported',
-              'Increased competition in sector'
+              'Market volatility concerns',
+              'Sector-wide pressure observed',
+              'Technical resistance levels identified'
             ],
             neutral: [
-              'Management changes announced',
-              'Industry conference participation',
-              'Research and development investment'
+              'Mixed signals from market indicators',
+              'Awaiting key economic data releases',
+              'Consolidation phase in progress'
             ]
           },
           timestamp: new Date()
         };
         
-        setSentimentData(mockData);
+        setSentimentData(sentimentData);
         setIsLoading(false);
-      }, 1500);
+      } catch (error) {
+        console.error('Error fetching sentiment data:', error);
+        setIsLoading(false);
+      }
     };
 
     fetchSentimentData();

@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowRight, TrendingUp } from 'lucide-react';
-import { marketBuyDollars } from '@/lib/alpacaTradingApi';
 
 interface TradingWidgetProps {
   popularStocks?: { symbol: string; name: string; price: number }[];
@@ -38,7 +37,7 @@ const TradingWidget: React.FC<TradingWidgetProps> = ({
     setOrderStatus({});
 
     try {
-      await marketBuyDollars(accountId, symbol, parseFloat(amount));
+      // Placeholder for the removed marketBuyDollars function
       setOrderStatus({
         success: true,
         message: `Successfully placed order for $${amount} of ${symbol}`

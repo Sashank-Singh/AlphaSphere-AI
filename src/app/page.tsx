@@ -4,7 +4,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Search, TrendingUp, TrendingDown, BarChart3, Activity, DollarSign, Users, Eye, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { stockDataService } from '@/lib/stockDataService';
+import { StockQuote } from '@/lib/mockStockService';
 
 // Mock real-time market data
 const marketIndices = [
@@ -14,14 +17,7 @@ const marketIndices = [
   { symbol: 'VIX', value: 12.84, change: -0.67, changePercent: -4.96 }
 ];
 
-const topMovers = [
-  { symbol: 'NVDA', name: 'NVIDIA Corp', price: 892.45, change: 24.12, changePercent: 2.78, volume: '45.2M' },
-  { symbol: 'TSLA', name: 'Tesla Inc', price: 248.73, change: -8.94, changePercent: -3.47, volume: '89.1M' },
-  { symbol: 'AAPL', name: 'Apple Inc', price: 192.53, change: 3.21, changePercent: 1.69, volume: '52.3M' },
-  { symbol: 'MSFT', name: 'Microsoft Corp', price: 421.08, change: 5.67, changePercent: 1.37, volume: '28.7M' },
-  { symbol: 'GOOGL', name: 'Alphabet Inc', price: 175.64, change: -2.34, changePercent: -1.31, volume: '31.4M' },
-  { symbol: 'META', name: 'Meta Platforms', price: 518.27, change: 12.45, changePercent: 2.46, volume: '19.8M' }
-];
+const topMoverSymbols = ['NVDA', 'TSLA', 'AAPL', 'MSFT', 'GOOGL', 'META'];
 
 const marketNews = [
   { id: 1, headline: 'Federal Reserve Signals Potential Rate Cut in December', time: '2 mins ago', impact: 'bullish' },
@@ -41,6 +37,33 @@ const sectorPerformance = [
 
 export default function Home() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [topMovers, setTopMovers] = useState<StockQuote[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTopMovers = async () => {
+      try {
+        const quotes = await Promise.all(
+          topMoverSymbols.map(symbol => stockDataService.getStockQuote(symbol))
+        );
+        // Sort by absolute change percentage (highest movers first)
+        const sortedQuotes = quotes
+          .filter(Boolean)
+          .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent));
+        setTopMovers(sortedQuotes);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching top movers:', error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchTopMovers();
+    
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchTopMovers, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -162,27 +185,37 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {topMovers.map((stock) => (
-                      <Link 
-                        key={stock.symbol} 
-                        to={`/stocks/${stock.symbol}`}
-                        className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 hover:bg-slate-800/50 transition-colors border border-slate-700/50"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div>
-                            <div className="font-bold text-white">{stock.symbol}</div>
-                            <div className="text-sm text-gray-400">{stock.name}</div>
+                    {isLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+                      </div>
+                    ) : topMovers.length > 0 ? (
+                      topMovers.map((stock) => (
+                        <Link 
+                          key={stock.symbol} 
+                          to={`/stocks/${stock.symbol}`}
+                          className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 hover:bg-slate-800/50 transition-colors border border-slate-700/50"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div>
+                              <div className="font-bold text-white">{stock.symbol}</div>
+                              <div className="text-sm text-gray-400">{stock.name}</div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-bold text-white">${stock.price}</div>
-                          <div className="text-sm">
-                            {formatChange(stock.change, stock.changePercent)}
+                          <div className="text-right">
+                            <div className="font-bold text-white">${stock.price?.toFixed(2) || '--'}</div>
+                            <div className="text-sm">
+                              {formatChange(stock.change || 0, stock.changePercent || 0)}
+                            </div>
+                            <div className="text-xs text-gray-500">Real-time</div>
                           </div>
-                          <div className="text-xs text-gray-500">Vol: {stock.volume}</div>
-                        </div>
-                      </Link>
-                    ))}
+                        </Link>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-gray-400">
+                        No data available
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

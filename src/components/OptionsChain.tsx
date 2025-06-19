@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, TrendingDown, Activity } from 'lucide-react';
-import { useOptionsWebSocket } from '@/hooks/useAlpacaWebSocket';
 import { stockDataService } from '@/lib/stockDataService';
 
 interface OptionsChainProps {
@@ -26,7 +25,6 @@ const OptionsChain: React.FC<OptionsChainProps> = ({ symbol }) => {
   const [selectedExpiry, setSelectedExpiry] = useState<string>('');
   const [optionsData, setOptionsData] = useState<{ options: OptionData[] } | null>(null);
   const [loading, setLoading] = useState(true);
-  const { data: wsData, isConnected } = useOptionsWebSocket([symbol]);
 
   useEffect(() => {
     const fetchOptionsData = async () => {

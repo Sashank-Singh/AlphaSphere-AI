@@ -16,7 +16,7 @@ import AIMarketInsights from '@/components/AIMarketInsights';
 import BacktestSimulator from '@/components/BacktestSimulator';
 import RiskManagementDashboard from '@/components/RiskManagementDashboard';
 import { getStockBySymbol } from '@/data/mockData';
-import { mockStockService } from '@/lib/mockStockService';
+import { stockDataService } from '@/lib/stockDataService';
 import { usePortfolio } from '@/context/PortfolioContext';
 import TVQuoteWidget from '@/components/TVQuoteWidget';
 import StockNews from '@/components/StockNews';
@@ -112,7 +112,7 @@ const StockDetailPage: React.FC = () => {
     if (!isLoading && stock) {
       const fetchStockData = async () => {
         try {
-          const quote = await mockStockService.getStockQuote(stock.symbol);
+          const quote = await stockDataService.getStockQuote(stock.symbol);
           setStock(prev => prev ? {
             ...prev,
             price: quote.price,

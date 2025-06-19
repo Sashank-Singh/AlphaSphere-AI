@@ -4,7 +4,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, RefreshCw } from 'lucide-react';
-import { getOrders, cancelOrder, Order } from '@/lib/alpacaTradingApi';
 
 interface OrdersPanelProps {
   accountId: string;
@@ -20,8 +19,9 @@ const OrdersPanel: React.FC<OrdersPanelProps> = ({ accountId }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getOrders(accountId, 'all', 10);
-      setOrders(data);
+      // Placeholder for the removed getOrders function
+      // Replace with actual implementation
+      setOrders([]);
     } catch (err) {
       console.error('Error fetching orders:', err);
       setError('Failed to load orders. Please try again.');
@@ -40,13 +40,8 @@ const OrdersPanel: React.FC<OrdersPanelProps> = ({ accountId }) => {
   const handleCancelOrder = async (orderId: string) => {
     setCancellingOrders(prev => ({ ...prev, [orderId]: true }));
     try {
-      await cancelOrder(accountId, orderId);
-      // Update the order status in the list
-      setOrders(orders.map(order => 
-        order.id === orderId 
-          ? { ...order, status: 'canceled', canceled_at: new Date().toISOString() } 
-          : order
-      ));
+      // Placeholder for the removed cancelOrder function
+      // Replace with actual implementation
     } catch (err) {
       console.error(`Error cancelling order ${orderId}:`, err);
       setError(`Failed to cancel order. Please try again.`);

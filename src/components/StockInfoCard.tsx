@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Building2, Users, Globe, Calendar } from 'lucide-react';
-import { mockStockService } from '@/lib/mockStockService';
+import { stockDataService } from '@/lib/stockDataService';
 
 interface CompanyInfo {
   symbol: string;
@@ -35,7 +35,7 @@ const StockInfoCard: React.FC<StockInfoCardProps> = ({ symbol, companyInfo: prop
         try {
           setLoading(true);
           setError(null);
-          const info = await mockStockService.getCompanyInfo(symbol);
+          const info = await stockDataService.getCompanyInfo(symbol);
           if (info) {
             // Map the mock service response to our expected format
             const mappedInfo: CompanyInfo = {

@@ -8,22 +8,23 @@ import { Label } from '@/components/ui/label';
 import { Loader2, BrainCircuit, Sparkles, ArrowRight, TrendingUp, TrendingDown, Clock, DollarSign, AlertTriangle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { getAIRecommendation } from '@/data/mockData';
-import { marketBuyShares, marketSellShares } from '@/lib/alpacaTradingApi';
+import { stockDataService } from '@/lib/stockDataService';
+import { StockQuote } from '@/lib/mockStockService';
 import { AIRecommendation, Stock } from '@/types';
 
 interface AITradeAdvisorProps {
   symbol: string;
-  price: number;
-  change: number;
   accountId: string;
+  refreshInterval?: number;
 }
 
 const AITradeAdvisor: React.FC<AITradeAdvisorProps> = ({
   symbol,
-  price,
-  change,
-  accountId
+  accountId,
+  refreshInterval = 30000
 }) => {
+  const [stockData, setStockData] = useState<StockQuote | null>(null);
+  const [isLoadingStock, setIsLoadingStock] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [recommendation, setRecommendation] = useState<AIRecommendation | null>(null);
   const [stockRecommendation, setStockRecommendation] = useState<{
@@ -39,18 +40,40 @@ const AITradeAdvisor: React.FC<AITradeAdvisorProps> = ({
     message: string;
   } | null>(null);
 
+  // Fetch real-time stock data
+  useEffect(() => {
+    const fetchStockData = async () => {
+      try {
+        const data = await stockDataService.getStockQuote(symbol);
+        setStockData(data);
+        setIsLoadingStock(false);
+      } catch (error) {
+        console.error(`Error fetching stock data for ${symbol}:`, error);
+        setIsLoadingStock(false);
+      }
+    };
+
+    fetchStockData();
+    
+    // Set up refresh interval
+    const interval = setInterval(fetchStockData, refreshInterval);
+    return () => clearInterval(interval);
+  }, [symbol, refreshInterval]);
+
   // Generate AI recommendation
   const generateRecommendation = () => {
     setIsLoading(true);
     setTradeResult(null);
 
+    if (!stockData) return;
+
     // Create a mock stock object for the recommendation
     const stock: Stock = {
       id: symbol,
       symbol: symbol,
-      name: symbol,
-      price: price,
-      change: change,
+      name: stockData.name || symbol,
+      price: stockData.price,
+      change: stockData.change,
       volume: 0
     };
 
@@ -93,7 +116,7 @@ const AITradeAdvisor: React.FC<AITradeAdvisorProps> = ({
     }, 2000);
   };
 
-  // Execute stock trade
+  // Execute stock trade (simulate using Polygon data)
   const executeStockTrade = async (action: 'buy' | 'sell') => {
     if (!stockRecommendation) return;
 
@@ -102,23 +125,16 @@ const AITradeAdvisor: React.FC<AITradeAdvisorProps> = ({
 
     try {
       const qty = parseInt(quantity);
-
-      if (action === 'buy') {
-        await marketBuyShares(accountId, symbol, qty);
-      } else {
-        await marketSellShares(accountId, symbol, qty);
-      }
-
+      // Simulate trade using Polygon data (no real trade execution)
+      await new Promise(res => setTimeout(res, 1000));
       setTradeResult({
         success: true,
-        message: `Successfully ${action === 'buy' ? 'bought' : 'sold'} ${qty} shares of ${symbol}`
+        message: `Simulated ${action === 'buy' ? 'buy' : 'sell'} of ${qty} shares of ${symbol} at ${formatCurrency(price)} (Polygon real-time price)`
       });
-
     } catch (error) {
-      console.error(`Error executing ${action} trade:`, error);
       setTradeResult({
         success: false,
-        message: error instanceof Error ? error.message : `Failed to ${action} shares`
+        message: 'Failed to simulate trade.'
       });
     } finally {
       setIsSubmitting(false);
@@ -195,14 +211,14 @@ const AITradeAdvisor: React.FC<AITradeAdvisorProps> = ({
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                       <div>
                         <div className="text-muted-foreground">Current Price:</div>
-                        <div className="font-medium">{formatCurrency(price)}</div>
+                        <div className="font-medium">{stockData ? formatCurrency(stockData.price) : '--'}</div>
                       </div>
 
                       <div>
                         <div className="text-muted-foreground">Target Price:</div>
                         <div className="font-medium flex items-center gap-1">
                           {formatCurrency(stockRecommendation.targetPrice)}
-                          {stockRecommendation.targetPrice > price ? (
+                          {stockData && stockRecommendation.targetPrice > stockData.price ? (
                             <TrendingUp className="h-3 w-3 text-green-500" />
                           ) : (
                             <TrendingDown className="h-3 w-3 text-red-500" />
@@ -212,8 +228,8 @@ const AITradeAdvisor: React.FC<AITradeAdvisorProps> = ({
 
                       <div className="col-span-2">
                         <div className="text-muted-foreground">Potential Gain/Loss:</div>
-                        <div className={`font-medium ${stockRecommendation.targetPrice > price ? "text-green-500" : "text-red-500"}`}>
-                          {((stockRecommendation.targetPrice - price) / price * 100).toFixed(2)}%
+                        <div className={`font-medium ${stockData && stockRecommendation.targetPrice > stockData.price ? "text-green-500" : "text-red-500"}`}>
+                          {stockData ? ((stockRecommendation.targetPrice - stockData.price) / stockData.price * 100).toFixed(2) : '--'}%
                         </div>
                       </div>
                     </div>
@@ -237,7 +253,7 @@ const AITradeAdvisor: React.FC<AITradeAdvisorProps> = ({
 
                   <div className="flex justify-between items-center mt-4">
                     <span>Estimated Cost:</span>
-                    <span className="font-bold">{formatCurrency(parseInt(quantity || '0') * price)}</span>
+                    <span className="font-bold">{stockData ? formatCurrency(parseInt(quantity || '0') * stockData.price) : '--'}</span>
                   </div>
 
                   {tradeResult && (
@@ -357,10 +373,6 @@ const AITradeAdvisor: React.FC<AITradeAdvisorProps> = ({
             Reset
           </Button>
         )}
-        <Button variant="link" className="ml-auto" onClick={() => window.open('https://alpaca.markets/docs/trading/', '_blank')}>
-          Learn more about trading
-          <ArrowRight className="h-4 w-4 ml-1" />
-        </Button>
       </CardFooter>
     </Card>
   );

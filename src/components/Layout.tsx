@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import BottomNavBar from './BottomNavBar';
+
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
@@ -58,6 +59,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Add Toaster component for notifications */}
         <Toaster />
       </div>
+      
+
     </div>
   );
 };

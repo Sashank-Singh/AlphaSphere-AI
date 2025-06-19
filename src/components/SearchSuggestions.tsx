@@ -1,82 +1,126 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, TrendingDown, Search } from 'lucide-react';
+import { stockDataService } from '@/lib/stockDataService';
+import { StockQuote } from '@/lib/mockStockService';
 import { useNavigate } from 'react-router-dom';
-import { Stock } from '@/types';
-import { formatCurrency } from '@/lib/utils';
 
 interface SearchSuggestionsProps {
-  suggestions: Stock[];
-  onSelect: (stock: Stock) => void;
-  visible: boolean;
+  query: string;
+  onSelect: (symbol: string) => void;
 }
 
-const getCompanyLogo = (symbol: string): string => {
-  const logoMap: { [key: string]: string } = {
-    'AAPL': 'https://companieslogo.com/img/orig/AAPL-e033b5b2.png',
-    'MSFT': 'https://companieslogo.com/img/orig/MSFT-e8c5e9b1.png',
-    'GOOGL': 'https://companieslogo.com/img/orig/GOOGL-e8b6d1bd.png',
-    'AMZN': 'https://companieslogo.com/img/orig/AMZN-e9b42c25.png',
-    'TSLA': 'https://companieslogo.com/img/orig/TSLA-b8a7e4a8.png',
-    'META': 'https://companieslogo.com/img/orig/META-b5a44e2b.png',
-    'NVDA': 'https://companieslogo.com/img/orig/NVDA-02f9b5d7.png',
-    'NFLX': 'https://companieslogo.com/img/orig/NFLX-b5b7c8c1.png',
-    'CRM': 'https://companieslogo.com/img/orig/CRM-0d7e0a7c.png',
-    'ORCL': 'https://companieslogo.com/img/orig/ORCL-d5b3b8d2.png',
-    'INTC': 'https://companieslogo.com/img/orig/INTC-c0b3b2d1.png',
-    'AMD': 'https://companieslogo.com/img/orig/AMD-c3a2b1d0.png',
-    'IBM': 'https://companieslogo.com/img/orig/IBM-c1a2b3d4.png',
-    'SPY': 'https://companieslogo.com/img/orig/SPY-e2b3c1d0.png',
-    'QQQ': 'https://companieslogo.com/img/orig/QQQ-f1a2b3c4.png'
-  };
-  
-  return logoMap[symbol] || `https://logo.clearbit.com/${symbol.toLowerCase()}.com`;
-};
 
-const SearchSuggestions: React.FC<SearchSuggestionsProps> = ({
-  suggestions,
-  onSelect,
-  visible
-}) => {
-  if (!visible || suggestions.length === 0) return null;
+
+const SearchSuggestions: React.FC<SearchSuggestionsProps> = ({ query, onSelect }) => {
+  const navigate = useNavigate();
+  const [suggestions, setSuggestions] = useState<StockQuote[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const popularStocks = [
+    { symbol: 'AAPL', name: 'Apple Inc.' },
+    { symbol: 'MSFT', name: 'Microsoft Corporation' },
+    { symbol: 'GOOGL', name: 'Alphabet Inc.' },
+    { symbol: 'AMZN', name: 'Amazon.com Inc.' },
+    { symbol: 'TSLA', name: 'Tesla Inc.' },
+    { symbol: 'META', name: 'Meta Platforms Inc.' },
+    { symbol: 'NVDA', name: 'NVIDIA Corporation' },
+    { symbol: 'JPM', name: 'JPMorgan Chase & Co.' },
+    { symbol: 'V', name: 'Visa Inc.' },
+    { symbol: 'JNJ', name: 'Johnson & Johnson' }
+  ];
+
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (query.length > 0) {
+        setIsLoading(true);
+        try {
+          const filtered = popularStocks.filter(stock => 
+            stock.symbol.toLowerCase().includes(query.toLowerCase()) ||
+            stock.name.toLowerCase().includes(query.toLowerCase())
+          ).slice(0, 5);
+          
+          const stockPromises = filtered.map(stock => 
+            stockDataService.getStockQuote(stock.symbol).catch(err => {
+              console.error(`Error fetching ${stock.symbol}:`, err);
+              return null;
+            })
+          );
+          
+          const stockData = await Promise.all(stockPromises);
+          const validStocks = stockData.filter((stock): stock is StockQuote => stock !== null);
+          setSuggestions(validStocks);
+        } catch (error) {
+          console.error('Error fetching suggestions:', error);
+          setSuggestions([]);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setSuggestions([]);
+      }
+    };
+
+    const debounceTimer = setTimeout(fetchSuggestions, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [query]);
+
+  if (suggestions.length === 0 && !isLoading) {
+    return null;
+  }
 
   return (
-    <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg z-50 max-h-[400px] overflow-y-auto">
-      {suggestions.map((stock) => (
-        <button
-          key={stock.symbol}
-          className="w-full px-4 py-3 flex items-center gap-3 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0"
-          onClick={() => onSelect(stock)}
-        >
-          <div className="w-10 h-10 flex-shrink-0 bg-white rounded-lg p-1 border border-border/20">
-            <img
-              src={stock.logo || getCompanyLogo(stock.symbol)}
-              alt={`${stock.name} logo`}
-              className="w-full h-full object-contain"
-              onError={(e) => {
-                const fallbackLogo = getCompanyLogo(stock.symbol);
-                if ((e.target as HTMLImageElement).src !== fallbackLogo) {
-                  (e.target as HTMLImageElement).src = fallbackLogo;
-                } else {
-                  (e.target as HTMLImageElement).src = 'https://companieslogo.com/img/orig/STOCK-96087f37.png?t=1648063409';
-                }
+    <Card className="absolute top-full left-0 right-0 mt-1 z-50 max-h-[300px] overflow-y-auto">
+      <CardContent className="p-0">
+        {isLoading ? (
+          <div className="p-3">
+            <div className="flex items-center space-x-3 animate-pulse">
+              <div className="h-4 w-4 bg-muted rounded"></div>
+              <div>
+                <div className="h-4 bg-muted rounded w-16 mb-1"></div>
+                <div className="h-3 bg-muted rounded w-24"></div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          suggestions.map((stock) => (
+            <div
+              key={stock.symbol}
+              className="flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer transition-colors border-b last:border-b-0"
+              onClick={() => {
+                onSelect(stock.symbol);
+                navigate(`/stocks/${stock.symbol}`);
               }}
-            />
-          </div>
-          <div className="flex-1 text-left min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-semibold text-foreground">{stock.symbol}</span>
-              <span className={`font-medium text-sm ${stock.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)}%
-              </span>
+            >
+              <div className="flex items-center space-x-3">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <div className="font-semibold">{stock.symbol}</div>
+                  <div className="text-sm text-muted-foreground">{stock.name || `${stock.symbol} Inc.`}</div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="text-right">
+                  <div className="font-semibold">${stock.price.toFixed(2)}</div>
+                  <div className={`text-sm flex items-center ${
+                    stock.changePercent >= 0 ? 'text-green-500' : 'text-red-500'
+                  }`}>
+                    {stock.changePercent >= 0 ? (
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3 mr-1" />
+                    )}
+                    {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground truncate mr-2">{stock.name}</span>
-              <span className="text-sm font-medium text-foreground">{formatCurrency(stock.price)}</span>
-            </div>
-          </div>
-        </button>
-      ))}
-    </div>
+          ))
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

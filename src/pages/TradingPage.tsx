@@ -8,12 +8,6 @@ import TradingPanel from '@/components/TradingPanel';
 import AITradeAdvisor from '@/components/AITradeAdvisor';
 import RealTimeStockChart from '@/components/RealTimeStockChart';
 import { usePolygonWebSocketData } from '@/hooks/usePolygonWebSocket';
-import { 
-  getLatestQuote, 
-  AlpacaQuote, 
-  AlpacaQuoteResponse, 
-  isMockDataMode 
-} from '../lib/alpacaApi';
 
 // Define interfaces for the chart and company data
 interface ChartDataPoint {
@@ -140,51 +134,26 @@ const TradingPage: React.FC = () => {
       }
 
       try {
-        const alpacaResponse: AlpacaQuoteResponse = await getLatestQuote(currentSymbol);
-        if (alpacaResponse && alpacaResponse.quote) {
-          const quote: AlpacaQuote = alpacaResponse.quote;
-          const price = quote.ap ?? quote.bp ?? 0;
-          const previousClose = quote.pcp ?? 0;
+        const isMock = isMockDataMode();
 
-          let change = 0;
-          let changePercent = 0;
+        setStockData({
+          symbol: currentSymbol,
+          price: 0,
+          change: 0,
+          changePercent: 0,
+          lastUpdated: Date.now(),
+          isMockData: isMock
+        });
 
-          if (price !== 0 && previousClose !== 0) {
-            change = price - previousClose;
-            changePercent = (change / previousClose) * 100;
-          }
-
-          prevPriceRef.current = stockData.price;
-          const isMock = isMockDataMode();
-
-          setStockData({
-            symbol: alpacaResponse.symbol || currentSymbol,
-            price: price,
-            change: change,
-            changePercent: changePercent,
-            lastUpdated: Date.now(),
-            isMockData: isMock
-          });
-
-          setCompanyData({
-            description: `${alpacaResponse.symbol || currentSymbol} is a publicly traded company.`,
-            marketCap: (price * 1000000000).toLocaleString(),
-            peRatio: (15 + Math.random() * 10).toFixed(2),
-            high52Week: (price * 1.2).toFixed(2),
-            low52Week: (price * 0.8).toFixed(2),
-            volume: (1000000 + Math.random() * 5000000).toLocaleString(),
-            avgVolume: (2000000 + Math.random() * 3000000).toLocaleString()
-          });
-        } else {
-          setStockData({ 
-            symbol: currentSymbol, 
-            price: 0, 
-            change: 0, 
-            changePercent: 0,
-            lastUpdated: Date.now(),
-            isMockData: true
-          });
-        }
+        setCompanyData({
+          description: `${currentSymbol} is a publicly traded company.`,
+          marketCap: (0 * 1000000000).toLocaleString(),
+          peRatio: (15 + Math.random() * 10).toFixed(2),
+          high52Week: (0 * 1.2).toFixed(2),
+          low52Week: (0 * 0.8).toFixed(2),
+          volume: (0).toLocaleString(),
+          avgVolume: (0).toLocaleString()
+        });
       } catch (error) {
         console.error(`Error fetching stock data for ${currentSymbol}:`, error);
         setStockData({ 

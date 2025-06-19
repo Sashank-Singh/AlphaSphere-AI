@@ -84,7 +84,7 @@ const AIPortfolioOptimizer: React.FC = () => {
         <Feather name="pie-chart" size={20} color="#3B82F6" />
         <Text style={styles.title}>AI Portfolio Optimizer</Text>
         <View style={styles.liveBadge}>
-          <Feather name="zap" size={12} color="#F59E0B" />
+          <Feather name="zap" size={12} color="#FBBF24" />
           <Text style={styles.liveText}>Live</Text>
         </View>
       </View>
@@ -184,18 +184,10 @@ const AIPortfolioOptimizer: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1C1C1E',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   header: {
     flexDirection: 'row',
@@ -205,21 +197,21 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFFFFF',
     marginLeft: 8,
     flex: 1,
   },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#78350F',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
   liveText: {
     fontSize: 12,
-    color: '#F59E0B',
+    color: '#FBBF24',
     fontWeight: '500',
     marginLeft: 4,
   },
@@ -242,7 +234,7 @@ const styles = StyleSheet.create({
   scoreTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFFFFF',
     marginLeft: 8,
   },
   riskContainer: {
@@ -250,7 +242,7 @@ const styles = StyleSheet.create({
   },
   riskLabel: {
     fontSize: 12,
-    color: '#6B7280',
+    color: '#AAB8C2',
   },
   riskValue: {
     fontSize: 14,
@@ -266,17 +258,19 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#AAB8C2',
   },
   progressValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFFFFF',
   },
   progressBar: {
     height: 8,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#374151',
     borderRadius: 4,
+    marginTop: 4,
+    overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
@@ -289,12 +283,12 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFFFFF',
     marginLeft: 8,
   },
   allocationRow: {
@@ -304,9 +298,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   allocationSector: {
-    fontSize: 12,
-    color: '#111827',
     flex: 1,
+    fontSize: 14,
+    color: '#FFFFFF',
   },
   allocationRight: {
     flexDirection: 'row',
@@ -315,15 +309,15 @@ const styles = StyleSheet.create({
   },
   allocationCurrent: {
     fontSize: 12,
-    color: '#6B7280',
-    width: 30,
+    color: '#AAB8C2',
+    width: 40,
     textAlign: 'right',
   },
   allocationBar: {
-    width: 32,
-    height: 4,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 2,
+    width: 80,
+    height: 6,
+    backgroundColor: '#374151',
+    borderRadius: 3,
   },
   allocationFill: {
     height: '100%',
@@ -331,7 +325,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   recommendationsSection: {
-    marginBottom: 16,
+    marginTop: 16,
   },
   recommendationRow: {
     flexDirection: 'row',
@@ -356,32 +350,35 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   recommendationAction: {
-    fontSize: 12,
-    color: '#111827',
     flex: 1,
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginLeft: 8,
   },
   recommendationImpact: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#111827',
+    color: '#AAB8C2',
+    fontWeight: '500',
   },
   diversificationSection: {
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopColor: '#374151',
+    marginTop: 16,
   },
   diversificationRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   diversificationLabel: {
-    fontSize: 12,
-    color: '#6B7280',
+    fontSize: 14,
+    color: '#AAB8C2',
   },
   diversificationValue: {
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFFFFF',
   },
 });
 

@@ -13,6 +13,7 @@ import {
   ChevronRight,
   TrendingUp,
   Percent,
+  Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -29,6 +30,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
       name: 'Dashboard',
       icon: LayoutDashboard,
       path: '/dashboard'
+    },
+    {
+      name: 'Search',
+      icon: Search,
+      path: '/search'
     },
     {
       name: 'Market',

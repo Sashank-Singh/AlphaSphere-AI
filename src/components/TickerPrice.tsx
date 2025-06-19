@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { mockStockService, StockQuote } from '@/lib/mockStockService';
+import { stockDataService } from '@/lib/stockDataService';
+import { StockQuote } from '@/lib/mockStockService';
 
 interface TickerPriceProps {
   symbol: string;
@@ -22,7 +23,7 @@ const TickerPrice: React.FC<TickerPriceProps> = ({
   useEffect(() => {
     const fetchPrice = async () => {
       try {
-        const data = await mockStockService.getStockQuote(symbol);
+        const data = await stockDataService.getStockQuote(symbol);
         setQuote(data);
       } catch (error) {
         console.error('Error fetching stock price:', error);
@@ -69,4 +70,4 @@ const TickerPrice: React.FC<TickerPriceProps> = ({
   );
 };
 
-export default TickerPrice; 
+export default TickerPrice;

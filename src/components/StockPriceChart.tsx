@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { mockStockService, StockQuote } from '@/lib/mockStockService';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,9 @@ import TradeModal from './TradeModal';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { stockDataService } from '@/lib/stockDataService';
 import { CompanyInfo } from '@/lib/mockStockService';
+import { usePolygonWebSocketData } from '@/hooks/usePolygonWebSocket';
 
 // Price data structure from TradingView
 interface TVPriceData {
@@ -118,6 +119,7 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
   const [isAITradeModalOpen, setIsAITradeModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
 
   // Get portfolio context for executing trades
   const { executeOptionTrade } = usePortfolio();
@@ -128,13 +130,31 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
   const tvWidgetRef = useRef<TVWidget | null>(null);
   const priceUpdateIntervalRef = useRef<number | null>(null);
 
+  const { stockData } = usePolygonWebSocketData([symbol]);
+  const real = stockData[symbol];
+
+  // Effect to load the TradingView script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://s3.tradingview.com/tv.js';
+    script.async = true;
+    script.onload = () => {
+      setScriptLoaded(true);
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
   // Fetch company info
   const fetchCompanyData = async () => {
     try {
       setLoading(true);
       const [company, prices] = await Promise.all([
-        mockStockService.getCompanyInfo(symbol),
-        mockStockService.getHistoricalPrices(symbol, 30)
+        stockDataService.getCompanyInfo(symbol),
+        stockDataService.getHistoricalPrices(symbol, 30)
       ]);
       setCompanyInfo(company);
       setPriceData(prices);
@@ -148,7 +168,7 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
   // Fetch price data for currentPrice state (used by StockAnalysisPanel)
   const fetchCurrentPrice = async () => {
     try {
-      const data = await mockStockService.getStockQuote(symbol);
+      const data = await stockDataService.getStockQuote(symbol);
       if (data) {
         setCurrentPrice(data.price);
         setLastUpdated(new Date());
@@ -164,106 +184,88 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
 
     fetchCompanyData();
     fetchCurrentPrice();
-
-    // Clean up interval on unmount
-    return () => {
-      if (timerRef.current) {
-        window.clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-
-      if (priceUpdateIntervalRef.current) {
-        window.clearInterval(priceUpdateIntervalRef.current);
-        priceUpdateIntervalRef.current = null;
-      }
-    };
   }, [symbol]);
 
-  // TradingView widget setup with price data callback
+  // Create/recreate the TradingView widget when all conditions are met
   useEffect(() => {
-    if (!chartContainerRef.current || !symbol) return;
+    if (!loading && scriptLoaded && chartContainerRef.current && symbol) {
+      if (tvWidgetRef.current) {
+        tvWidgetRef.current.remove?.();
+        tvWidgetRef.current = null;
+      }
+      
+      const getActiveStudies = () => {
+        const studies = [];
+        if (showVolume) studies.push("Volume@tv-basicstudies");
 
-    // Clear previous chart if any
-    chartContainerRef.current.innerHTML = '';
+        // Trend Indicators
+        if (activeIndicators.SMA) studies.push("MASimple@tv-basicstudies");
+        if (activeIndicators.EMA) studies.push("MAExp@tv-basicstudies");
+        if (activeIndicators.BB) studies.push("BB@tv-basicstudies");
+        if (activeIndicators.Ichimoku) studies.push("IchimokuCloud@tv-basicstudies");
+        if (activeIndicators.ParabolicSAR) studies.push("PSAR@tv-basicstudies");
+        if (activeIndicators.ZigZag) studies.push("ZigZag@tv-basicstudies");
 
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/tv.js';
-    script.async = true;
-    script.onload = () => {
-      if (typeof window.TradingView !== 'undefined') {
-        const getActiveStudies = () => {
-          const studies = [];
-          if (showVolume) studies.push("Volume@tv-basicstudies");
+        // Momentum Indicators
+        if (activeIndicators.RSI) studies.push("RSI@tv-basicstudies");
+        if (activeIndicators.MACD) studies.push("MACD@tv-basicstudies");
+        if (activeIndicators.Stochastic) studies.push("Stochastic@tv-basicstudies");
+        if (activeIndicators.CCI) studies.push("CCI@tv-basicstudies");
+        if (activeIndicators.MFI) studies.push("MF@tv-basicstudies");
+        if (activeIndicators.ROC) studies.push("ROC@tv-basicstudies");
 
-          // Trend Indicators
-          if (activeIndicators.SMA) studies.push("MASimple@tv-basicstudies");
-          if (activeIndicators.EMA) studies.push("MAExp@tv-basicstudies");
-          if (activeIndicators.BB) studies.push("BB@tv-basicstudies");
-          if (activeIndicators.Ichimoku) studies.push("IchimokuCloud@tv-basicstudies");
-          if (activeIndicators.ParabolicSAR) studies.push("PSAR@tv-basicstudies");
-          if (activeIndicators.ZigZag) studies.push("ZigZag@tv-basicstudies");
+        // Volume Indicators
+        if (activeIndicators.OBV) studies.push("OBV@tv-basicstudies");
+        if (activeIndicators.AccDist) studies.push("AccDist@tv-basicstudies");
+        if (activeIndicators.CMF) studies.push("CMF@tv-basicstudies");
 
-          // Momentum Indicators
-          if (activeIndicators.RSI) studies.push("RSI@tv-basicstudies");
-          if (activeIndicators.MACD) studies.push("MACD@tv-basicstudies");
-          if (activeIndicators.Stochastic) studies.push("Stochastic@tv-basicstudies");
-          if (activeIndicators.CCI) studies.push("CCI@tv-basicstudies");
-          if (activeIndicators.MFI) studies.push("MF@tv-basicstudies");
-          if (activeIndicators.ROC) studies.push("ROC@tv-basicstudies");
+        // Volatility Indicators
+        if (activeIndicators.ATR) studies.push("ATR@tv-basicstudies");
+        if (activeIndicators.StdDev) studies.push("StdDev@tv-basicstudies");
 
-          // Volume Indicators
-          if (activeIndicators.OBV) studies.push("OBV@tv-basicstudies");
-          if (activeIndicators.AccDist) studies.push("AccDist@tv-basicstudies");
-          if (activeIndicators.CMF) studies.push("CMF@tv-basicstudies");
+        // Oscillators
+        if (activeIndicators.WilliamsR) studies.push("WilliamsR@tv-basicstudies");
+        if (activeIndicators.Momentum) studies.push("Momentum@tv-basicstudies");
 
-          // Volatility Indicators
-          if (activeIndicators.ATR) studies.push("ATR@tv-basicstudies");
-          if (activeIndicators.StdDev) studies.push("StdDev@tv-basicstudies");
+        return studies;
+      };
 
-          // Oscillators
-          if (activeIndicators.WilliamsR) studies.push("WilliamsR@tv-basicstudies");
-          if (activeIndicators.Momentum) studies.push("Momentum@tv-basicstudies");
-
-          return studies;
-        };
-
-        const config: TVWidgetConfig = {
-          autosize: true,
-          symbol: `NASDAQ:${symbol}`,
-          interval: interval || "D",
-          timezone: "exchange",
-          theme: "dark",
-          style: "1",
-          locale: "en",
-          toolbar_bg: "#161a1e",
-          enable_publishing: false,
-          allow_symbol_change: false,
-          container_id: "tradingview_chart",
-          hide_side_toolbar: false,
-          show_popup_button: true,
-          popup_width: "1000",
-          popup_height: "650",
-          hide_volume: !showVolume,
-          backgroundColor: "rgba(0, 0, 0, 1)",
-          gridColor: "rgba(42, 46, 57, 0.3)",
-          studies: getActiveStudies(),
-          save_image: false
-        };
-
-        console.log('Creating TradingView widget with config:', config);
-        const widget = new window.TradingView.widget(config);
+      const config: TVWidgetConfig = {
+        autosize: true,
+        symbol: `NASDAQ:${symbol}`,
+        interval: interval || "D",
+        timezone: "exchange",
+        theme: "dark",
+        style: "1",
+        locale: "en",
+        toolbar_bg: "#161a1e",
+        enable_publishing: false,
+        allow_symbol_change: false,
+        container_id: "tradingview_chart",
+        hide_side_toolbar: false,
+        show_popup_button: true,
+        popup_width: "1000",
+        popup_height: "650",
+        hide_volume: !showVolume,
+        backgroundColor: "rgba(0, 0, 0, 1)",
+        gridColor: "rgba(42, 46, 57, 0.3)",
+        studies: getActiveStudies(),
+        save_image: false
+      };
+      
+      if (typeof (window as any).TradingView !== 'undefined') {
+        const widget = new (window as any).TradingView.widget(config);
         tvWidgetRef.current = widget;
       }
-    };
-
-    chartContainerRef.current.appendChild(script);
+    }
 
     return () => {
-      if (chartContainerRef.current) {
-        chartContainerRef.current.innerHTML = '';
+      if (tvWidgetRef.current) {
+        tvWidgetRef.current.remove?.();
+        tvWidgetRef.current = null;
       }
     };
-  }, [symbol, interval, showVolume, activeIndicators]);
+  }, [loading, scriptLoaded, symbol, interval, showVolume, activeIndicators]);
 
   const handleIntervalChange = (value: string) => {
     if (value) setInterval(value);
@@ -354,7 +356,7 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
       <div className="bg-black rounded-lg border border-gray-800 p-2 sm:p-4 w-full min-w-0">
         {/* Chart header and controls */}
         <div className="flex flex-wrap gap-2 items-center mb-2">
-          <ToggleGroup type="single" value={interval} onValueChange={(value) => value && setInterval(value)}>
+          <ToggleGroup type="single" value={interval} onValueChange={handleIntervalChange}>
             <ToggleGroupItem value="5" size="sm">5m</ToggleGroupItem>
             <ToggleGroupItem value="15" size="sm">15m</ToggleGroupItem>
             <ToggleGroupItem value="60" size="sm">1H</ToggleGroupItem>
@@ -606,9 +608,7 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
 // This is for the TypeScript global namespace
 declare global {
   interface Window {
-    TradingView: {
-      widget: new (config: TVWidgetConfig) => TVWidget;
-    };
+    TradingView: new (config: TVWidgetConfig) => TVWidget;
   }
 }
 

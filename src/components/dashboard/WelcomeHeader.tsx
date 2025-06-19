@@ -13,7 +13,7 @@ const WelcomeHeader: React.FC = () => {
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div className="space-y-2">
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-          Welcome back, {user?.email?.split('@')[0] || 'Trader'}!
+          Welcome back, {user?.name?.split('@')[0] || 'Trader'}!
         </h1>
         <p className="text-lg text-muted-foreground">
           Here's what's happening in your portfolio today

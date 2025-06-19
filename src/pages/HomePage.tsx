@@ -427,7 +427,7 @@ const HomePage: React.FC = () => {
             {/* Third Row: Component on Left, Text on Right */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
               <div className="flex justify-center">
-                <AITradeAdvisor symbol="AAPL" price={192.32} change={1.23} accountId="demo" />
+                <AITradeAdvisor symbol="AAPL" accountId="demo" />
               </div>
               <div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">AI Trade Advisor</h3>

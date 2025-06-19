@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 
-// Polygon.io API key
-const POLYGON_API_KEY = '3F7RWVng9ADNhpAopPDEfpx_5vNh0MpP';
+// Get Polygon.io API key from environment variable
+const POLYGON_API_KEY = import.meta.env.VITE_POLYGON_API_KEY;
 
 // Define types for the data we'll receive
 interface StockData {
@@ -51,69 +51,84 @@ export const usePolygonWebSocketData = (
   const prevCloseRef = useRef<Record<string, number>>({});
   const wsRef = useRef<WebSocket | null>(null);
 
-  // Set up WebSocket connection
   useEffect(() => {
-    // Function to fetch previous day's close prices
-    const fetchPrevClosePrices = async () => {
-      const today = new Date();
-      const prevDay = new Date(today);
-      prevDay.setDate(today.getDate() - 1);
-      
-      // If it's Monday, go back to Friday
-      if (prevDay.getDay() === 0) { // Sunday
-        prevDay.setDate(prevDay.getDate() - 2);
-      } else if (prevDay.getDay() === 1) { // Monday
-        prevDay.setDate(prevDay.getDate() - 3);
+    if (!POLYGON_API_KEY) {
+      console.error('Polygon API key is missing. Please set VITE_POLYGON_API_KEY in your .env file.');
+      return;
+    }
+
+    // Connect to Polygon WebSocket
+    const ws = new WebSocket('wss://socket.polygon.io/stocks');
+    wsRef.current = ws;
+
+    let isMounted = true;
+
+    ws.onopen = () => {
+      // Authenticate
+      ws.send(JSON.stringify({ action: 'auth', params: POLYGON_API_KEY }));
+      // Subscribe to stock symbols
+      if (stockSymbols.length > 0) {
+        ws.send(JSON.stringify({ action: 'subscribe', params: stockSymbols.map(s => `T.${s}`).join(',') }));
       }
-      
-      const prevDate = prevDay.toISOString().split('T')[0];
-      
-      // Mock values for now to avoid API calls that might fail
-      for (const symbol of stockSymbols) {
-        prevCloseRef.current[symbol] = 100; // Mock value
+      setState(prev => ({ ...prev, isConnected: true }));
+    };
+
+    ws.onmessage = (event) => {
+      const messages = JSON.parse(event.data);
+      if (!Array.isArray(messages)) return;
+      const updatedStockData: StockData = {};
+      for (const msg of messages) {
+        // Trade update (type 'T')
+        if (msg.ev === 'T') {
+          const symbol = msg.sym;
+          const price = msg.p;
+          const volume = msg.s;
+          // Calculate change and changePercent if possible
+          const prevClose = prevCloseRef.current[symbol] || price;
+          const change = price - prevClose;
+          const changePercent = prevClose !== 0 ? (change / prevClose) * 100 : 0;
+          updatedStockData[symbol] = {
+            symbol,
+            price,
+            change,
+            changePercent,
+            volume
+          };
+        }
+      }
+      if (Object.keys(updatedStockData).length > 0 && isMounted) {
+        setState(prev => ({
+          ...prev,
+          stockData: { ...prev.stockData, ...updatedStockData }
+        }));
       }
     };
 
-    // Fetch previous close prices
-    fetchPrevClosePrices();
+    ws.onerror = (err) => {
+      console.error('Polygon WebSocket error:', err);
+      setState(prev => ({ ...prev, isConnected: false }));
+    };
 
-    // Generate mock data immediately for a responsive UI
-    generateMockData();
+    ws.onclose = () => {
+      setState(prev => ({ ...prev, isConnected: false }));
+    };
 
-    // No WebSocket connection for now to make the page load
-    // This is a temporary fallback solution
+    // Fetch previous close prices for all symbols (optional: can be improved with REST API)
+    (async () => {
+      for (const symbol of stockSymbols) {
+        // For now, just set to 0 (or fetch from REST API if needed)
+        prevCloseRef.current[symbol] = 0;
+      }
+    })();
 
-    // Clean up on unmount
+    // Cleanup
     return () => {
+      isMounted = false;
       if (wsRef.current) {
         wsRef.current.close();
       }
     };
-  }, [stockSymbols.join(','), optionSymbols.join(','), newsSymbols.join(',')]);
-
-  // Generate mock data for immediate display
-  const generateMockData = () => {
-    const mockStockData: StockData = {};
-    
-    for (const symbol of stockSymbols) {
-      const price = 100 + Math.random() * 50;
-      const change = (Math.random() * 4) - 2; // Between -2 and 2
-      const changePercent = (change / price) * 100;
-      
-      mockStockData[symbol] = {
-        symbol,
-        price,
-        change,
-        changePercent,
-        volume: Math.floor(Math.random() * 1000000)
-      };
-    }
-    
-    setState(prevState => ({
-      ...prevState,
-      stockData: mockStockData
-    }));
-  };
+  }, [stockSymbols.join(','), POLYGON_API_KEY]);
 
   return state;
 };

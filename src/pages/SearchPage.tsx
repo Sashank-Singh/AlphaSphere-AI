@@ -6,37 +6,64 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ChevronLeft, Search as SearchIcon, X, TrendingUp } from 'lucide-react';
 import StockCard from '@/components/StockCard';
-import { mockStocks } from '@/data/mockData';
+import { stockDataService } from '@/lib/stockDataService';
+import { StockQuote } from '@/lib/mockStockService';
 import Layout from '@/components/Layout';
 
 const SearchPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<StockQuote[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
-  const handleSearch = (e: React.FormEvent) => {
+  // Popular stock symbols to display
+  const popularSymbols = ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'NVDA'];
+  
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSearching(!!searchQuery);
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    setIsLoading(true);
+    
+    try {
+      // For demo purposes, we'll search through popular symbols
+      // In a real app, you'd have a search API
+      const query = searchQuery.toLowerCase();
+      const matchingSymbols = popularSymbols.filter(symbol => 
+        symbol.toLowerCase().includes(query)
+      );
+      
+      if (matchingSymbols.length > 0) {
+        const results = await Promise.all(
+          matchingSymbols.map(symbol => stockDataService.getStockQuote(symbol))
+        );
+        setSearchResults(results.filter(Boolean));
+      } else {
+        // Try to fetch the search query as a symbol directly
+        try {
+          const result = await stockDataService.getStockQuote(searchQuery.toUpperCase());
+          setSearchResults([result]);
+        } catch {
+          setSearchResults([]);
+        }
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const clearSearch = () => {
     setSearchQuery('');
     setIsSearching(false);
+    setSearchResults([]);
   };
   
-  // Filter stocks based on search query
-  const filteredStocks = mockStocks.filter(stock => {
-    if (!searchQuery) return false;
-    
-    const query = searchQuery.toLowerCase();
-    return (
-      stock.symbol.toLowerCase().includes(query) ||
-      stock.name.toLowerCase().includes(query)
-    );
-  });
-  
-  // Popular/trending stocks for when no search is active
-  const trendingStocks = mockStocks.slice(0, 6);
+
   
   return (
     <Layout>
@@ -80,7 +107,12 @@ const SearchPage: React.FC = () => {
               Search Results for "{searchQuery}"
             </h2>
             
-            {filteredStocks.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-lg text-muted-foreground">Searching...</p>
+              </div>
+            ) : searchResults.length === 0 ? (
               <div className="text-center py-12">
                 <SearchIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-lg text-muted-foreground mb-2">No results found</p>
@@ -88,8 +120,8 @@ const SearchPage: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredStocks.map(stock => (
-                  <StockCard key={stock.id} stock={stock} />
+                {searchResults.map(stock => (
+                  <StockCard key={stock.symbol} symbol={stock.symbol} name={stock.name} />
                 ))}
               </div>
             )}
@@ -102,8 +134,8 @@ const SearchPage: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-              {trendingStocks.map(stock => (
-                <StockCard key={stock.id} stock={stock} />
+              {popularSymbols.map(symbol => (
+                <StockCard key={symbol} symbol={symbol} />
               ))}
             </div>
             

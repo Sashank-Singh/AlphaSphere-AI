@@ -32,7 +32,7 @@ const SmartNotifications: React.FC = () => {
       id: '2',
       type: 'price_alert',
       title: 'Price Alert: AAPL',
-      message: 'AAPL reached your target price of $180',
+      message: 'AAPL price movement detected - check current levels',
       timestamp: new Date(Date.now() - 15 * 60 * 1000),
       priority: 'medium',
       actionable: true,

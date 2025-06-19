@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { stockDataService } from '@/lib/stockDataService';
+import { StockQuote } from '@/lib/mockStockService';
 import { 
   LineChart, 
   Line, 
@@ -65,21 +67,30 @@ const PredictivePriceForecasting: React.FC<PredictivePriceForecastingProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [timeframe, setTimeframe] = useState<'1d' | '1w' | '1m'>('1d');
   const [forecastData, setForecastData] = useState<Record<string, ForecastData>>({});
+  const [currentStock, setCurrentStock] = useState<StockQuote | null>(null);
   
   const fetchForecastData = async () => {
     setIsLoading(true);
     
-    // In a real app, this would fetch from an API
-    setTimeout(() => {
+    try {
+      // Fetch current stock data
+      const stockData = await stockDataService.getStockQuote(symbol);
+      setCurrentStock(stockData);
+      
+      // Generate forecast based on real current price
+      const basePrice = stockData.price;
       const mockData: Record<string, ForecastData> = {
-        '1d': generateMockForecastData('1d', stock?.price || 150),
-        '1w': generateMockForecastData('1w', stock?.price || 150),
-        '1m': generateMockForecastData('1m', stock?.price || 150)
+        '1d': generateMockForecastData('1d', basePrice),
+        '1w': generateMockForecastData('1w', basePrice),
+        '1m': generateMockForecastData('1m', basePrice)
       };
       
       setForecastData(mockData);
       setIsLoading(false);
-    }, 1200);
+    } catch (error) {
+      console.error('Error generating forecast:', error);
+      setIsLoading(false);
+    }
   };
   
   // Generate mock forecast data

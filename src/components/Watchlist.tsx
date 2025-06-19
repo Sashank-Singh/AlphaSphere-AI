@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,7 @@ const Watchlist: React.FC<WatchlistProps> = ({
 }) => {
   const [newTicker, setNewTicker] = useState('');
   const [localAlerts, setLocalAlerts] = useState<Alert[]>([]);
+  const navigate = useNavigate();
 
   const handleAddStock = () => {
     if (newTicker.trim()) {
@@ -72,7 +74,10 @@ const Watchlist: React.FC<WatchlistProps> = ({
               key={stock.symbol}
               className="flex items-center justify-between p-2 rounded-lg border"
             >
-              <div>
+              <div 
+                className="cursor-pointer"
+                onClick={() => navigate(`/stocks/${stock.symbol}`)}
+              >
                 <div className="font-medium">{stock.symbol}</div>
                 <div className="text-sm text-muted-foreground">{stock.name}</div>
               </div>

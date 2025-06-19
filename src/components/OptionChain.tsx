@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowUpDown, TrendingUp, TrendingDown, Wifi, WifiOff } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import { useOptionsWebSocket, OptionQuote } from '@/hooks/useAlpacaWebSocket';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface OptionContract {
@@ -61,7 +60,6 @@ const OptionChain: React.FC<OptionChainProps> = ({
   };
 
   const [optionSymbols, setOptionSymbols] = useState<string>('');
-  const { optionsData: wsOptionData, isConnected } = useOptionsWebSocket(optionSymbols);
 
   useEffect(() => {
     if (expiryDate && symbol) {
@@ -74,45 +72,8 @@ const OptionChain: React.FC<OptionChainProps> = ({
     setIsLoading(true);
 
     try {
-      if (wsOptionData && Array.isArray(wsOptionData) && wsOptionData.length > 0) {
-        const calls: OptionContract[] = [];
-        const puts: OptionContract[] = [];
-
-        wsOptionData.forEach((option: OptionQuote) => {
-          const isCall = option.type === 'call';
-          const contract: OptionContract = {
-            strike: option.strike,
-            expiryDate: option.expiration,
-            type: option.type,
-            bid: option.bidPrice || option.bid,
-            ask: option.askPrice || option.ask,
-            last: option.lastPrice || option.last,
-            change: 0,
-            volume: option.volume || 0,
-            openInterest: option.openInterest || 0,
-            iv: option.impliedVolatility || Math.random() * 0.3 + 0.2,
-            delta: isCall ? Math.random() * 0.5 + 0.5 : -Math.random() * 0.5 - 0.5,
-            gamma: Math.random() * 0.05,
-            theta: -Math.random() * 0.1,
-            vega: Math.random() * 0.2
-          };
-
-          if (isCall) {
-            calls.push(contract);
-          } else {
-            puts.push(contract);
-          }
-        });
-
-        if (calls.length > 0 || puts.length > 0) {
-          setOptions({
-            calls: sortOptionsByKey(calls, sortConfig.key, sortConfig.direction),
-            puts: sortOptionsByKey(puts, sortConfig.key, sortConfig.direction)
-          });
-          setIsLoading(false);
-          return;
-        }
-      }
+      const calls: OptionContract[] = [];
+      const puts: OptionContract[] = [];
 
       const strikes = [];
       const roundedPrice = Math.round(stockPrice / 5) * 5;
@@ -120,9 +81,6 @@ const OptionChain: React.FC<OptionChainProps> = ({
       for (let i = -5; i <= 5; i++) {
         strikes.push(roundedPrice + (i * 5));
       }
-
-      const calls: OptionContract[] = [];
-      const puts: OptionContract[] = [];
 
       strikes.forEach(strike => {
         const callInTheMoney = strike < stockPrice;
@@ -180,7 +138,7 @@ const OptionChain: React.FC<OptionChainProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [symbol, stockPrice, expiryDate, sortConfig, wsOptionData]);
+  }, [symbol, stockPrice, expiryDate, sortConfig]);
 
   const sortOptionsByKey = (options: OptionContract[], key: string, direction: 'ascending' | 'descending') => {
     return [...options].sort((a, b) => {
@@ -245,17 +203,10 @@ const OptionChain: React.FC<OptionChainProps> = ({
             </div>
             <div className="flex items-center text-xs">
               <span className="mr-1">Data:</span>
-              {isConnected ? (
-                <span className="flex items-center text-green-500">
-                  <Wifi className="h-3 w-3 mr-1" />
-                  Live
-                </span>
-              ) : (
-                <span className="flex items-center text-yellow-500">
-                  <WifiOff className="h-3 w-3 mr-1" />
-                  Delayed
-                </span>
-              )}
+              <span className="flex items-center text-yellow-500">
+                <WifiOff className="h-3 w-3 mr-1" />
+                Delayed
+              </span>
             </div>
           </div>
         </CardHeader>
