@@ -4,3 +4,4 @@ python-dotenv
 Flask-CORS
 yfinance
 pandas 
+gunicorn
