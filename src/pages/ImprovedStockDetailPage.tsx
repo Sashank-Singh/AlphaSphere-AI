@@ -7,7 +7,7 @@ import { formatCurrency, formatPercentage, cn } from '@/lib/utils';
 import { Stock } from '@/types';
 import { stockDataService } from '@/lib/stockDataService';
 import { usePortfolio } from '@/context/PortfolioContext';
-import RealTimeStockChart from '@/components/RealTimeStockChart';
+import StockPriceChart from '@/components/StockPriceChart';
 import TradeModal from '@/components/TradeModal';
 import AISentimentAnalysis from '@/components/AISentimentAnalysis';
 import PredictivePriceForecasting from '@/components/PredictivePriceForecasting';
@@ -271,14 +271,8 @@ const ImprovedStockDetailPage: React.FC = () => {
       {/* Chart */}
       <div className="mb-12">
         {stock && (
-          <RealTimeStockChart 
+          <StockPriceChart 
             symbol={symbol!}
-            currentPrice={stock.price}
-            change={stock.change}
-            changePercent={stock.changePercent || 0}
-            isRealTime={true}
-            chartType="area"
-            height={400}
           />
         )}
       </div>

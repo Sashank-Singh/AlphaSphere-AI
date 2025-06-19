@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, ArrowLeft, BrainCircuit, Percent, Wifi, WifiOff, Calculator } from 'lucide-react';
 import OptionChain from '@/components/OptionChain';
-import RealTimeStockChart from '@/components/RealTimeStockChart';
+import StockPriceChart from '@/components/StockPriceChart';
 import OptionsChart from '@/components/OptionsChart';
 import { usePolygonWebSocketData } from '@/hooks/usePolygonWebSocket';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -282,14 +282,8 @@ const OptionsPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Stock Chart */}
           {stockData.price > 0 && (
-            <RealTimeStockChart
+            <StockPriceChart
               symbol={stockData.symbol}
-              currentPrice={stockData.price}
-              change={stockData.change}
-              changePercent={stockData.changePercent}
-              isRealTime={stockFeedConnected}
-              chartType="area"
-              height={350}
             />
           )}
 
