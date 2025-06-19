@@ -29,4 +29,4 @@ backend_proxy/.env
 *.sw?
 .env.local
 .env.development
-
+.env 
