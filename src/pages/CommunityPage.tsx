@@ -1,190 +1,214 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageSquare, ThumbsUp, Share2, Users, TrendingUp, Image as ImageIcon, Link2, Bookmark, MoreHorizontal, Bell } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import ReactPlayer from 'react-player';
+import PostCreator from '@/components/community/PostCreator';
+import PostCard from '@/components/community/PostCard';
+import CommentSection from '@/components/community/CommentSection';
+import TopTraders from '@/components/community/TopTraders';
+import TrendingTopics from '@/components/community/TrendingTopics';
+import FeedTabs from '@/components/community/FeedTabs';
 
 interface Post {
-  id: number;
+  id: string;
   user: {
-    name: string;
-    avatar: string;
+    name?: string;
     handle: string;
+    avatar?: string;
     verified?: boolean;
   };
   content: string;
-  image?: string;
+  timestamp: string;
   likes: number;
-  comments: Comment[];
+  comments: number;
   shares: number;
   bookmarks: number;
-  time: Date;
   tags: string[];
-  isLiked?: boolean;
-  isBookmarked?: boolean;
+  image?: string;
+  link?: string;
+  liked?: boolean;
+  bookmarked?: boolean;
 }
 
 interface Comment {
-  id: number;
+  id: string;
   user: {
     name: string;
-    avatar: string;
     handle: string;
+    avatar?: string;
   };
   content: string;
+  timestamp: string;
   likes: number;
-  time: Date;
-  isLiked?: boolean;
+  liked?: boolean;
 }
 
-// Regex to detect URLs in post content
-const urlRegex = /https?:\/\/[^\s]+/g;
+interface Trader {
+  id: string;
+  name: string;
+  handle: string;
+  avatar?: string;
+  winRate: string;
+  followers: string;
+  performance: string;
+  verified: boolean;
+  isFollowing?: boolean;
+}
 
-// Component to preview links or embed playable content
-const LinkPreview: React.FC<{ url: string }> = ({ url }) => {
-  // Embed playable URLs (e.g., YouTube) using ReactPlayer
-  if (ReactPlayer.canPlay(url)) {
-    return (
-      <div className="my-4">
-        <ReactPlayer url={url} width="100%" height="200px" className="rounded-lg" />
-      </div>
-    );
+interface TrendingTopic {
+  id: string;
+  tag: string;
+  type: 'hashtag' | 'cashtag';
+  posts: number;
+  change: number;
+  trending: boolean;
+}
+
+
+
+// Sample data
+const samplePosts: Post[] = [
+  {
+    id: '1',
+    user: {
+      name: 'Alex Chen',
+      handle: '@alextrader',
+      avatar: '/api/placeholder/40/40',
+      verified: true
+    },
+    content: 'Just closed a massive position on $TSLA. The technical analysis was spot on! 📈 Here\'s my breakdown of why I think we\'re heading for a major breakout. #TechnicalAnalysis #TSLA',
+    timestamp: '2h',
+    likes: 24,
+    comments: 8,
+    shares: 3,
+    bookmarks: 12,
+    tags: ['TechnicalAnalysis', 'TSLA'],
+    image: '/api/placeholder/500/300',
+    liked: false,
+    bookmarked: true
+  },
+  {
+    id: '2',
+    user: {
+      name: 'Sarah Williams',
+      handle: '@sarahwins',
+      avatar: '/api/placeholder/40/40'
+    },
+    content: 'Market volatility is creating some incredible opportunities right now. My watchlist is full of potential plays. What are you all watching? 👀',
+    timestamp: '4h',
+    likes: 15,
+    comments: 12,
+    shares: 2,
+    bookmarks: 8,
+    tags: ['MarketWatch', 'Opportunities'],
+    liked: true,
+    bookmarked: false
+  },
+  {
+    id: '3',
+    user: {
+      name: 'Mike Rodriguez',
+      handle: '@miketrading',
+      avatar: '/api/placeholder/40/40',
+      verified: true
+    },
+    content: 'New video analysis on $SPY trends. Link below 👇 https://youtube.com/watch?v=example',
+    timestamp: '6h',
+    likes: 31,
+    comments: 5,
+    shares: 7,
+    bookmarks: 18,
+    tags: ['SPY', 'Analysis'],
+    link: 'https://youtube.com/watch?v=example',
+    liked: false,
+    bookmarked: false
   }
-  // Fallback to simple link card with domain and URL
-  let hostname = url;
-  try {
-    hostname = new URL(url).hostname;
-  } catch (error) {
-    // ignore invalid URL, use raw link
+];
+
+const topTraders: Trader[] = [
+  { 
+    id: '1', 
+    name: 'Jordan Smith', 
+    handle: '@jordanwins', 
+    avatar: '/api/placeholder/32/32', 
+    winRate: '87%', 
+    followers: '12.5k',
+    performance: '+24.5%',
+    verified: true,
+    isFollowing: false
+  },
+  { 
+    id: '2', 
+    name: 'Emma Davis', 
+    handle: '@emmadavis', 
+    avatar: '/api/placeholder/32/32', 
+    winRate: '82%', 
+    followers: '8.9k',
+    performance: '+18.2%',
+    verified: true,
+    isFollowing: true
+  },
+  { 
+    id: '3', 
+    name: 'Ryan Park', 
+    handle: '@ryanpark', 
+    avatar: '/api/placeholder/32/32', 
+    winRate: '79%', 
+    followers: '15.2k',
+    performance: '+15.7%',
+    verified: false,
+    isFollowing: false
+  },
+  { 
+    id: '4', 
+    name: 'Lisa Wong', 
+    handle: '@lisawong', 
+    avatar: '/api/placeholder/32/32', 
+    winRate: '76%', 
+    followers: '6.7k',
+    performance: '+12.3%',
+    verified: true,
+    isFollowing: false
   }
-  return (
-    <a href={url} target="_blank" rel="noopener noreferrer" className="block border rounded-lg p-3 mb-4 hover:shadow-lg transition">
-      <div className="text-sm font-medium text-primary mb-1 truncate">{hostname}</div>
-      <div className="text-xs text-muted-foreground break-all">{url}</div>
-    </a>
-  );
-};
+];
+
+const trendingTopics: TrendingTopic[] = [
+  { id: '1', tag: 'TechnicalAnalysis', posts: 1247, type: 'hashtag', change: 15, trending: true },
+  { id: '2', tag: 'TSLA', posts: 892, type: 'cashtag', change: 8, trending: true },
+  { id: '3', tag: 'MarketWatch', posts: 634, type: 'hashtag', change: -3, trending: false },
+  { id: '4', tag: 'SPY', posts: 521, type: 'cashtag', change: 12, trending: true },
+  { id: '5', tag: 'Options', posts: 387, type: 'hashtag', change: 22, trending: true }
+];
 
 const CommunityPage: React.FC = () => {
-  const [posts, setPosts] = useState<Post[]>([
-    {
-      id: 1,
-      user: {
-        name: 'Sarah Chen',
-        avatar: '/avatars/sarah.jpg',
-        handle: '@sarahtrader',
-        verified: true
-      },
-      content: 'Just closed my $AAPL position with a 15% gain! The technical setup was perfect for a swing trade. Here\'s my analysis...',
-      image: '/images/trading/apple-chart.png',
-      likes: 24,
-      comments: [
-        {
-          id: 1,
-          user: {
-            name: 'Alex Thompson',
-            avatar: '/avatars/alex.jpg',
-            handle: '@alexthompson'
-          },
-          content: 'Great analysis! What indicators did you use?',
-          likes: 5,
-          time: new Date(Date.now() - 3600000)
-        }
-      ],
-      shares: 12,
-      bookmarks: 8,
-      time: new Date(Date.now() - 7200000),
-      tags: ['AAPL', 'SwingTrading', 'TechnicalAnalysis'],
-      isLiked: false,
-      isBookmarked: false
-    },
-    {
-      id: 2,
-      user: {
-        name: 'Mike Johnson',
-        avatar: '/avatars/mike.jpg',
-        handle: '@mikej',
-        verified: true
-      },
-      content: 'Anyone watching the semiconductor sector? $NVDA and $AMD showing strong momentum. Here\'s my sector analysis and key levels to watch.',
-      likes: 18,
-      comments: [],
-      shares: 8,
-      bookmarks: 5,
-      time: new Date(Date.now() - 14400000),
-      tags: ['Semiconductors', 'NVDA', 'AMD'],
-      isLiked: false,
-      isBookmarked: false
-    }
-  ]);
-
-  const [newPost, setNewPost] = useState('');
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [posts, setPosts] = useState<Post[]>(samplePosts);
   const [activeTab, setActiveTab] = useState('trending');
-  const [showComments, setShowComments] = useState<number | null>(null);
-  const [newComment, setNewComment] = useState('');
+  const [showComments, setShowComments] = useState<{ [key: string]: boolean }>({});
+  const [newComment, setNewComment] = useState<{ [key: string]: string }>({});
+  const [filter, setFilter] = useState('all');
 
-  const topTraders = [
-    {
-      name: 'Alex Thompson',
-      handle: '@alexthompson',
-      winRate: '78%',
-      followers: '2.4k',
-      performance: '+32.5%',
-      verified: true
-    },
-    {
-      name: 'Lisa Wang',
-      handle: '@lisawang',
-      winRate: '72%',
-      followers: '1.8k',
-      performance: '+28.7%',
-      verified: true
-    },
-    {
-      name: 'David Miller',
-      handle: '@davidmiller',
-      winRate: '70%',
-      followers: '1.5k',
-      performance: '+25.3%',
-      verified: false
-    }
-  ];
-
-  const handlePostSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPost.trim()) return;
-
-    const newPostObj: Post = {
-      id: posts.length + 1,
+  // Handle post submission
+  const handlePostSubmit = (content: string, image?: File) => {
+    if (!content.trim()) return;
+    
+    const newPost: Post = {
+      id: Date.now().toString(),
       user: {
-        name: 'Current User',
-        avatar: '/avatars/default.jpg',
-        handle: '@currentuser'
+        name: 'You',
+        handle: '@you',
+        avatar: '/api/placeholder/40/40'
       },
-      content: newPost,
-      image: selectedImage ? URL.createObjectURL(selectedImage) : undefined,
+      content,
+      timestamp: 'now',
       likes: 0,
-      comments: [],
+      comments: 0,
       shares: 0,
       bookmarks: 0,
-      time: new Date(),
-      tags: extractTags(newPost),
-      isLiked: false,
-      isBookmarked: false
+      tags: extractTags(content),
+      image: image ? URL.createObjectURL(image) : undefined,
+      liked: false,
+      bookmarked: false
     };
-
-    setPosts([newPostObj, ...posts]);
-    setNewPost('');
-    setSelectedImage(null);
+    
+    setPosts([newPost, ...posts]);
   };
 
   const extractTags = (content: string): string[] => {
@@ -193,350 +217,135 @@ const CommunityPage: React.FC = () => {
     return [...hashTags, ...cashTags].map(tag => tag.slice(1));
   };
 
-  const handleLike = (postId: number) => {
-    setPosts(posts.map(post => {
-      if (post.id === postId) {
-        return {
-          ...post,
-          likes: post.isLiked ? post.likes - 1 : post.likes + 1,
-          isLiked: !post.isLiked
-        };
-      }
-      return post;
-    }));
+  // Handle like toggle
+  const handleLike = (postId: string) => {
+    setPosts(posts.map(post => 
+      post.id === postId 
+        ? { ...post, likes: post.liked ? post.likes - 1 : post.likes + 1, liked: !post.liked }
+        : post
+    ));
   };
 
-  const handleBookmark = (postId: number) => {
-    setPosts(posts.map(post => {
-      if (post.id === postId) {
-        return {
-          ...post,
-          bookmarks: post.isBookmarked ? post.bookmarks - 1 : post.bookmarks + 1,
-          isBookmarked: !post.isBookmarked
-        };
-      }
-      return post;
-    }));
+  // Handle bookmark toggle
+  const handleBookmark = (postId: string) => {
+    setPosts(posts.map(post => 
+      post.id === postId 
+        ? { ...post, bookmarks: post.bookmarked ? post.bookmarks - 1 : post.bookmarks + 1, bookmarked: !post.bookmarked }
+        : post
+    ));
   };
 
-  const handleCommentSubmit = (postId: number) => {
-    if (!newComment.trim()) return;
+  // Handle comment submission
+  const handleCommentSubmit = (postId: string, content: string) => {
+    if (!content.trim()) return;
 
-    setPosts(posts.map(post => {
-      if (post.id === postId) {
-        const newCommentObj: Comment = {
-          id: (post.comments.length + 1),
-          user: {
-            name: 'Current User',
-            avatar: '/avatars/default.jpg',
-            handle: '@currentuser'
-          },
-          content: newComment,
-          likes: 0,
-          time: new Date(),
-          isLiked: false
-        };
-        return {
-          ...post,
-          comments: [...post.comments, newCommentObj]
-        };
-      }
-      return post;
-    }));
-    setNewComment('');
+    // In a real app, this would add the comment to the post
+    // For now, we'll just increment the comment count
+    setPosts(posts.map(post => 
+      post.id === postId 
+        ? { ...post, comments: post.comments + 1 }
+        : post
+    ));
   };
+
+  // Handle follow toggle for traders
+  const handleFollowToggle = (traderId: string) => {
+    // In a real app, this would update the follow status
+    console.log('Toggle follow for trader:', traderId);
+  };
+
+  // Handle topic click
+  const handleTopicClick = (topic: TrendingTopic) => {
+    // In a real app, this would filter posts by the topic
+    console.log('Clicked topic:', topic.tag);
+  };
+
+  // Handle filter change
+  const handleFilterChange = (newFilter: string) => {
+    setFilter(newFilter);
+  };
+
+  // Filter posts based on current filter
+  const filteredPosts = posts.filter(post => {
+    if (filter === 'all') return true;
+    if (filter === 'stocks') return post.tags.some(tag => /^[A-Z]{1,5}$/.test(tag));
+    if (filter === 'crypto') return post.tags.some(tag => ['BTC', 'ETH', 'DOGE'].includes(tag));
+    if (filter === 'options') return post.tags.includes('Options');
+    if (filter === 'analysis') return post.tags.includes('Analysis') || post.tags.includes('TechnicalAnalysis');
+    return true;
+  });
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold tracking-tight">Community</h1>
-          <Badge variant="secondary" className="text-sm">
-            Beta
-          </Badge>
-        </div>
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon">
-            <Bell className="h-4 w-4" />
-          </Button>
-          <Button>
-            <Users className="mr-2 h-4 w-4" />
-            Find Traders
-          </Button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            {/* Post Creation */}
+            <PostCreator onSubmit={handlePostSubmit} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          {/* Post Creation */}
-          <Card>
-            <CardContent className="pt-6">
-              <form onSubmit={handlePostSubmit}>
-                <div className="flex gap-4">
-                  <Avatar>
-                    <AvatarImage src="/avatars/default.jpg" />
-                    <AvatarFallback>You</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-4">
-                    <Textarea
-                      placeholder="Share your trading insights..."
-                      value={newPost}
-                      onChange={(e) => setNewPost(e.target.value)}
-                      className="min-h-[100px]"
+            {/* Feed Tabs */}
+            <FeedTabs
+              posts={filteredPosts}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              onFilterChange={handleFilterChange}
+            >
+              {/* Posts Feed */}
+              <div className="space-y-6">
+                {filteredPosts.map((post) => (
+                  <div key={post.id}>
+                    <PostCard
+                      post={post}
+                      onLike={handleLike}
+                      onBookmark={handleBookmark}
+                      onComment={() => setShowComments(prev => ({
+                        ...prev,
+                        [post.id]: !prev[post.id]
+                      }))}
+                      onShare={(postId) => console.log('Share post:', postId)}
                     />
-                    <div className="flex items-center justify-between">
-                      <div className="flex gap-2">
-                        <Button type="button" variant="outline" size="sm" onClick={() => document.getElementById('image-upload')?.click()}>
-                          <ImageIcon className="h-4 w-4 mr-2" />
-                          Add Image
-                        </Button>
-                        <input
-                          id="image-upload"
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => setSelectedImage(e.target.files?.[0] || null)}
-                        />
-                        <Button type="button" variant="outline" size="sm">
-                          <Link2 className="h-4 w-4 mr-2" />
-                          Add Link
-                        </Button>
-                      </div>
-                      <Button type="submit">Post</Button>
-                    </div>
-                    {selectedImage && (
-                      <div className="relative">
-                        <img
-                          src={URL.createObjectURL(selectedImage)}
-                          alt="Selected"
-                          className="rounded-lg max-h-48 object-cover"
-                        />
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-2 right-2"
-                          onClick={() => setSelectedImage(null)}
-                        >
-                          Remove
-                        </Button>
-                      </div>
+                    
+                    {/* Comments Section */}
+                    {showComments[post.id] && (
+                      <CommentSection
+                        postId={post.id}
+                        comments={[]} // In a real app, this would come from the post data
+                        newComment={newComment[post.id] || ''}
+                        onCommentChange={(content) => setNewComment(prev => ({
+                          ...prev,
+                          [post.id]: content
+                        }))}
+                        onCommentSubmit={(content) => {
+                          handleCommentSubmit(post.id, content);
+                          setNewComment(prev => ({ ...prev, [post.id]: '' }));
+                        }}
+                      />
                     )}
-                  </div>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Feed Tabs */}
-          <Tabs defaultValue="trending" className="w-full">
-            <TabsList className="w-full">
-              <TabsTrigger value="trending" className="flex-1">Trending</TabsTrigger>
-              <TabsTrigger value="latest" className="flex-1">Latest</TabsTrigger>
-              <TabsTrigger value="following" className="flex-1">Following</TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          {/* Feed */}
-          <div className="space-y-6">
-            {posts.map(post => (
-              <Card key={post.id} className="overflow-hidden">
-                <CardContent className="pt-6">
-                  <div className="flex gap-4">
-                    <Avatar>
-                      <AvatarImage src={post.user.avatar} />
-                      <AvatarFallback>{post.user.name[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold">{post.user.name}</span>
-                          {post.user.verified && (
-                            <Badge variant="secondary" className="text-xs">
-                              Verified
-                            </Badge>
-                          )}
-                          <span className="text-sm text-muted-foreground">{post.user.handle}</span>
-                          <span className="text-sm text-muted-foreground">·</span>
-                          <span className="text-sm text-muted-foreground">
-                            {formatDistanceToNow(post.time, { addSuffix: true })}
-                          </span>
-                        </div>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <p className="mb-4 whitespace-pre-wrap">{post.content}</p>
-                      {/* Embed first link if present */}
-                      {(() => {
-                        const links = post.content.match(urlRegex) || [];
-                        return links.length > 0 ? <LinkPreview url={links[0]} /> : null;
-                      })()}
-                      {post.image && (
-                        <img
-                          src={post.image}
-                          alt="Post content"
-                          className="rounded-lg mb-4 max-h-96 object-cover w-full"
-                        />
-                      )}
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {post.tags.map(tag => (
-                          <Badge key={tag} variant="secondary" className="cursor-pointer hover:bg-secondary/80">
-                            {tag.startsWith('$') ? tag : '#' + tag}
-                          </Badge>
-                        ))}
-                      </div>
-                      <div className="flex gap-6 text-sm text-muted-foreground">
-                        <button
-                          className={`flex items-center gap-1 hover:text-primary ${post.isLiked ? 'text-primary' : ''}`}
-                          onClick={() => handleLike(post.id)}
-                        >
-                          <ThumbsUp className="h-4 w-4" />
-                          {post.likes}
-                        </button>
-                        <button
-                          className="flex items-center gap-1 hover:text-primary"
-                          onClick={() => setShowComments(showComments === post.id ? null : post.id)}
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                          {post.comments.length}
-                        </button>
-                        <button className="flex items-center gap-1 hover:text-primary">
-                          <Share2 className="h-4 w-4" />
-                          {post.shares}
-                        </button>
-                        <button
-                          className={`flex items-center gap-1 hover:text-primary ${post.isBookmarked ? 'text-primary' : ''}`}
-                          onClick={() => handleBookmark(post.id)}
-                        >
-                          <Bookmark className="h-4 w-4" />
-                          {post.bookmarks}
-                        </button>
-                      </div>
-
-                      {/* Comments Section */}
-                      {showComments === post.id && (
-                        <div className="mt-4 space-y-4">
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Write a comment..."
-                              value={newComment}
-                              onChange={(e) => setNewComment(e.target.value)}
-                              className="flex-1"
-                            />
-                            <Button onClick={() => handleCommentSubmit(post.id)}>Reply</Button>
-                          </div>
-                          <ScrollArea className="h-[300px]">
-                            {post.comments.map(comment => (
-                              <div key={comment.id} className="flex gap-3 py-3">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarImage src={comment.user.avatar} />
-                                  <AvatarFallback>{comment.user.name[0]}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-sm">{comment.user.name}</span>
-                                    <span className="text-xs text-muted-foreground">{comment.user.handle}</span>
-                                    <span className="text-xs text-muted-foreground">·</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {formatDistanceToNow(comment.time, { addSuffix: true })}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm mt-1">{comment.content}</p>
-                                  <button
-                                    className={`flex items-center gap-1 mt-2 text-xs text-muted-foreground hover:text-primary ${
-                                      comment.isLiked ? 'text-primary' : ''
-                                    }`}
-                                  >
-                                    <ThumbsUp className="h-3 w-3" />
-                                    {comment.likes}
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                          </ScrollArea>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          {/* Top Traders */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Traders</CardTitle>
-              <CardDescription>Traders with the best performance</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {topTraders.map(trader => (
-                  <div key={trader.handle} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback>{trader.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="flex items-center gap-1">
-                          <span className="font-semibold">{trader.name}</span>
-                          {trader.verified && (
-                            <Badge variant="secondary" className="text-xs">
-                              Verified
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-sm text-muted-foreground">{trader.handle}</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-green-500">{trader.performance}</div>
-                      <div className="text-xs text-muted-foreground">{trader.followers} followers</div>
-                    </div>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </FeedTabs>
+          </div>
 
-          {/* Trending Topics */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Trending</CardTitle>
-              <CardDescription>Popular trading topics</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                    <span className="font-medium">#AITrading</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">2.5k posts</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                    <span className="font-medium">#MarketAnalysis</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">1.8k posts</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                    <span className="font-medium">#TradingTips</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">1.2k posts</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Top Traders */}
+            <TopTraders
+              traders={topTraders}
+              onFollowToggle={handleFollowToggle}
+            />
+
+            {/* Trending Topics */}
+            <TrendingTopics
+              topics={trendingTopics}
+              onTopicClick={handleTopicClick}
+            />
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-export default CommunityPage; 
+export default CommunityPage;

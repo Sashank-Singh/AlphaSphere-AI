@@ -3,13 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, ArrowLeft, BrainCircuit, Percent, Wifi, WifiOff, Calculator } from 'lucide-react';
+import { Search, ArrowLeft, BrainCircuit, Percent, Wifi, WifiOff, Calculator, BarChart2, Building2 } from 'lucide-react';
 import OptionChain from '@/components/OptionChain';
-import StockPriceChart from '@/components/StockPriceChart';
+import RealTimeStockChart from '@/components/RealTimeStockChart';
 import OptionsChart from '@/components/OptionsChart';
 import { usePolygonWebSocketData } from '@/hooks/usePolygonWebSocket';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { stockDataService } from '@/lib/stockDataService';
+import { yahooFinanceService, OptionChainData } from '@/lib/yahooFinanceService';
 
 interface ChartDataPoint {
   date: string;
@@ -23,6 +24,16 @@ interface DisplayStockData {
   changePercent: number;
   lastUpdated: number;
   isMockData: boolean;
+}
+
+interface CompanyData {
+  description: string;
+  marketCap: string;
+  peRatio: string;
+  high52Week: string;
+  low52Week: string;
+  volume: string;
+  avgVolume: string;
 }
 
 interface WsSymbolData {
@@ -62,12 +73,16 @@ const OptionsPage: React.FC = () => {
     isMockData: false
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [companyData, setCompanyData] = useState<CompanyData | null>(null);
+  const [optionChainData, setOptionChainData] = useState<OptionChainData | null>(null);
   const [priceUpdated, setPriceUpdated] = useState<boolean>(false);
+  const [optionsLoading, setOptionsLoading] = useState<boolean>(true);
 
   const prevPriceRef = useRef<number>(0);
   const accountId = 'demo-account-id';
 
-  const expirationDates = [
+  // Use expiration dates from option chain data, fallback to default dates
+  const expirationDates = optionChainData?.expirationDates || [
     '2024-03-15',
     '2024-03-22',
     '2024-03-29',
@@ -129,7 +144,10 @@ const OptionsPage: React.FC = () => {
       }
 
       try {
-        const quote = await stockDataService.getStockQuote(currentSymbol);
+        const [quote, info] = await Promise.all([
+          stockDataService.getStockQuote(currentSymbol),
+          stockDataService.getCompanyInfo(currentSymbol)
+        ]);
 
         if (quote) {
           setStockData({
@@ -150,6 +168,18 @@ const OptionsPage: React.FC = () => {
             isMockData: true
           });
         }
+
+        if (info) {
+          setCompanyData({
+            description: info.description || `${info.name} is a publicly traded company.`,
+            marketCap: (info.marketCap || 0).toLocaleString(),
+            peRatio: (info.peRatio || 0).toFixed(2),
+            high52Week: (info.high52Week || 0).toFixed(2),
+            low52Week: (info.low52Week || 0).toFixed(2),
+            volume: (quote?.volume || 0).toLocaleString(),
+            avgVolume: (info.avgVolume || 0).toLocaleString()
+          });
+        }
       } catch (error) {
         console.error(`Error fetching stock data for ${currentSymbol}:`, error);
         setStockData({
@@ -160,6 +190,7 @@ const OptionsPage: React.FC = () => {
           lastUpdated: Date.now(),
           isMockData: true
         });
+        setCompanyData(null);
       } finally {
         setIsLoading(false);
       }
@@ -169,6 +200,31 @@ const OptionsPage: React.FC = () => {
       fetchDataForCurrentSymbol();
     }
   }, [currentSymbol]);
+
+  // Fetch option chain data
+  useEffect(() => {
+    const fetchOptionChain = async () => {
+      setOptionsLoading(true);
+      try {
+        const optionData = await yahooFinanceService.getOptionChain(currentSymbol);
+        setOptionChainData(optionData);
+        
+        // Update expiration dates based on available data
+        if (optionData.expirationDates.length > 0 && !optionData.expirationDates.includes(selectedExpiry)) {
+          setSelectedExpiry(optionData.expirationDates[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching option chain:', error);
+        setOptionChainData(null);
+      } finally {
+        setOptionsLoading(false);
+      }
+    };
+
+    if (currentSymbol) {
+      fetchOptionChain();
+    }
+  }, [currentSymbol, selectedExpiry]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -282,8 +338,14 @@ const OptionsPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Stock Chart */}
           {stockData.price > 0 && (
-            <StockPriceChart
+            <RealTimeStockChart
               symbol={stockData.symbol}
+              currentPrice={stockData.price}
+              change={stockData.change}
+              changePercent={stockData.changePercent}
+              isRealTime={stockFeedConnected}
+              chartType="area"
+              height={400}
             />
           )}
 
@@ -523,6 +585,81 @@ const OptionsPage: React.FC = () => {
             </Card>
           </div>
         </div>
+
+        {/* Company Information */}
+        {companyData && (
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-4 flex items-center">
+              <Building2 className="h-5 w-5 mr-2 text-primary" />
+              Company Information
+            </h2>
+            <Card className="bg-black border border-gray-800">
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div>
+                    <h3 className="font-semibold mb-2">Overview</h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Market Cap:</span>
+                        <span>{companyData.marketCap ? `$${(companyData.marketCap / 1e9).toFixed(2)}B` : 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">P/E Ratio:</span>
+                        <span>{companyData.peRatio || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Dividend Yield:</span>
+                        <span>{companyData.dividendYield ? `${companyData.dividendYield}%` : 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">Trading</h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">52W High:</span>
+                        <span>${companyData.fiftyTwoWeekHigh || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">52W Low:</span>
+                        <span>${companyData.fiftyTwoWeekLow || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Volume:</span>
+                        <span>{companyData.volume ? companyData.volume.toLocaleString() : 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">Financials</h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Revenue:</span>
+                        <span>{companyData.revenue ? `$${(companyData.revenue / 1e9).toFixed(2)}B` : 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">EPS:</span>
+                        <span>${companyData.eps || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Beta:</span>
+                        <span>{companyData.beta || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">About</h3>
+                    <div className="text-sm text-muted-foreground">
+                      <p className="line-clamp-4">
+                        {companyData.description || 'Company description not available.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </TooltipProvider>
   );

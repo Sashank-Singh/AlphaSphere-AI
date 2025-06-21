@@ -189,6 +189,69 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
     fetchCurrentPrice();
   }, [symbol]);
 
+  // Function to determine the correct exchange for a symbol
+  const getSymbolWithExchange = (symbol: string) => {
+    // If symbol already includes exchange, return as is
+    if (symbol.includes(':')) {
+      return symbol;
+    }
+
+    // Common ETFs and their exchanges
+    const etfExchanges: { [key: string]: string } = {
+      // SPDR ETFs - try different exchange formats
+      'SPY': 'AMEX',
+      'XLF': 'NYSEARCA', 
+      'XLK': 'NYSEARCA',
+      'XLE': 'NYSEARCA',
+      'XLI': 'NYSEARCA',
+      'XLV': 'NYSEARCA',
+      'XLY': 'NYSEARCA',
+      'XLP': 'NYSEARCA',
+      'XLU': 'NYSEARCA',
+      'XLB': 'NYSEARCA',
+      'XLRE': 'NYSEARCA',
+      'XLC': 'NYSEARCA',
+      
+      // Vanguard ETFs
+      'VTI': 'NYSEARCA',
+      'VOO': 'NYSEARCA',
+      'VEA': 'NYSEARCA',
+      'VWO': 'NYSEARCA',
+      'VIG': 'NYSEARCA',
+      'VYM': 'NYSEARCA',
+      'VB': 'NYSEARCA',
+      'VO': 'NYSEARCA',
+      'VV': 'NYSEARCA',
+      
+      // iShares ETFs
+      'IWM': 'NYSEARCA',
+      'EFA': 'NYSEARCA',
+      'EEM': 'NYSEARCA',
+      'AGG': 'NYSEARCA',
+      'TLT': 'NYSEARCA',
+      'IYR': 'NYSEARCA',
+      'GLD': 'NYSEARCA',
+      'SLV': 'NYSEARCA',
+      
+      // Other popular ETFs
+      'QQQ': 'NASDAQ',
+      'DIA': 'NYSEARCA',
+      'IVV': 'NYSEARCA',
+      'VNQ': 'NYSEARCA',
+      'BND': 'NASDAQ',
+      'VTEB': 'NASDAQ',
+      'VXUS': 'NASDAQ'
+    };
+
+    // Check if it's a known ETF
+    if (etfExchanges[symbol]) {
+      return `${etfExchanges[symbol]}:${symbol}`;
+    }
+
+    // Default to NASDAQ for stocks and unknown symbols
+    return `NASDAQ:${symbol}`;
+  };
+
   // Create/recreate the TradingView widget when all conditions are met
   useEffect(() => {
     if (!loading && scriptLoaded && chartContainerRef.current && symbol) {
@@ -235,7 +298,7 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
 
       const config: TVWidgetConfig = {
         autosize: true,
-        symbol: `NASDAQ:${symbol}`,
+        symbol: getSymbolWithExchange(symbol),
         interval: interval || "D",
         timezone: "exchange",
         theme: "dark",

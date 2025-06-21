@@ -11,8 +11,8 @@ const PortfolioOverview: React.FC = () => {
 
   return (
     <Card className="lg:col-span-2 bg-card text-foreground border-border">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center justify-between text-xl">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center justify-between text-lg">
           Portfolio Overview
           <Badge variant="secondary" className="gap-1">
             <Activity className="h-3 w-3" />
@@ -20,23 +20,23 @@ const PortfolioOverview: React.FC = () => {
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-3">
-          <div className="text-4xl font-bold">{formatCurrency(portfolio.totalValue)}</div>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <div className="text-2xl font-bold">{formatCurrency(portfolio.totalValue)}</div>
           <div className="flex items-center gap-2 text-green-500">
-            <TrendingUp className="h-4 w-4" />
-            <span className="text-lg">+2.4% (+${((portfolio.totalValue * 0.024)).toFixed(2)}) today</span>
+            <TrendingUp className="h-3 w-3" />
+            <span className="text-sm">+2.4% (+${((portfolio.totalValue * 0.024)).toFixed(2)}) today</span>
           </div>
         </div>
         
-        <div className="grid grid-cols-2 gap-6 pt-4">
-          <div className="space-y-2">
-            <div className="text-sm opacity-80">Available Cash</div>
-            <div className="text-2xl font-semibold">{formatCurrency(portfolio.cash)}</div>
+        <div className="grid grid-cols-2 gap-4 pt-2">
+          <div className="space-y-1">
+            <div className="text-xs opacity-80">Available Cash</div>
+            <div className="text-lg font-semibold">{formatCurrency(portfolio.cash)}</div>
           </div>
-          <div className="space-y-2">
-            <div className="text-sm opacity-80">Positions</div>
-            <div className="text-2xl font-semibold">{portfolio.positions.length}</div>
+          <div className="space-y-1">
+            <div className="text-xs opacity-80">Positions</div>
+            <div className="text-lg font-semibold">{portfolio.positions.length}</div>
           </div>
         </div>
       </CardContent>

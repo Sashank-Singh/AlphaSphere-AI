@@ -34,12 +34,71 @@ const TVQuoteWidget: React.FC<TVQuoteWidgetProps> = ({
     script.async = true;
     script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js';
     
+    // Function to determine the correct exchange for a symbol
+    const getSymbolWithExchange = (symbol: string) => {
+      // If symbol already includes exchange, return as is
+      if (symbol.includes(':')) {
+        return symbol;
+      }
+
+      // Common ETFs and their exchanges
+      const etfExchanges: { [key: string]: string } = {
+        // SPDR ETFs - try different exchange formats
+       'SPY': 'AMEX',
+        'XLF': 'NYSEARCA', 
+        'XLK': 'NYSEARCA',
+        'XLE': 'NYSEARCA',
+        'XLI': 'NYSEARCA',
+        'XLV': 'NYSEARCA',
+        'XLY': 'NYSEARCA',
+        'XLP': 'NYSEARCA',
+        'XLU': 'NYSEARCA',
+        'XLB': 'NYSEARCA',
+        'XLRE': 'NYSEARCA',
+        'XLC': 'NYSEARCA',
+        
+        // Vanguard ETFs
+        'VTI': 'NYSEARCA',
+        'VOO': 'NYSEARCA',
+        'VEA': 'NYSEARCA',
+        'VWO': 'NYSEARCA',
+        'VIG': 'NYSEARCA',
+        'VYM': 'NYSEARCA',
+        'VB': 'NYSEARCA',
+        'VO': 'NYSEARCA',
+        'VV': 'NYSEARCA',
+        
+        // iShares ETFs
+        'IWM': 'NYSEARCA',
+        'EFA': 'NYSEARCA',
+        'EEM': 'NYSEARCA',
+        'AGG': 'NYSEARCA',
+        'TLT': 'NYSEARCA',
+        'IYR': 'NYSEARCA',
+        'GLD': 'NYSEARCA',
+        'SLV': 'NYSEARCA',
+        
+        // Other popular ETFs
+        'QQQ': 'NASDAQ',
+        'DIA': 'NYSEARCA',
+        'IVV': 'NYSEARCA',
+        'VNQ': 'NYSEARCA',
+        'BND': 'NASDAQ',
+        'VTEB': 'NASDAQ',
+        'VXUS': 'NASDAQ'
+      };
+
+      // Check if it's a known ETF
+      if (etfExchanges[symbol]) {
+        return `${etfExchanges[symbol]}:${symbol}`;
+      }
+
+      // Default to NASDAQ for stocks and unknown symbols
+      return `NASDAQ:${symbol}`;
+    };
+
     // Format symbol correctly
-    let formattedSymbol = symbol;
-    if (!symbol.includes(':')) {
-      // Default to NASDAQ for stock tickers
-      formattedSymbol = `NASDAQ:${symbol}`;
-    }
+    const formattedSymbol = getSymbolWithExchange(symbol);
     
     // Configure widget
     script.innerHTML = JSON.stringify({
@@ -185,4 +244,4 @@ const TVQuoteWidget: React.FC<TVQuoteWidgetProps> = ({
   );
 };
 
-export default TVQuoteWidget; 
+export default TVQuoteWidget;

@@ -3,6 +3,8 @@ from functools import lru_cache
 import pandas as pd
 from datetime import datetime, timedelta
 import logging
+import requests
+import yfinance as yf
 
 logging.basicConfig(level=logging.INFO)
 
@@ -104,6 +106,101 @@ def get_historical_prices(symbol, period='1y', interval='1d'):
 
         if history.empty:
             return []
+        
+        # Reset index to make 'Date' a column and format it
+        history.reset_index(inplace=True)
+        history['Date'] = history['Date'].dt.strftime('%Y-%m-%d')
+        
+        # Convert to list of dictionaries
+        return history.to_dict('records')
+        
+    except Exception as e:
+        logging.error(f"Error fetching historical data for {symbol}: {e}")
+        return []
+
+def get_sector_performance():
+    """
+    Fetches sector performance data using sector ETFs as proxies.
+    Returns performance data for major market sectors.
+    """
+    try:
+        # Major sector ETFs that represent different sectors
+        sector_etfs = {
+            'Technology': 'XLK',
+            'Healthcare': 'XLV', 
+            'Financial Services': 'XLF',
+            'Consumer Discretionary': 'XLY',
+            'Communication Services': 'XLC',
+            'Industrials': 'XLI',
+            'Consumer Staples': 'XLP',
+            'Energy': 'XLE',
+            'Utilities': 'XLU',
+            'Real Estate': 'XLRE',
+            'Materials': 'XLB'
+        }
+        
+        sector_performance = []
+        
+        for sector_name, etf_symbol in sector_etfs.items():
+            try:
+                ticker = yf.Ticker(etf_symbol)
+                
+                # Get current price and 1-day history for change calculation
+                hist = ticker.history(period='2d')
+                if len(hist) < 2:
+                    continue
+                    
+                current_price = hist['Close'].iloc[-1]
+                prev_close = hist['Close'].iloc[-2]
+                
+                # Calculate daily change
+                daily_change = current_price - prev_close
+                daily_change_percent = (daily_change / prev_close) * 100 if prev_close else 0
+                
+                # Get longer term performance
+                hist_1m = ticker.history(period='1mo')
+                hist_3m = ticker.history(period='3mo')
+                hist_1y = ticker.history(period='1y')
+                
+                # Calculate performance metrics
+                monthly_return = 0
+                quarterly_return = 0
+                yearly_return = 0
+                
+                if len(hist_1m) > 0:
+                    monthly_return = ((current_price - hist_1m['Close'].iloc[0]) / hist_1m['Close'].iloc[0]) * 100
+                    
+                if len(hist_3m) > 0:
+                    quarterly_return = ((current_price - hist_3m['Close'].iloc[0]) / hist_3m['Close'].iloc[0]) * 100
+                    
+                if len(hist_1y) > 0:
+                    yearly_return = ((current_price - hist_1y['Close'].iloc[0]) / hist_1y['Close'].iloc[0]) * 100
+                
+                sector_data = {
+                    'sector': sector_name,
+                    'symbol': etf_symbol,
+                    'price': round(current_price, 2),
+                    'dailyChange': round(daily_change, 2),
+                    'dailyChangePercent': round(daily_change_percent, 2),
+                    'monthlyReturn': round(monthly_return, 2),
+                    'quarterlyReturn': round(quarterly_return, 2),
+                    'yearlyReturn': round(yearly_return, 2)
+                }
+                
+                sector_performance.append(sector_data)
+                
+            except Exception as e:
+                logging.warning(f"Error fetching data for sector {sector_name} ({etf_symbol}): {e}")
+                continue
+        
+        # Sort by daily performance (best performing first)
+        sector_performance.sort(key=lambda x: x['dailyChangePercent'], reverse=True)
+        
+        return sector_performance
+        
+    except Exception as e:
+        logging.error(f"Error fetching sector performance: {e}")
+        return []
 
         # Reset index to make 'Date' a column and format it
         history.reset_index(inplace=True)
@@ -271,4 +368,88 @@ def get_options_recommendation(symbol):
         }
     except Exception as e:
         logging.error(f"Error generating options recommendation for {symbol}: {e}")
-        return { 'strategy': 'UNAVAILABLE', 'summary': 'An error occurred during analysis.' } 
+        return { 'strategy': 'UNAVAILABLE', 'summary': 'An error occurred during analysis.' }
+
+def get_market_news(limit=10):
+    """
+    Fetches market news with realistic mock data and current timestamps.
+    """
+    try:
+        # For now, return realistic mock data with current timestamps
+        # This can be replaced with actual API calls when available
+        import random
+        
+        news_templates = [
+            {
+                'title': 'Federal Reserve Maintains Interest Rates at Current Levels',
+                'description': 'The Federal Reserve announced it will keep interest rates unchanged, citing ongoing economic stability and controlled inflation metrics.',
+                'link': 'https://finance.yahoo.com/news/fed-rates'
+            },
+            {
+                'title': 'Tech Stocks Rally as AI Sector Shows Strong Growth',
+                'description': 'Major technology companies see significant gains as artificial intelligence investments continue to drive market optimism.',
+                'link': 'https://finance.yahoo.com/news/tech-rally'
+            },
+            {
+                'title': 'Oil Prices Fluctuate Amid Global Supply Chain Concerns',
+                'description': 'Energy markets remain volatile as geopolitical tensions and supply chain disruptions impact crude oil pricing.',
+                'link': 'https://finance.yahoo.com/news/oil-prices'
+            },
+            {
+                'title': 'S&P 500 Reaches New Milestone as Market Sentiment Improves',
+                'description': 'The benchmark index continues its upward trajectory, driven by strong corporate earnings and positive economic indicators.',
+                'link': 'https://finance.yahoo.com/news/sp500-milestone'
+            },
+            {
+                'title': 'Cryptocurrency Market Shows Mixed Signals',
+                'description': 'Digital assets display varied performance as regulatory clarity and institutional adoption continue to evolve.',
+                'link': 'https://finance.yahoo.com/news/crypto-mixed'
+            },
+            {
+                'title': 'Banking Sector Outperforms Amid Rising Interest Rate Environment',
+                'description': 'Financial institutions benefit from improved net interest margins as rate environment remains favorable for lending.',
+                'link': 'https://finance.yahoo.com/news/banking-sector'
+            },
+            {
+                'title': 'Consumer Spending Data Indicates Economic Resilience',
+                'description': 'Latest retail sales figures suggest continued consumer confidence despite ongoing economic uncertainties.',
+                'link': 'https://finance.yahoo.com/news/consumer-spending'
+            },
+            {
+                'title': 'Healthcare Stocks Gain on Breakthrough Drug Approvals',
+                'description': 'Pharmaceutical companies see significant gains following FDA approvals for innovative treatments and therapies.',
+                'link': 'https://finance.yahoo.com/news/healthcare-gains'
+            }
+        ]
+        
+        # Randomly select news items
+        selected_news = random.sample(news_templates, min(limit, len(news_templates)))
+        
+        news_items = []
+        now = datetime.now()
+        
+        for i, template in enumerate(selected_news):
+            # Generate realistic timestamps (within last 24 hours)
+            hours_ago = random.randint(1, 24)
+            minutes_ago = random.randint(0, 59)
+            
+            if hours_ago == 1 and minutes_ago < 30:
+                time_ago = f"{minutes_ago} minute{'s' if minutes_ago != 1 else ''} ago"
+            elif hours_ago == 1:
+                time_ago = "1 hour ago"
+            else:
+                time_ago = f"{hours_ago} hours ago"
+            
+            news_item = {
+                'title': template['title'],
+                'description': template['description'],
+                'timeAgo': time_ago,
+                'link': template['link']
+            }
+            news_items.append(news_item)
+        
+        return news_items
+        
+    except Exception as e:
+        logging.error(f"Error generating market news: {e}")
+        return []

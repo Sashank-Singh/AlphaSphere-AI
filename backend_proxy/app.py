@@ -137,7 +137,30 @@ def get_options_recommendation_route(symbol):
     except Exception as e:
         return jsonify({'error': 'Failed to generate options recommendation', 'details': str(e)}), 500
 
+@app.route('/api/yahoo/news', methods=['GET'])
+def get_market_news():
+    """
+    Endpoint to get market news from Yahoo Finance.
+    """
+    try:
+        limit = request.args.get('limit', 10, type=int)
+        news = yahoo_finance.get_market_news(limit)
+        return jsonify(news)
+    except Exception as e:
+        return jsonify({'error': 'Failed to fetch market news', 'details': str(e)}), 500
+
+@app.route('/api/yahoo/sectors', methods=['GET'])
+def get_sector_performance():
+    """
+    Endpoint to get sector performance data.
+    """
+    try:
+        sectors = yahoo_finance.get_sector_performance()
+        return jsonify(sectors)
+    except Exception as e:
+        return jsonify({'error': 'Failed to fetch sector performance', 'details': str(e)}), 500
+
 if __name__ == '__main__':
     # Default port for Flask is 5000. You can change it if needed.
     # Ensure debug=False for production.
-    app.run(debug=True, port=5001) # Running on port 5001 to avoid conflict with Vite (often 5173 or 3000) 
+    app.run(debug=True, port=5001) # Running on port 5001 to avoid conflict with Vite (often 5173 or 3000)

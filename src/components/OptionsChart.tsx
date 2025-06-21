@@ -294,6 +294,7 @@ const OptionsChart: React.FC<OptionsChartProps> = ({
       </CardContent>
     </Card>
   );
+  
 };
 
 export default OptionsChart;
