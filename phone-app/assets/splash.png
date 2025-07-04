@@ -1,0 +1,38 @@
+<svg width="1284" height="2778" viewBox="0 0 1284 2778" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="backgroundGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#000000;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#1A1A1A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="sphereGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#357ABD;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E3A8A;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="highlight" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1284" height="2778" fill="url(#backgroundGradient)"/>
+  
+  <!-- Main sphere -->
+  <circle cx="642" cy="1389" r="200" fill="url(#sphereGradient)"/>
+  
+  <!-- Highlight -->
+  <circle cx="642" cy="1389" r="200" fill="url(#highlight)"/>
+  
+  <!-- Alpha symbol -->
+  <path d="M 600 1330 L 625 1330 L 642 1370 L 659 1330 L 684 1330 L 660 1390 L 680 1440 L 655 1440 L 642 1420 L 629 1440 L 604 1440 L 624 1390 Z" fill="#FFFFFF" opacity="0.9"/>
+  
+  <!-- Orbital rings -->
+  <circle cx="642" cy="1389" r="220" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.3"/>
+  <circle cx="642" cy="1389" r="250" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.2"/>
+  
+  <!-- App name -->
+  <text x="642" y="1600" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#FFFFFF" text-anchor="middle" opacity="0.8">AlphaSphere</text>
+  <text x="642" y="1650" font-family="Arial, sans-serif" font-size="24" fill="#CCCCCC" text-anchor="middle" opacity="0.6">AI Trading Platform</text>
+</svg>

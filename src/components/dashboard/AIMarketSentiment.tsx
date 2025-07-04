@@ -1,164 +1,175 @@
-import React, { useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Target, TrendingUp, Brain, BarChart3, Zap, PieChart } from 'lucide-react';
+import { 
+  PieChart, 
+  TrendingUp, 
+  TrendingDown,
+  Target
+} from 'lucide-react';
 
-interface OptimizationData {
-  overallScore: number;
-  riskLevel: 'low' | 'medium' | 'high';
-  diversificationScore: number;
-  allocations: Array<{
-    sector: string;
-    current: number;
-    recommended: number;
-    status: 'optimal' | 'overweight' | 'underweight';
-  }>;
-  recommendations: Array<{
-    type: 'rebalance' | 'add' | 'reduce';
-    action: string;
-    impact: number;
-  }>;
+interface OptimizationRecommendation {
+  id: string;
+  title: string;
+  description: string;
+  impact: 'high' | 'medium' | 'low';
+  action: 'buy' | 'sell' | 'rebalance';
+  expectedReturn: string;
+  riskLevel: string;
+  timeAgo: string;
 }
 
-const AIMarketSentiment: React.FC = () => {
-  const [optimization, setOptimization] = useState<OptimizationData>({
-    overallScore: 78,
-    riskLevel: 'medium',
-    diversificationScore: 85,
-    allocations: [
-      { sector: 'Technology', current: 45, recommended: 35, status: 'overweight' },
-      { sector: 'Healthcare', current: 15, recommended: 20, status: 'underweight' },
-      { sector: 'Finance', current: 25, recommended: 25, status: 'optimal' },
-      { sector: 'Energy', current: 15, recommended: 20, status: 'underweight' }
-    ],
-    recommendations: [
-      { type: 'reduce', action: 'Reduce tech exposure', impact: 85 },
-      { type: 'add', action: 'Increase healthcare allocation', impact: 70 }
-    ]
-  });
+const AIMarketSentiment: React.FC = memo(() => {
+  const [recommendations, setRecommendations] = useState<OptimizationRecommendation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setOptimization(prev => ({
-        ...prev,
-        overallScore: Math.max(60, Math.min(95, prev.overallScore + (Math.random() - 0.5) * 8)),
-        diversificationScore: Math.max(70, Math.min(100, prev.diversificationScore + (Math.random() - 0.5) * 6)),
-        allocations: prev.allocations.map(allocation => ({
-          ...allocation,
-          current: Math.max(5, Math.min(50, allocation.current + (Math.random() - 0.5) * 3))
-        }))
-      }));
-    }, 12000);
+  const generateMockData = useCallback(() => {
+    const mockRecommendations: OptimizationRecommendation[] = [
+      {
+        id: '1',
+        title: 'Reduce Tech Concentration Risk',
+        description: 'Your portfolio is overweight in technology. Consider rebalancing to reduce sector concentration risk.',
+        impact: 'high',
+        action: 'sell',
+        expectedReturn: '+2.3%',
+        riskLevel: 'Medium',
+        timeAgo: '2 hours ago'
+      },
+      {
+        id: '2',
+        title: 'Increase Bond Allocation',
+        description: 'Add defensive assets to improve risk-adjusted returns and portfolio stability.',
+        impact: 'medium',
+        action: 'buy',
+        expectedReturn: '+1.8%',
+        riskLevel: 'Low',
+        timeAgo: '4 hours ago'
+      },
+      {
+        id: '3',
+        title: 'Rebalance International Exposure',
+        description: 'Optimize geographic diversification by adjusting international equity allocation.',
+        impact: 'medium',
+        action: 'rebalance',
+        expectedReturn: '+1.2%',
+        riskLevel: 'Medium',
+        timeAgo: '6 hours ago'
+      },
+      {
+        id: '4',
+        title: 'Add ESG-Focused Holdings',
+        description: 'Consider sustainable investment options to align with ESG criteria while maintaining returns.',
+        impact: 'low',
+        action: 'buy',
+        expectedReturn: '+0.8%',
+        riskLevel: 'Low',
+        timeAgo: '8 hours ago'
+      }
+    ];
 
-    return () => clearInterval(interval);
+    setRecommendations(mockRecommendations);
   }, []);
 
-  const getRiskColor = (risk: string) => {
-    switch (risk) {
-      case 'low': return 'text-green-500';
-      case 'high': return 'text-red-500';
-      default: return 'text-yellow-500';
+  useEffect(() => {
+    setLoading(true);
+    setTimeout(() => {
+      generateMockData();
+      setLoading(false);
+    }, 1000);
+  }, [generateMockData]);
+
+  const getImpactBadgeVariant = (impact: string) => {
+    switch (impact) {
+      case 'high': return 'destructive';
+      case 'medium': return 'secondary';
+      case 'low': return 'outline';
+      default: return 'outline';
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'optimal': return 'text-green-500';
-      case 'overweight': return 'text-red-500';
-      case 'underweight': return 'text-orange-500';
-      default: return 'text-gray-500';
+  const getActionIcon = (action: string) => {
+    switch (action) {
+      case 'buy': return <TrendingUp className="h-4 w-4 text-green-500" />;
+      case 'sell': return <TrendingDown className="h-4 w-4 text-red-500" />;
+      case 'rebalance': return <Target className="h-4 w-4 text-blue-500" />;
+      default: return <Target className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  const getRecommendationIcon = (type: string) => {
-    switch (type) {
-      case 'add': return <TrendingUp className="h-3 w-3" />;
-      case 'reduce': return <BarChart3 className="h-3 w-3" />;
-      default: return <Target className="h-3 w-3" />;
-    }
-  };
+  const handleToggleShowAll = useCallback(() => {
+    setShowAll(prev => !prev);
+  }, []);
 
   return (
-    <div>
-      <h3 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2 mb-6">
-        <PieChart className="h-5 w-5 text-primary" />
-        AI Portfolio Optimizer
-        <Badge variant="secondary" className="ml-auto">
-          <Zap className="h-3 w-3 mr-1" />
-          Live
-        </Badge>
-      </h3>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Brain className="h-4 w-4 text-primary" />
-            <span className="font-semibold">Optimization Score</span>
-          </div>
-          <div className="text-right">
-            <div className="text-sm text-muted-foreground">Risk Level</div>
-            <div className={`font-bold capitalize ${getRiskColor(optimization.riskLevel)}`}>
-              {optimization.riskLevel}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Portfolio Score</span>
-            <span className="font-semibold">{optimization.overallScore.toFixed(0)}%</span>
-          </div>
-          <Progress value={optimization.overallScore} className="h-2" />
-        </div>
-
-        <div className="space-y-2">
-          <h4 className="font-semibold text-sm flex items-center gap-2">
-            <Target className="h-3 w-3" />
-            Asset Allocation
-          </h4>
-          {optimization.allocations.map((allocation) => (
-            <div key={allocation.sector} className="flex items-center justify-between text-xs">
-              <span>{allocation.sector}</span>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">{allocation.current.toFixed(0)}%</span>
-                <div className="w-8 h-1 bg-muted rounded">
-                  <div 
-                    className="h-full bg-primary rounded" 
-                    style={{ width: `${(allocation.current / 50) * 100}%` }}
-                  />
-                </div>
-                <span className={`font-semibold ${getStatusColor(allocation.status)}`}>
-                  {allocation.status === 'optimal' ? '✓' : allocation.status === 'overweight' ? '↑' : '↓'}
-                </span>
+    <Card className="bg-card border-border">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xl flex items-center gap-2">
+          <PieChart className="h-6 w-6" />
+          Portfolio Optimization
+        </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          AI-powered recommendations to optimize your portfolio performance
+        </p>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-4 border border-border rounded-lg animate-pulse">
+                <div className="h-4 bg-muted rounded mb-2"></div>
+                <div className="h-3 bg-muted rounded mb-2 w-3/4"></div>
+                <div className="h-3 bg-muted rounded w-1/4"></div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="space-y-2">
-          <h4 className="font-semibold text-sm">AI Recommendations</h4>
-          {optimization.recommendations.map((rec, index) => (
-            <div key={index} className="flex items-center gap-2 p-2 rounded bg-muted/50">
-              <Badge variant={rec.type === 'add' ? 'default' : rec.type === 'reduce' ? 'destructive' : 'secondary'}>
-                <div className="flex items-center gap-1">
-                  {getRecommendationIcon(rec.type)}
-                  {rec.type.toUpperCase()}
-                </div>
-              </Badge>
-              <span className="text-xs flex-1">{rec.action}</span>
-              <span className="text-xs font-semibold">{rec.impact}%</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="pt-2 border-t border-muted/20">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Diversification Score</span>
-            <span className="font-semibold">{optimization.diversificationScore.toFixed(0)}%</span>
+            ))}
           </div>
-        </div>
-      </div>
-    </div>
+        ) : (
+          <div className="space-y-4">
+            {(showAll ? recommendations : recommendations.slice(0, 2)).map((recommendation) => (
+              <div 
+                key={recommendation.id} 
+                className="p-4 border border-border rounded-lg hover:bg-muted/10 transition-colors group"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      {getActionIcon(recommendation.action)}
+                      <h4 className="font-semibold text-sm group-hover:text-primary transition-colors">
+                        {recommendation.title}
+                      </h4>
+                      <Badge variant={getImpactBadgeVariant(recommendation.impact)} className="text-xs">
+                        {recommendation.impact}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      {recommendation.description}
+                    </p>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span>Expected: <span className="text-green-500">{recommendation.expectedReturn}</span></span>
+                      <span>Risk: {recommendation.riskLevel}</span>
+                      <span>{recommendation.timeAgo}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {recommendations.length > 2 && (
+              <div className="pt-2">
+                <button
+                  onClick={handleToggleShowAll}
+                  className="w-full py-2 px-4 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors"
+                >
+                  {showAll ? 'Show Less' : `View More (${recommendations.length - 2} more)`}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
-};
+});
+
+AIMarketSentiment.displayName = 'AIMarketSentiment';
 
 export default AIMarketSentiment;

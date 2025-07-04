@@ -52,7 +52,7 @@ const PortfolioOverview: React.FC = () => {
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>Available Cash</Text>
             <Text style={styles.statValue}>
-              {formatCurrency(portfolioData.availableCash)}
+              {formatCurrency(portfolioData.availableCash)|| 'Loading...'}
             </Text>
           </View>
           <View style={styles.statItem}>

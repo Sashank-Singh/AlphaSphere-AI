@@ -1,104 +1,200 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Activity } from 'lucide-react';
+import { Activity, TrendingUp } from 'lucide-react';
+import { stockDataService, StockQuote } from '@/lib/stockDataService';
 
-const MarketSentimentCard: React.FC = () => {
-  const [sentiment, setSentiment] = useState({
-    overall: 'Bullish',
-    bullish: 65,
-    neutral: 25,
-    bearish: 10
+interface SentimentData {
+  bullish: number;
+  neutral: number;
+  bearish: number;
+  overall: 'bullish' | 'neutral' | 'bearish';
+}
+
+const MarketSentimentCard: React.FC = memo(() => {
+  const [sentimentData, setSentimentData] = useState<SentimentData>({
+    bullish: 72,
+    neutral: 22,
+    bearish: 6,
+    overall: 'bullish'
   });
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSentiment(prev => ({
-        ...prev,
-        bullish: Math.max(40, Math.min(80, prev.bullish + (Math.random() - 0.5) * 5)),
-        neutral: Math.max(15, Math.min(35, prev.neutral + (Math.random() - 0.5) * 3)),
-        bearish: Math.max(5, Math.min(25, prev.bearish + (Math.random() - 0.5) * 3))
-      }));
-    }, 10000);
+  const marketIndicators = ['SPY', 'QQQ', 'IWM', 'DIA', 'VTI', 'XLF'];
 
-    return () => clearInterval(interval);
-  }, []);
-
-  // Normalize percentages
-  const total = sentiment.bullish + sentiment.neutral + sentiment.bearish;
-  const normalizedSentiment = {
-    bullish: Math.round((sentiment.bullish / total) * 100),
-    neutral: Math.round((sentiment.neutral / total) * 100),
-    bearish: Math.round((sentiment.bearish / total) * 100)
+  const calculateSentiment = (changePercent: number): 'bullish' | 'bearish' | 'neutral' => {
+    if (changePercent > 0.5) return 'bullish';
+    if (changePercent < -0.5) return 'bearish';
+    return 'neutral';
   };
 
-  const overallSentiment = normalizedSentiment.bullish > 50 ? 'Bullish' : 
-                          normalizedSentiment.bearish > 35 ? 'Bearish' : 'Neutral';
+  const calculateOverallSentiment = (bullish: number, neutral: number, bearish: number): 'bullish' | 'neutral' | 'bearish' => {
+    if (bullish > 50) return 'bullish';
+    if (bearish > 30) return 'bearish';
+    return 'neutral';
+  };
+
+  const fetchSentimentData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const quotes = await Promise.all(
+        marketIndicators.map(async (symbol) => {
+          try {
+            return await stockDataService.getStockQuote(symbol);
+          } catch (error) {
+            console.error(`Error fetching ${symbol}:`, error);
+            return null;
+          }
+        })
+      );
+
+      const validQuotes = quotes.filter((quote): quote is StockQuote => quote !== null);
+      
+      if (validQuotes.length === 0) {
+        return;
+      }
+
+      // Calculate sentiment distribution based on market indicators
+      const sentiments = validQuotes.map(quote => calculateSentiment(quote.changePercent));
+      const bullishCount = sentiments.filter(s => s === 'bullish').length;
+      const neutralCount = sentiments.filter(s => s === 'neutral').length;
+      const bearishCount = sentiments.filter(s => s === 'bearish').length;
+      
+      const total = sentiments.length;
+      const bullishPercent = Math.round((bullishCount / total) * 100);
+      const neutralPercent = Math.round((neutralCount / total) * 100);
+      const bearishPercent = Math.round((bearishCount / total) * 100);
+      
+      // Ensure percentages add up to 100
+      const totalPercent = bullishPercent + neutralPercent + bearishPercent;
+      let adjustedBullish = bullishPercent;
+      let adjustedNeutral = neutralPercent;
+      let adjustedBearish = bearishPercent;
+      
+      if (totalPercent !== 100) {
+        const diff = 100 - totalPercent;
+        adjustedBullish += diff;
+      }
+      
+      const newSentimentData: SentimentData = {
+        bullish: Math.max(0, adjustedBullish),
+        neutral: Math.max(0, adjustedNeutral),
+        bearish: Math.max(0, adjustedBearish),
+        overall: calculateOverallSentiment(adjustedBullish, adjustedNeutral, adjustedBearish)
+      };
+      
+      setSentimentData(newSentimentData);
+    } catch (error) {
+      console.error('Error fetching sentiment data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSentimentData();
+    
+    // Set up refresh interval for real-time updates
+    const interval = setInterval(() => {
+      fetchSentimentData();
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [fetchSentimentData]);
+
+  const getSentimentBadgeVariant = (sentiment: string) => {
+    switch (sentiment) {
+      case 'bullish': return 'default';
+      case 'bearish': return 'destructive';
+      case 'neutral': return 'secondary';
+      default: return 'secondary';
+    }
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Activity className="h-5 w-5" />
+    <Card className="bg-black border-gray-800 text-white">
+      <CardHeader className="pb-1">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Activity className="h-4 w-4" />
           Market Sentiment
         </CardTitle>
-        <p className="text-sm text-muted-foreground">Overall market mood and positioning</p>
+        <p className="text-xs text-gray-400">
+          Overall market mood and positioning
+        </p>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-lg font-semibold">Market Sentiment</span>
-            <Badge 
-              variant={overallSentiment === 'Bullish' ? 'default' : 
-                      overallSentiment === 'Bearish' ? 'destructive' : 'secondary'}
-              className="flex items-center gap-1"
-            >
-              {overallSentiment === 'Bullish' ? <TrendingUp className="h-3 w-3" /> :
-               overallSentiment === 'Bearish' ? <TrendingDown className="h-3 w-3" /> :
-               <Activity className="h-3 w-3" />}
-              {overallSentiment}
-            </Badge>
-          </div>
-          
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-green-500">Bullish</span>
-              <span className="font-semibold text-green-500">{normalizedSentiment.bullish}%</span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div 
-                className="bg-green-500 h-2 rounded-full transition-all duration-1000" 
-                style={{ width: `${normalizedSentiment.bullish}%` }}
-              />
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">Neutral</span>
-              <span className="font-semibold text-gray-500">{normalizedSentiment.neutral}%</span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div 
-                className="bg-gray-500 h-2 rounded-full transition-all duration-1000" 
-                style={{ width: `${normalizedSentiment.neutral}%` }}
-              />
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-red-500">Bearish</span>
-              <span className="font-semibold text-red-500">{normalizedSentiment.bearish}%</span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div 
-                className="bg-red-500 h-2 rounded-full transition-all duration-1000" 
-                style={{ width: `${normalizedSentiment.bearish}%` }}
-              />
+      <CardContent className="space-y-3 py-3">
+        {loading ? (
+          <div className="space-y-4">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-700 rounded mb-4"></div>
+              <div className="h-6 bg-gray-700 rounded mb-2"></div>
+              <div className="h-6 bg-gray-700 rounded mb-2"></div>
+              <div className="h-6 bg-gray-700 rounded"></div>
             </div>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Header with overall sentiment */}
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Market Sentiment</h3>
+              <Badge variant={getSentimentBadgeVariant(sentimentData.overall)} className="flex items-center gap-1 text-xs py-0.5 px-2">
+                <TrendingUp className="h-2.5 w-2.5" />
+                {sentimentData.overall.charAt(0).toUpperCase() + sentimentData.overall.slice(1)}
+              </Badge>
+            </div>
+            
+            {/* Sentiment breakdown */}
+            <div className="space-y-2">
+              {/* Bullish */}
+              <div className="space-y-0.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-green-400 font-medium text-xs">Bullish</span>
+                  <span className="text-green-400 font-bold text-sm">{sentimentData.bullish}%</span>
+                </div>
+                <div className="w-full bg-gray-800 rounded-full h-1">
+                  <div 
+                    className="bg-green-500 h-1 rounded-full transition-all duration-500" 
+                    style={{ width: `${sentimentData.bullish}%` }}
+                  ></div>
+                </div>
+              </div>
+              
+              {/* Neutral */}
+              <div className="space-y-0.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400 font-medium text-xs">Neutral</span>
+                  <span className="text-gray-400 font-bold text-sm">{sentimentData.neutral}%</span>
+                </div>
+                <div className="w-full bg-gray-800 rounded-full h-1">
+                  <div 
+                    className="bg-gray-500 h-1 rounded-full transition-all duration-500" 
+                    style={{ width: `${sentimentData.neutral}%` }}
+                  ></div>
+                </div>
+              </div>
+              
+              {/* Bearish */}
+              <div className="space-y-0.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-red-400 font-medium text-xs">Bearish</span>
+                  <span className="text-red-400 font-bold text-sm">{sentimentData.bearish}%</span>
+                </div>
+                <div className="w-full bg-gray-800 rounded-full h-1">
+                  <div 
+                    className="bg-red-500 h-1 rounded-full transition-all duration-500" 
+                    style={{ width: `${sentimentData.bearish}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
-};
+});
+
+MarketSentimentCard.displayName = 'MarketSentimentCard';
 
 export default MarketSentimentCard;

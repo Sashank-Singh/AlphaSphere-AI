@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,9 +10,17 @@ import { usePortfolio } from '@/context/PortfolioContext';
 import ImprovedSphereAI from '@/components/ImprovedSphereAI';
 import CommunityPage from '@/pages/CommunityPage';
 
-const MainContentTabs: React.FC = () => {
+const MainContentTabs: React.FC = memo(() => {
   const { portfolio } = usePortfolio();
   const navigate = useNavigate();
+
+  const handleNavigateToStock = useCallback((symbol: string) => {
+    navigate(`/stocks/${symbol}`);
+  }, [navigate]);
+
+  const handleNavigateToTrading = useCallback(() => {
+    navigate('/trading');
+  }, [navigate]);
 
   const portfolioPositions = portfolio.positions.slice(0, 3);
 
@@ -62,7 +70,7 @@ const MainContentTabs: React.FC = () => {
                     variant="outline" 
                     size="sm" 
                     className="w-full mt-4"
-                    onClick={() => navigate(`/stocks/${position.symbol}`)}
+                    onClick={() => handleNavigateToStock(position.symbol)}
                   >
                     View Details
                   </Button>
@@ -79,7 +87,7 @@ const MainContentTabs: React.FC = () => {
                 <p className="text-muted-foreground mb-6">
                   Start building your portfolio by making your first trade
                 </p>
-                <Button onClick={() => navigate('/trading')}>
+                <Button onClick={handleNavigateToTrading}>
                   Start Trading
                 </Button>
               </CardContent>
@@ -107,6 +115,8 @@ const MainContentTabs: React.FC = () => {
       </Tabs>
     </div>
   );
-};
+});
+
+MainContentTabs.displayName = 'MainContentTabs';
 
 export default MainContentTabs;

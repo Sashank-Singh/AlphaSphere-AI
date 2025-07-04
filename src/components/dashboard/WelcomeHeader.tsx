@@ -1,11 +1,11 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Smartphone } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-const WelcomeHeader: React.FC = () => {
+const WelcomeHeader: React.FC = memo(() => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
 
@@ -28,6 +28,8 @@ const WelcomeHeader: React.FC = () => {
       )}
     </div>
   );
-};
+});
+
+WelcomeHeader.displayName = 'WelcomeHeader';
 
 export default WelcomeHeader;

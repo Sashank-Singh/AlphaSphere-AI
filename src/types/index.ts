@@ -78,6 +78,8 @@ export interface Transaction {
 export interface Portfolio {
   cash: number;
   totalValue: number;
+  dailyChange?: number;
+  dailyChangePercent?: number;
   positions: Position[];
   optionPositions: OptionContract[];
   transactions: Transaction[];

@@ -106,7 +106,7 @@ const AISentimentAnalysis: React.FC<AISentimentAnalysisProps> = ({ symbol, stock
   };
 
   return (
-    <Card className={className}>
+    <Card className={cn("h-full bg-card border border-border rounded-2xl", className)}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium flex items-center">
@@ -209,42 +209,19 @@ const AISentimentAnalysis: React.FC<AISentimentAnalysisProps> = ({ symbol, stock
                 </div>
               </TabsContent>
               
-              <TabsContent value="sources" className="space-y-4">
-                <div>
-                  <h4 className="text-xs font-medium text-muted-foreground mb-2">Positive Indicators</h4>
-                  <ul className="space-y-1">
-                    {sentimentData.sources.positive.map((source, index) => (
-                      <li key={`pos-${index}`} className="text-sm flex items-center">
-                        <TrendingUp className="h-3 w-3 text-green-500 mr-2" />
-                        {source}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                
-                <div>
-                  <h4 className="text-xs font-medium text-muted-foreground mb-2">Negative Indicators</h4>
-                  <ul className="space-y-1">
-                    {sentimentData.sources.negative.map((source, index) => (
-                      <li key={`neg-${index}`} className="text-sm flex items-center">
-                        <TrendingDown className="h-3 w-3 text-red-500 mr-2" />
-                        {source}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                
-                <div>
-                  <h4 className="text-xs font-medium text-muted-foreground mb-2">Neutral Factors</h4>
-                  <ul className="space-y-1">
-                    {sentimentData.sources.neutral.map((source, index) => (
-                      <li key={`neu-${index}`} className="text-sm flex items-center">
-                        <div className="h-3 w-3 bg-yellow-500/30 rounded-full mr-2" />
-                        {source}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              <TabsContent value="sources" className="space-y-4 pt-2">
+                {['positive', 'negative', 'neutral'].map((type) => (
+                  <div key={type} className="p-4 border border-border rounded-lg bg-background hover:bg-muted/10 transition-colors">
+                    <div className="flex items-center mb-1">
+                      <span className="font-semibold text-sm capitalize">{type} sources</span>
+                    </div>
+                    <ul className="list-disc list-inside text-xs text-muted-foreground">
+                      {sentimentData.sources[type].map((src, idx) => (
+                        <li key={idx}>{src}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </TabsContent>
               
               <TabsContent value="trends" className="pt-2">

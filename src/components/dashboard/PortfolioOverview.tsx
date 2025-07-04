@@ -1,47 +1,71 @@
-
-import React from 'react';
+import React, { memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Activity } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
-import { formatCurrency } from '@/lib/utils';
+import { TrendingUp, TrendingDown, DollarSign, PieChart } from 'lucide-react';
 
-const PortfolioOverview: React.FC = () => {
+const PortfolioOverview: React.FC = memo(() => {
   const { portfolio } = usePortfolio();
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  };
+
+  const formatPercentage = (percentage?: number) => {
+    const safeValue = percentage ?? 0;
+    return `${safeValue >= 0 ? '+' : ''}${safeValue.toFixed(2)}%`;
+  };
+
+  const isPositive = portfolio.dailyChange >= 0;
+  const changeClass = isPositive ? 'gain-positive' : 'gain-negative';
+
   return (
-    <Card className="lg:col-span-2 bg-card text-foreground border-border">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center justify-between text-lg">
+    <Card className="border-l-2 border-slate-600 pl-3">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <PieChart className="h-5 w-5" />
           Portfolio Overview
-          <Badge variant="secondary" className="gap-1">
-            <Activity className="h-3 w-3" />
-            Live
-          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <div className="text-2xl font-bold">{formatCurrency(portfolio.totalValue)}</div>
-          <div className="flex items-center gap-2 text-green-500">
-            <TrendingUp className="h-3 w-3" />
-            <span className="text-sm">+2.4% (+${((portfolio.totalValue * 0.024)).toFixed(2)}) today</span>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2 interactive-element p-3 rounded-lg transition-all">
+            <p className="text-base text-muted-foreground">Total Value</p>
+            <p className="text-2xl font-bold">{formatCurrency(portfolio.totalValue)}</p>
+          </div>
+          <div className="space-y-2 interactive-element p-3 rounded-lg transition-all">
+            <p className="text-base text-muted-foreground">Daily Change</p>
+            <div className={`flex items-center gap-1 text-lg font-semibold px-2 py-1 rounded-md ${changeClass}`}>
+              {isPositive ? (
+                <TrendingUp className="h-4 w-4" />
+              ) : (
+                <TrendingDown className="h-4 w-4" />
+              )}
+              {formatPercentage(portfolio.dailyChangePercent)}
+            </div>
           </div>
         </div>
         
-        <div className="grid grid-cols-2 gap-4 pt-2">
-          <div className="space-y-1">
-            <div className="text-xs opacity-80">Available Cash</div>
-            <div className="text-lg font-semibold">{formatCurrency(portfolio.cash)}</div>
+        <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+          <div className="space-y-2 interactive-element p-3 rounded-lg transition-all">
+            <p className="text-base text-muted-foreground">Available Cash</p>
+            <p className="text-lg font-semibold flex items-center gap-1">
+              <DollarSign className="h-4 w-4" />
+              {formatCurrency(portfolio.cash)}
+            </p>
           </div>
-          <div className="space-y-1">
-            <div className="text-xs opacity-80">Positions</div>
-            <div className="text-lg font-semibold">{portfolio.positions.length}</div>
+          <div className="space-y-2 interactive-element p-3 rounded-lg transition-all">
+            <p className="text-base text-muted-foreground">Positions</p>
+            <p className="text-lg font-semibold">{portfolio.positions.length}</p>
           </div>
         </div>
       </CardContent>
     </Card>
   );
-};
+});
+
+PortfolioOverview.displayName = 'PortfolioOverview';
 
 export default PortfolioOverview;

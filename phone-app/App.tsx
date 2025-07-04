@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // Import screens
 import DashboardScreen from './src/screens/DashboardScreen';
@@ -93,23 +94,25 @@ const MainTabs = () => {
 
 const App: React.FC = () => {
   return (
-    <SafeAreaProvider>
-      <NavigationContainer>
-        <Stack.Navigator>
-          <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
-          <Stack.Screen 
-            name="StockDetail" 
-            component={StockDetailScreen}
-            options={{ 
-              headerStyle: { backgroundColor: '#1C1C1E' },
-              headerTintColor: '#FFFFFF',
-              headerTitle: '',
-            }} 
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-      <StatusBar style="light" />
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <Stack.Navigator>
+            <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
+            <Stack.Screen 
+              name="StockDetail" 
+              component={StockDetailScreen}
+              options={{ 
+                headerStyle: { backgroundColor: '#1C1C1E' },
+                headerTintColor: '#FFFFFF',
+                headerTitle: '',
+              }} 
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+        <StatusBar style="light" />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 };
 
