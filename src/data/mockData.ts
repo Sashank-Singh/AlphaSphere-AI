@@ -275,6 +275,8 @@ export const mockNews: NewsItem[] = [
 export const mockPortfolio: Portfolio = {
   cash: 100000,
   totalValue: 250000,
+  dailyChange: 2500,
+  dailyChangePercent: 1.02,
   positions: [
     {
       id: 'pos1',

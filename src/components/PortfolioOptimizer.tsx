@@ -268,18 +268,17 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
   }, [riskTolerance, portfolio]);
   
   return (
-    <Card className={className}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          Portfolio Optimizer
+    <Card className={cn("h-full bg-card border border-border rounded-2xl", className)}>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5" />
+          Portfolio Optimization
         </CardTitle>
         <CardDescription>
-          AI-powered suggestions to optimize your portfolio
+          AI-powered recommendations to optimize your portfolio for risk and return.
         </CardDescription>
       </CardHeader>
-      
-      <CardContent>
+      <CardContent className="space-y-4">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8">
             <div className="h-16 w-16 rounded-full border-4 border-primary border-t-transparent animate-spin mb-4"></div>
@@ -356,45 +355,22 @@ const PortfolioOptimizer: React.FC<PortfolioOptimizerProps> = ({ className }) =>
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-3 mt-2">
-                {recommendation.suggestions.map((suggestion, index) => (
-                  <div 
-                    key={`suggestion-${index}`}
-                    className={cn(
-                      "border rounded-md p-3",
-                      suggestion.severity === 'high' ? "border-destructive/20 bg-destructive/5" :
-                      suggestion.severity === 'medium' ? "border-yellow-500/20 bg-yellow-500/5" :
-                      "border-primary/20 bg-primary/5"
-                    )}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-1">
-                        {suggestion.type === 'buy' && (
-                          <Badge variant="outline" className="text-green-500">BUY</Badge>
+                {recommendation && (
+                  <div className="space-y-4">
+                    {recommendation.suggestions.map((suggestion, idx) => (
+                      <div key={idx} className="p-4 border border-border rounded-lg bg-background hover:bg-muted/10 transition-colors">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-semibold text-sm">{suggestion.type.toUpperCase()} {suggestion.symbol}</span>
+                          <Badge className={`ml-2 ${suggestion.severity === 'high' ? 'bg-red-500' : suggestion.severity === 'medium' ? 'bg-yellow-500' : 'bg-green-500'}`}>{suggestion.severity} risk</Badge>
+                        </div>
+                        <div className="text-xs text-muted-foreground mb-1">{suggestion.reasoning}</div>
+                        {suggestion.actionAmount && (
+                          <div className="text-xs text-primary font-medium">Action: {suggestion.actionAmount}</div>
                         )}
-                        {suggestion.type === 'sell' && (
-                          <Badge variant="outline" className="text-red-500">SELL</Badge>
-                        )}
-                        {suggestion.type === 'hold' && (
-                          <Badge variant="outline" className="text-yellow-500">HOLD</Badge>
-                        )}
-                        {suggestion.type === 'rebalance' && (
-                          <Badge variant="outline" className="text-blue-500">REBALANCE</Badge>
-                        )}
-                        <span className="font-medium">{suggestion.symbol}</span>
-                        {suggestion.name && <span className="text-sm text-muted-foreground">({suggestion.name})</span>}
                       </div>
-                      
-                      {suggestion.actionAmount && (
-                        <Badge variant="secondary">
-                          {typeof suggestion.actionAmount === 'number' ? 
-                            `${suggestion.actionAmount} shares` : suggestion.actionAmount}
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <p className="text-sm mt-2">{suggestion.reasoning}</p>
+                    ))}
                   </div>
-                ))}
+                )}
                 
                 <Button 
                   size="sm" 
