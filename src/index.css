@@ -61,6 +61,15 @@
     display: none;
   }
   
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
   /* Mobile optimizations */
   .mobile-bottom-sheet {
     border-top-left-radius: 0.75rem;

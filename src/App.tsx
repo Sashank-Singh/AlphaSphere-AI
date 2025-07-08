@@ -21,6 +21,8 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { useAuth } from '@/context/AuthContext';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { Loader2 } from 'lucide-react';
+import LearnScreen from '@/pages/LearnScreen';
+import LearnDetailPage from '@/pages/LearnDetailPage';
 
 const AppContent: React.FC = () => {
   return (
@@ -83,6 +85,16 @@ const AppContent: React.FC = () => {
         <Route path="/community" element={
           <Layout>
             <CommunityPage />
+          </Layout>
+        } />
+        <Route path="/learn" element={
+          <Layout>
+            <LearnScreen />
+          </Layout>
+        } />
+        <Route path="/learn/:moduleId" element={
+          <Layout>
+            <LearnDetailPage />
           </Layout>
         } />
       </Routes>

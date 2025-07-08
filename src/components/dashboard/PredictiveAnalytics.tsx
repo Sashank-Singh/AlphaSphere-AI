@@ -25,26 +25,9 @@ const PredictiveAnalytics: React.FC = memo(() => {
   const fetchPredictions = useCallback(async () => {
     try {
       setLoading(true);
-      // Simulate AI predictions - in real app, this would call your AI service
       const symbols = ['AAPL', 'TSLA', 'NVDA'];
-      const mockPredictions: PredictionData[] = symbols.map(symbol => {
-        const currentPrice = Math.random() * 200 + 100;
-        const change = (Math.random() - 0.5) * 0.2; // ±10% change
-        const predictedPrice = currentPrice * (1 + change);
-        const confidence = Math.random() * 0.4 + 0.6; // 60-100% confidence
-        
-        return {
-          symbol,
-          currentPrice,
-          predictedPrice,
-          confidence,
-          timeframe: selectedTimeframe,
-          trend: change > 0.05 ? 'bullish' : change < -0.05 ? 'bearish' : 'neutral',
-          riskLevel: confidence > 0.8 ? 'low' : confidence > 0.7 ? 'medium' : 'high'
-        };
-      });
-      
-      setPredictions(mockPredictions);
+      const fetchedPredictions = await stockDataService.getAIPredictions(symbols, selectedTimeframe);
+      setPredictions(fetchedPredictions);
     } catch (error) {
       console.error('Error fetching predictions:', error);
     } finally {

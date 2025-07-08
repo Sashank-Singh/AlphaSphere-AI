@@ -3,33 +3,52 @@ import { Portfolio, Transaction, Position, OptionContract, Stock } from '@/types
 import { mockPortfolio, getStockBySymbol } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
 
+const VIRTUAL_INITIAL_CASH = 100000;
+
 interface PortfolioContextType {
   portfolio: Portfolio;
+  paperPortfolio: Portfolio;
   isLoading: boolean;
-  executeStockTrade: (symbol: string, quantity: number, price: number, type: 'buy' | 'sell') => Promise<boolean>;
+  executeStockTrade: (symbol: string, quantity: number, price: number, type: 'buy' | 'sell', isPaperTrade?: boolean) => Promise<boolean>;
   executeOptionTrade: (option: OptionContract, quantity: number, type: 'buy' | 'sell') => Promise<boolean>;
   resetPortfolio: () => void;
+  resetPaperPortfolio: () => void;
 }
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
 
 export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [portfolio, setPortfolio] = useState<Portfolio>(mockPortfolio);
+  const [paperPortfolio, setPaperPortfolio] = useState<Portfolio>({
+    ...mockPortfolio,
+    cash: VIRTUAL_INITIAL_CASH,
+    totalValue: VIRTUAL_INITIAL_CASH,
+    positions: [],
+    optionPositions: [],
+    transactions: [],
+  });
+
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    const loadPortfolio = async () => {
+    const loadPortfolios = async () => {
       try {
         const savedPortfolio = localStorage.getItem('tradingAppPortfolio');
         if (savedPortfolio) {
           const parsedPortfolio = JSON.parse(savedPortfolio);
-          // Ensure all fields are present, falling back to mock data if not
-          setPortfolio({
-            ...mockPortfolio,
-            ...parsedPortfolio,
-          });
+          setPortfolio({ ...mockPortfolio, ...parsedPortfolio });
         }
+        
+        const savedPaperPortfolio = localStorage.getItem('tradingAppPaperPortfolio');
+        if (savedPaperPortfolio) {
+          const parsedPaperPortfolio = JSON.parse(savedPaperPortfolio);
+          setPaperPortfolio({ ...mockPortfolio, ...parsedPaperPortfolio });
+        } else {
+          // If no paper portfolio, initialize one
+          resetPaperPortfolio();
+        }
+
       } catch (error) {
         console.error('Error loading portfolio from storage:', error);
       } finally {
@@ -37,14 +56,17 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     };
 
-    loadPortfolio();
+    loadPortfolios();
   }, []);
 
-  const executeStockTrade = async (symbol: string, quantity: number, price: number, type: 'buy' | 'sell'): Promise<boolean> => {
+  const executeStockTrade = async (symbol: string, quantity: number, price: number, type: 'buy' | 'sell', isPaperTrade = false): Promise<boolean> => {
     try {
       setIsLoading(true);
+
+      const currentPortfolio = isPaperTrade ? paperPortfolio : portfolio;
+      const setCurrentPortfolio = isPaperTrade ? setPaperPortfolio : setPortfolio;
+      const storageKey = isPaperTrade ? 'tradingAppPaperPortfolio' : 'tradingAppPortfolio';
       
-      // Get stock details
       const stock = getStockBySymbol(symbol);
       if (!stock) {
         toast({
@@ -57,30 +79,27 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       const total = quantity * price;
       
-      // Check if user can afford the trade (for buys)
-      if (type === 'buy' && total > portfolio.cash) {
+      if (type === 'buy' && total > currentPortfolio.cash) {
         toast({
           title: "Insufficient Funds",
-          description: "You don't have enough cash for this trade.",
+          description: `You don't have enough cash for this ${isPaperTrade ? 'paper' : 'real'} trade.`,
           variant: "destructive"
         });
         return false;
       }
       
-      // Check if user has enough shares (for sells)
       if (type === 'sell') {
-        const position = portfolio.positions.find(p => p.symbol === symbol);
+        const position = currentPortfolio.positions.find(p => p.symbol === symbol);
         if (!position || position.quantity < quantity) {
           toast({
             title: "Insufficient Shares",
-            description: "You don't have enough shares to sell.",
+            description: `You don't have enough shares to sell for this ${isPaperTrade ? 'paper' : 'real'} trade.`,
             variant: "destructive"
           });
           return false;
         }
       }
       
-      // Create new transaction
       const transaction: Transaction = {
         id: `tx-${Date.now()}`,
         date: new Date(),
@@ -92,13 +111,11 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         total: type === 'buy' ? total : -total,
       };
       
-      // Update positions
-      let updatedPositions: Position[] = [...portfolio.positions];
+      let updatedPositions: Position[] = [...currentPortfolio.positions];
       const existingPosition = updatedPositions.find(p => p.symbol === symbol);
       
       if (type === 'buy') {
         if (existingPosition) {
-          // Update existing position
           const newQuantity = existingPosition.quantity + quantity;
           const newAvgPrice = (existingPosition.quantity * existingPosition.averagePrice + quantity * price) / newQuantity;
           
@@ -108,7 +125,6 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               : p
           );
         } else {
-          // Create new position
           updatedPositions.push({
             id: `pos-${Date.now()}`,
             stockId: stock.id,
@@ -122,10 +138,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       } else { // Sell
         if (existingPosition) {
           if (existingPosition.quantity === quantity) {
-            // Remove position entirely
             updatedPositions = updatedPositions.filter(p => p.symbol !== symbol);
           } else {
-            // Reduce position quantity (keep average price the same)
             updatedPositions = updatedPositions.map(p => 
               p.symbol === symbol 
                 ? { ...p, quantity: p.quantity - quantity, currentPrice: price } 
@@ -135,36 +149,33 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
       }
       
-      // Update cash
       const newCash = type === 'buy' 
-        ? portfolio.cash - total 
-        : portfolio.cash + total;
+        ? currentPortfolio.cash - total 
+        : currentPortfolio.cash + total;
       
-      // Calculate new total value (cash + positions value)
       const positionsValue = updatedPositions.reduce(
         (sum, position) => sum + (position.quantity * position.currentPrice), 
         0
       );
       
-      const optionsValue = portfolio.optionPositions.reduce(
+      const optionsValue = currentPortfolio.optionPositions.reduce(
         (sum, option) => sum + ((option.quantity || 0) * option.premium * 100), 
         0
       );
       
-      // Update portfolio
       const newPortfolio = {
-        ...portfolio,
+        ...currentPortfolio,
         cash: newCash,
         totalValue: newCash + positionsValue + optionsValue,
         positions: updatedPositions,
-        transactions: [transaction, ...portfolio.transactions]
+        transactions: [transaction, ...currentPortfolio.transactions]
       };
       
-      setPortfolio(newPortfolio);
-      localStorage.setItem('tradingAppPortfolio', JSON.stringify(newPortfolio));
+      setCurrentPortfolio(newPortfolio);
+      localStorage.setItem(storageKey, JSON.stringify(newPortfolio));
       
       toast({
-        title: "Trade Executed",
+        title: `${isPaperTrade ? 'Paper ' : ''}Trade Executed`,
         description: `Successfully ${type === 'buy' ? 'bought' : 'sold'} ${quantity} shares of ${symbol}`,
       });
       
@@ -383,12 +394,33 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const resetPortfolio = () => {
+    localStorage.removeItem('tradingAppPortfolio');
     setPortfolio(mockPortfolio);
-    localStorage.setItem('tradingAppPortfolio', JSON.stringify(mockPortfolio));
+    toast({
+      title: "Portfolio Reset",
+      description: "Your real portfolio has been reset to its initial state.",
+    });
+  };
+
+  const resetPaperPortfolio = () => {
+    const initialPaperPortfolio = {
+      ...mockPortfolio,
+      cash: VIRTUAL_INITIAL_CASH,
+      totalValue: VIRTUAL_INITIAL_CASH,
+      positions: [],
+      optionPositions: [],
+      transactions: [],
+    };
+    localStorage.setItem('tradingAppPaperPortfolio', JSON.stringify(initialPaperPortfolio));
+    setPaperPortfolio(initialPaperPortfolio);
+    toast({
+      title: "Paper Portfolio Reset",
+      description: `Your virtual portfolio has been reset with $${VIRTUAL_INITIAL_CASH.toLocaleString()} cash.`,
+    });
   };
 
   return (
-    <PortfolioContext.Provider value={{ portfolio, isLoading, executeStockTrade, executeOptionTrade, resetPortfolio }}>
+    <PortfolioContext.Provider value={{ portfolio, paperPortfolio, isLoading, executeStockTrade, executeOptionTrade, resetPortfolio, resetPaperPortfolio }}>
       {children}
     </PortfolioContext.Provider>
   );

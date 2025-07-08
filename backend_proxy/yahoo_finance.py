@@ -111,11 +111,20 @@ def get_historical_prices(symbol, period='1y', interval='1d'):
         history.reset_index(inplace=True)
         history['Date'] = history['Date'].dt.strftime('%Y-%m-%d')
         
-        # Convert to list of dictionaries
-        return history.to_dict('records')
+        # Rename columns to be consistent with the frontend
+        history.rename(columns={
+            'Date': 'date',
+            'Open': 'open',
+            'High': 'high',
+            'Low': 'low',
+            'Close': 'close',
+            'Volume': 'volume'
+        }, inplace=True)
         
+        # Return data as a list of dictionaries
+        return history[['date', 'open', 'high', 'low', 'close', 'volume']].to_dict('records')
     except Exception as e:
-        logging.error(f"Error fetching historical data for {symbol}: {e}")
+        logging.error(f"Error fetching historical prices for {symbol}: {e}")
         return []
 
 def get_sector_performance():
@@ -202,25 +211,96 @@ def get_sector_performance():
         logging.error(f"Error fetching sector performance: {e}")
         return []
 
-        # Reset index to make 'Date' a column and format it
-        history.reset_index(inplace=True)
-        history['Date'] = history['Date'].dt.strftime('%Y-%m-%d')
+def get_ai_prediction(symbol, timeframe='1M'):
+    """
+    Generates a more advanced prediction for different timeframes.
+    """
+    try:
+        ticker = get_ticker(symbol)
         
-        # Rename columns to be consistent with the frontend
-        history.rename(columns={
-            'Date': 'date',
-            'Open': 'open',
-            'High': 'high',
-            'Low': 'low',
-            'Close': 'close',
-            'Volume': 'volume'
-        }, inplace=True)
+        # Define parameters based on timeframe
+        if timeframe == '1D':
+            hist = ticker.history(period='1mo', interval='30m') # more data points for intraday
+            short_window, long_window = 10, 50 # e.g. 5 hours vs 25 hours
+        elif timeframe == '1W':
+            hist = ticker.history(period='3mo', interval='1d')
+            short_window, long_window = 5, 20 # 1 week vs 1 month
+        elif timeframe == '1M':
+            hist = ticker.history(period='1y', interval='1d')
+            short_window, long_window = 20, 60 # 1 month vs 3 months
+        else: # 3M
+            hist = ticker.history(period='2y', interval='1d')
+            short_window, long_window = 50, 200 # ~2.5 months vs ~10 months
+
+        if hist.empty or len(hist) < long_window:
+            logging.warning(f"Not enough historical data for {symbol} with timeframe {timeframe}")
+            return {'error': 'Not enough data'}
+
+        # Calculate SMAs
+        hist[f'SMA{short_window}'] = hist['Close'].rolling(window=short_window).mean()
+        hist[f'SMA{long_window}'] = hist['Close'].rolling(window=long_window).mean()
+
+        latest = hist.iloc[-1]
+        current_price = latest['Close']
+        sma_short = latest[f'SMA{short_window}']
+        sma_long = latest[f'SMA{long_window}']
+
+        if pd.isna(sma_short) or pd.isna(sma_long):
+            logging.warning(f"Could not calculate moving averages for {symbol}")
+            return {'error': 'Could not calculate moving averages'}
+
+        # Trend and Confidence
+        if sma_short > sma_long:
+            trend = 'bullish'
+            confidence = min(1.0, abs((sma_short - sma_long) / sma_long))
+        elif sma_short < sma_long:
+            trend = 'bearish'
+            confidence = min(1.0, abs((sma_long - sma_short) / sma_short))
+        else:
+            trend = 'neutral'
+            confidence = 0.5
         
-        # Return data as a list of dictionaries
-        return history[['date', 'open', 'high', 'low', 'close', 'volume']].to_dict('records')
+        # Predicted Price
+        returns = hist['Close'].pct_change().dropna()
+        if not returns.empty:
+            volatility = returns.std()
+        else:
+            volatility = 0
+        
+        time_factor_map = {'1D': 1, '1W': 5, '1M': 21, '3M': 63}
+        time_factor = time_factor_map.get(timeframe, 21)
+        scaled_volatility = volatility * (time_factor**0.5)
+
+        if trend == 'bullish':
+            predicted_change = scaled_volatility * confidence
+        elif trend == 'bearish':
+            predicted_change = -scaled_volatility * confidence
+        else:
+            predicted_change = 0
+            
+        predicted_price = current_price * (1 + predicted_change)
+
+        # Risk Level
+        if confidence > 0.7 and scaled_volatility < 0.05:
+             risk_level = 'low'
+        elif confidence > 0.5 and scaled_volatility < 0.1:
+            risk_level = 'medium'
+        else:
+            risk_level = 'high'
+        
+        return {
+            'symbol': symbol.upper(),
+            'currentPrice': current_price,
+            'predictedPrice': predicted_price,
+            'confidence': confidence,
+            'timeframe': timeframe,
+            'trend': trend,
+            'riskLevel': risk_level,
+        }
+
     except Exception as e:
-        logging.error(f"Error fetching historical prices for {symbol}: {e}")
-        return []
+        logging.error(f"Error generating AI prediction for {symbol}: {e}")
+        return None
 
 def get_trade_recommendation(symbol):
     """

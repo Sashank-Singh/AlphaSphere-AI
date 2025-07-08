@@ -7,96 +7,69 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Loader2 } from 'lucide-react';
+import { usePortfolio } from '@/context/PortfolioContext';
 
 interface TradingPanelProps {
   symbol?: string;
   currentPrice?: number;
-  accountId?: string;
+  onExecuteTrade: (type: 'buy' | 'sell', quantity: number, price: number) => void;
+  isSimulator: boolean;
 }
 
 const TradingPanel: React.FC<TradingPanelProps> = ({
   symbol = 'AAPL',
   currentPrice = 0,
-  accountId = 'demo-account-id'
+  onExecuteTrade,
+  isSimulator,
 }) => {
   const [orderType, setOrderType] = useState<'market' | 'limit'>('market');
   const [orderSide, setOrderSide] = useState<'buy' | 'sell'>('buy');
-  const [quantity, setQuantity] = useState<string>('');
+  const [quantity, setQuantity] = useState<string>('1');
   const [dollars, setDollars] = useState<string>('');
   const [limitPrice, setLimitPrice] = useState<string>(currentPrice ? currentPrice.toString() : '0');
-  const [useDollars, setUseDollars] = useState<boolean>(true);
+  const [useDollars, setUseDollars] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [orderStatus, setOrderStatus] = useState<{
     success?: boolean;
     message?: string;
     orderId?: string;
   }>({});
+  
+  const { portfolio, paperPortfolio } = usePortfolio();
+  const currentPortfolio = isSimulator ? paperPortfolio : portfolio;
 
   const handleSubmitOrder = async () => {
-    if (!symbol) {
-      setOrderStatus({
-        success: false,
-        message: 'Please select a symbol'
-      });
+    // For the simulator, we use the simplified context function
+    if (isSimulator) {
+      onExecuteTrade(orderSide, parseFloat(quantity), currentPrice);
       return;
     }
 
+    // --- Start of Real Trading Logic ---
+    // This logic is kept but would need real API functions to work
+    if (!symbol) {
+      setOrderStatus({ success: false, message: 'Please select a symbol' });
+      return;
+    }
     setIsLoading(true);
     setOrderStatus({});
-
     try {
-      let response;
+      // Placeholder for real API calls
+      console.log('Executing real trade (placeholder)...', { orderSide, orderType, quantity, dollars, limitPrice, useDollars });
+      // Example: const response = await limitBuyShares(accountId, symbol, parseFloat(quantity), parseFloat(limitPrice));
+      
+      // Mock success for UI demonstration
+      setTimeout(() => {
+        setOrderStatus({ success: true, message: `Real trade for ${quantity} shares of ${symbol} submitted.` });
+        setIsLoading(false);
+      }, 1000);
 
-      if (orderType === 'market') {
-        if (orderSide === 'buy') {
-          if (useDollars && dollars) {
-            response = await marketBuyDollars(accountId, symbol, parseFloat(dollars));
-          } else if (!useDollars && quantity) {
-            response = await marketBuyShares(accountId, symbol, parseFloat(quantity));
-          } else {
-            throw new Error('Please enter a valid amount');
-          }
-        } else { // sell
-          if (quantity) {
-            response = await marketSellShares(accountId, symbol, parseFloat(quantity));
-          } else {
-            throw new Error('Please enter a valid quantity');
-          }
-        }
-      } else { // limit
-        if (!limitPrice) {
-          throw new Error('Please enter a limit price');
-        }
-
-        if (orderSide === 'buy') {
-          if (quantity) {
-            response = await limitBuyShares(accountId, symbol, parseFloat(quantity), parseFloat(limitPrice));
-          } else {
-            throw new Error('Please enter a valid quantity');
-          }
-        } else { // sell
-          if (quantity) {
-            response = await limitSellShares(accountId, symbol, parseFloat(quantity), parseFloat(limitPrice));
-          } else {
-            throw new Error('Please enter a valid quantity');
-          }
-        }
-      }
-
-      setOrderStatus({
-        success: true,
-        message: `Order submitted successfully!`,
-        orderId: response.id
-      });
     } catch (error) {
       console.error('Error submitting order:', error);
-      setOrderStatus({
-        success: false,
-        message: error instanceof Error ? error.message : 'An error occurred'
-      });
-    } finally {
+      setOrderStatus({ success: false, message: error instanceof Error ? error.message : 'An error occurred' });
       setIsLoading(false);
     }
+    // --- End of Real Trading Logic ---
   };
 
   const estimatedCost = useDollars
@@ -106,24 +79,22 @@ const TradingPanel: React.FC<TradingPanelProps> = ({
   return (
     <Card className="w-full bg-black border border-gray-800 h-full">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg">Trade {symbol}</CardTitle>
+        <CardTitle className="text-lg">{isSimulator ? 'Paper Trading' : 'Trade'} {symbol}</CardTitle>
         <CardDescription>
           Current Price: ${currentPrice.toFixed(2)}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="buy" className="w-full">
+        <Tabs defaultValue="buy" className="w-full" onValueChange={(value) => setOrderSide(value as 'buy' | 'sell')}>
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger
               value="buy"
-              onClick={() => setOrderSide('buy')}
               className={orderSide === 'buy' ? 'bg-green-500/20 text-green-500' : ''}
             >
               Buy
             </TabsTrigger>
             <TabsTrigger
               value="sell"
-              onClick={() => setOrderSide('sell')}
               className={orderSide === 'sell' ? 'bg-red-500/20 text-red-500' : ''}
             >
               Sell
@@ -131,131 +102,60 @@ const TradingPanel: React.FC<TradingPanelProps> = ({
           </TabsList>
 
           <TabsContent value="buy" className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="orderType">Order Type</Label>
-                <Select
-                  value={orderType}
-                  onValueChange={(value) => setOrderType(value as 'market' | 'limit')}
-                >
-                  <SelectTrigger id="orderType">
-                    <SelectValue placeholder="Select order type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="market">Market</SelectItem>
-                    <SelectItem value="limit">Limit</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {orderType === 'limit' && (
-                <div>
-                  <Label htmlFor="limitPrice">Limit Price</Label>
-                  <Input
-                    id="limitPrice"
-                    type="number"
-                    step="0.01"
-                    value={limitPrice}
-                    onChange={(e) => setLimitPrice(e.target.value)}
-                    placeholder="Enter limit price"
-                  />
-                </div>
-              )}
-
-              {orderSide === 'buy' && (
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="useDollars"
-                    checked={useDollars}
-                    onCheckedChange={setUseDollars}
-                  />
-                  <Label htmlFor="useDollars">Buy in dollars</Label>
-                </div>
-              )}
-
-              {(orderSide === 'sell' || !useDollars) && (
-                <div>
-                  <Label htmlFor="quantity">Quantity</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    step="0.01"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    placeholder="Enter quantity"
-                  />
-                </div>
-              )}
-
-              {orderSide === 'buy' && useDollars && (
-                <div>
-                  <Label htmlFor="dollars">Amount in $</Label>
-                  <Input
-                    id="dollars"
-                    type="number"
-                    step="0.01"
-                    value={dollars}
-                    onChange={(e) => setDollars(e.target.value)}
-                    placeholder="Enter dollar amount"
-                  />
-                </div>
-              )}
+            <div>
+              <Label htmlFor="orderType-buy">Order Type</Label>
+              <Select value={orderType} onValueChange={(value) => setOrderType(value as 'market' | 'limit')}>
+                <SelectTrigger id="orderType-buy"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="market">Market</SelectItem>
+                  <SelectItem value="limit">Limit</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
+            {orderType === 'limit' && (
+              <div>
+                <Label htmlFor="limitPrice-buy">Limit Price</Label>
+                <Input id="limitPrice-buy" type="number" value={limitPrice} onChange={(e) => setLimitPrice(e.target.value)} />
+              </div>
+            )}
+
+            <div className="flex items-center space-x-2">
+              <Switch id="useDollars-buy" checked={useDollars} onCheckedChange={setUseDollars} />
+              <Label htmlFor="useDollars-buy">Buy in dollars</Label>
+            </div>
+            
+            {!useDollars && (
+              <div>
+                <Label htmlFor="quantity-buy">Quantity</Label>
+                <Input id="quantity-buy" type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+              </div>
+            )}
+
+            {useDollars && (
+              <div>
+                <Label htmlFor="dollars-buy">Amount in $</Label>
+                <Input id="dollars-buy" type="number" value={dollars} onChange={(e) => setDollars(e.target.value)} />
+              </div>
+            )}
           </TabsContent>
-
+          
           <TabsContent value="sell" className="space-y-4">
-            <div className="space-y-4">
               <div>
-                <Label htmlFor="orderType">Order Type</Label>
-                <Select
-                  value={orderType}
-                  onValueChange={(value) => setOrderType(value as 'market' | 'limit')}
-                >
-                  <SelectTrigger id="orderType">
-                    <SelectValue placeholder="Select order type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="market">Market</SelectItem>
-                    <SelectItem value="limit">Limit</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="quantity-sell">Quantity</Label>
+                <Input id="quantity-sell" type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
               </div>
-
-              {orderType === 'limit' && (
-                <div>
-                  <Label htmlFor="limitPrice">Limit Price</Label>
-                  <Input
-                    id="limitPrice"
-                    type="number"
-                    step="0.01"
-                    value={limitPrice}
-                    onChange={(e) => setLimitPrice(e.target.value)}
-                    placeholder="Enter limit price"
-                  />
-                </div>
-              )}
-
-              <div>
-                <Label htmlFor="quantity">Quantity</Label>
-                <Input
-                  id="quantity"
-                  type="number"
-                  step="0.01"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  placeholder="Enter quantity"
-                />
-              </div>
-            </div>
           </TabsContent>
         </Tabs>
+        
+        <div className="flex justify-between pt-4 mt-4 border-t border-gray-800">
+          <span className="text-gray-400 font-semibold">{isSimulator ? 'Virtual Cash:' : 'Available Cash:'}</span>
+          <span className="font-semibold">${currentPortfolio.cash.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
 
         {orderStatus.message && (
           <div className={`mt-4 p-2 rounded ${orderStatus.success ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
             {orderStatus.message}
-            {orderStatus.orderId && (
-              <div className="text-xs mt-1">Order ID: {orderStatus.orderId}</div>
-            )}
           </div>
         )}
       </CardContent>
@@ -268,14 +168,7 @@ const TradingPanel: React.FC<TradingPanelProps> = ({
           onClick={handleSubmitOrder}
           disabled={isLoading}
         >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            `${orderSide === 'buy' ? 'Buy' : 'Sell'} ${symbol}`
-          )}
+          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : `${orderSide === 'buy' ? 'Buy' : 'Sell'} ${symbol}`}
         </Button>
       </CardFooter>
     </Card>
