@@ -317,6 +317,21 @@ class StockDataService {
     }
   }
 
+  public async getAIPredictions(symbols: string[], timeframe: string): Promise<any[]> {
+    const predictions = await Promise.all(
+      symbols.map(async (symbol) => {
+        try {
+          const prediction = await this.fetchWithFallBack(`/yahoo/prediction/${symbol}?timeframe=${timeframe}`);
+          return prediction;
+        } catch (error) {
+          console.error(`Error fetching prediction for ${symbol}:`, error);
+          return null;
+        }
+      })
+    );
+    return predictions.filter(p => p && !p.error);
+  }
+
   public async getOptionsData(symbol: string, requireGreeks: boolean = false, specificContract?: string) {
     // Check cache first
     const cachedData = this.optionsCache[symbol];

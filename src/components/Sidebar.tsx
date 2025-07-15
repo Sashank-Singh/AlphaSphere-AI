@@ -14,6 +14,7 @@ import {
   TrendingUp,
   Percent,
   Search,
+  BookOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -65,6 +66,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
       name: 'Community',
       icon: Users,
       path: '/community'
+    },
+    {
+      name: 'Learn',
+      icon: BookOpen,
+      path: '/learn'
     }
   ];
 

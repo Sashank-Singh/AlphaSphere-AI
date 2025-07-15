@@ -7,7 +7,7 @@
   :root {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
+    --card: 240 10% 5.9%;
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
@@ -21,10 +21,23 @@
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 极 3.7% 15.9%;
+    --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 142.1 76.2% 36.3%;
     --radius: 0.75rem;
+    
+    /* Enhanced color scheme for better contrast */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 98%;
+    
+    /* Gradient variables */
+    --card-gradient: linear-gradient(135deg, hsl(240 10% 5.9%) 0%, hsl(240 8% 7%) 100%);
+    --primary-gradient: linear-gradient(135deg, hsl(138 76% 97%) 0%, hsl(142 76% 90%) 100%);
+    --accent-gradient: linear-gradient(135deg, hsl(240 3.7% 15.9%) 0%, hsl(240 5% 18%) 100%);
   }
   
   body {
@@ -48,6 +61,15 @@
     display: none;
   }
   
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
   /* Mobile optimizations */
   .mobile-bottom-sheet {
     border-top-left-radius: 0.75rem;
@@ -57,27 +79,56 @@
     left: 0;
     right: 0;
     z-index: 50;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    filter: drop-shadow(0 -4px 10px rgba(0, 0, 0, 0.15));
   }
   
   .mobile-card {
     padding: 0.75rem;
   }
   
-  /* Glassmorphism & visual effects */
+  /* Enhanced glassmorphism & visual effects */
   .glass-card {
     backdrop-filter: blur(16px);
-    background-color: hsla(var(--background)/0.8);
-    border: 1px solid hsla(var(--border)/0.5);
+    background: var(--card-gradient);
+    border: 1px solid hsla(var(--border), 0.5);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  }
+  
+  .enhanced-card {
+    background: var(--card-gradient);
+    border: 1px solid hsla(var(--border), 0.6);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .enhanced-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    border-color: hsla(var(--border), 0.8);
   }
   
   .hover-scale {
-    transition-property: transform;
-    transition-duration: 300ms;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .hover-scale:hover {
+    transform: scale(1.02) translateY(-1px);
+  }
+  
+  /* Micro-interactions */
+  .interactive-element {
+    transition: all 0.2s ease-out;
+    cursor: pointer;
+  }
+  
+  .interactive-element:hover {
     transform: scale(1.05);
+    filter: brightness(1.1);
+  }
+  
+  .interactive-element:active {
+    transform: scale(0.98);
+    transition-duration: 0.1s;
   }
   
   .slide-up-enter {
@@ -101,7 +152,7 @@
     font-weight: 700;
   }
   
-  /* Animations */
+  /* Enhanced Animations */
   @keyframes pulse-glow {
     0%, 100% {
       opacity: 1;
@@ -117,11 +168,11 @@
     animation: pulse-glow 2s infinite;
   }
 
-  /* Fade-in animation */
+  /* Staggered fade-in animation */
   @keyframes fade-in {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(20px);
     }
     to {
       opacity: 1;
@@ -132,8 +183,23 @@
   .fade-in {
     animation: fade-in 0.6s ease-out forwards;
   }
+  
+  .fade-in-delay-1 {
+    animation: fade-in 0.6s ease-out 0.1s forwards;
+    opacity: 0;
+  }
+  
+  .fade-in-delay-2 {
+    animation: fade-in 0.6s ease-out 0.2s forwards;
+    opacity: 0;
+  }
+  
+  .fade-in-delay-3 {
+    animation: fade-in 0.6s ease-out 0.3s forwards;
+    opacity: 0;
+  }
 
-  /* Shimmer loading effect */
+  /* Enhanced shimmer loading effect */
   .shimmer {
     background: linear-gradient(
       90deg,
@@ -152,6 +218,50 @@
     100% {
       background-position: 200% 0;
     }
+  }
+  
+  /* Loading skeleton */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted) / 0.8) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+  }
+  
+  @keyframes skeleton-loading {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  
+  /* Bounce animation for notifications */
+  @keyframes bounce-in {
+    0% {
+      transform: scale(0.3) translateY(100%);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.05) translateY(-10%);
+    }
+    70% {
+      transform: scale(0.9) translateY(0%);
+    }
+    100% {
+      transform: scale(1) translateY(0%);
+      opacity: 1;
+    }
+  }
+  
+  .bounce-in {
+    animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
 
   /* Card transitions */
@@ -180,27 +290,83 @@
     transition: width 1s ease-out;
   }
   
-  /* AI features highlight */
+  /* Color coding system */
+  .gain-positive {
+    color: hsl(var(--success));
+    background-color: hsl(var(--success)/0.1);
+  }
+  
+  .gain-negative {
+    color: hsl(var(--destructive));
+    background-color: hsl(var(--destructive)/0.1);
+  }
+  
+  .gain-neutral {
+    color: hsl(var(--muted-foreground));
+    background-color: hsl(var(--muted)/0.1);
+  }
+  
+  /* Risk level indicators */
+  .risk-low {
+    color: hsl(var(--success));
+    border-left: 3px solid hsl(var(--success));
+    background-color: hsl(var(--success)/0.05);
+  }
+  
+  .risk-medium {
+    color: hsl(var(--warning));
+    border-left: 3px solid hsl(var(--warning));
+    background-color: hsl(var(--warning)/0.05);
+  }
+  
+  .risk-high {
+    color: hsl(var(--destructive));
+    border-left: 3px solid hsl(var(--destructive));
+    background-color: hsl(var(--destructive)/0.05);
+  }
+  
+  /* Market sentiment indicators */
+  .sentiment-bullish {
+    color: hsl(var(--success));
+    background: linear-gradient(135deg, hsl(var(--success)/0.1) 0%, hsl(var(--success)/0.05) 100%);
+  }
+  
+  .sentiment-bearish {
+    color: hsl(var(--destructive));
+    background: linear-gradient(135deg, hsl(var(--destructive)/0.1) 0%, hsl(var(--destructive)/0.05) 100%);
+  }
+  
+  .sentiment-neutral {
+    color: hsl(var(--info));
+    background: linear-gradient(135deg, hsl(var(--info)/0.1) 0%, hsl(var(--info)/0.05) 100%);
+  }
+  
+  /* Enhanced AI feature highlights */
   .ai-highlight {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+    border: 1px solid rgba(34, 197, 94, 0.2);
     position: relative;
     overflow: hidden;
   }
   
-  .ai-highlight::after {
+  .ai-highlight::before {
     content: '';
     position: absolute;
     top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background-color: hsla(var(--primary)/0.1);
-    opacity: 0;
-    transition-property: opacity;
-    transition-duration: 300ms;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    animation: ai-shine 3s infinite;
   }
   
-  .ai-highlight:hover::after {
-    opacity: 1;
+  @keyframes ai-shine {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
   }
 
   /* Safe area utilities for devices with notches */

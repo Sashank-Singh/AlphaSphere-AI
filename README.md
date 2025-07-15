@@ -93,7 +93,7 @@ python app.py
 
 ### 5. **Run the Frontend**
 ```sh
-npm run dev
+npm start
 ```
 - The app runs on Vite's default port (usually 5173 or 8080).
 

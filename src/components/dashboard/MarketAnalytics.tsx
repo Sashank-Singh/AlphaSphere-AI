@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, ExternalLink } from 'lucide-react';
 import SectorHeatmapCard from '@/components/SectorHeatmapCard';
@@ -11,7 +11,7 @@ interface NewsItem {
   link: string;
 }
 
-const MarketAnalytics: React.FC = () => {
+const MarketAnalytics: React.FC = memo(() => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,10 +60,14 @@ const MarketAnalytics: React.FC = () => {
     fetchNews();
   }, []);
 
-  const truncateDescription = (description: string, maxLength: number = 100) => {
+  const truncateDescription = useCallback((description: string, maxLength: number = 100) => {
     if (description.length <= maxLength) return description;
     return description.substring(0, maxLength) + '...';
-  };
+  }, []);
+
+  const handleToggleShowAll = useCallback(() => {
+    setShowAll(prev => !prev);
+  }, []);
 
   return (
     <div>
@@ -93,7 +97,7 @@ const MarketAnalytics: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {(showAll ? news : news.slice(0, 2)).map((item, index) => (
+                {(showAll ? news : news.slice(0, 3)).map((item, index) => (
                   <div 
                     key={index} 
                     className="p-4 border border-border rounded-lg hover:bg-muted/10 transition-colors group"
@@ -122,13 +126,13 @@ const MarketAnalytics: React.FC = () => {
                     </div>
                   </div>
                 ))}
-                {news.length > 2 && (
+                {news.length > 3 && (
                   <div className="pt-2">
                     <button
-                      onClick={() => setShowAll(!showAll)}
+                      onClick={handleToggleShowAll}
                       className="w-full py-2 px-4 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors"
                     >
-                      {showAll ? 'Show Less' : `View More (${news.length - 2} more)`}
+                      {showAll ? 'Show Less' : `View More (${news.length - 3} more)`}
                     </button>
                   </div>
                 )}
@@ -139,6 +143,8 @@ const MarketAnalytics: React.FC = () => {
       </div>
     </div>
   );
-};
+});
+
+MarketAnalytics.displayName = 'MarketAnalytics';
 
 export default MarketAnalytics;

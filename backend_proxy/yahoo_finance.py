@@ -111,11 +111,20 @@ def get_historical_prices(symbol, period='1y', interval='1d'):
         history.reset_index(inplace=True)
         history['Date'] = history['Date'].dt.strftime('%Y-%m-%d')
         
-        # Convert to list of dictionaries
-        return history.to_dict('records')
+        # Rename columns to be consistent with the frontend
+        history.rename(columns={
+            'Date': 'date',
+            'Open': 'open',
+            'High': 'high',
+            'Low': 'low',
+            'Close': 'close',
+            'Volume': 'volume'
+        }, inplace=True)
         
+        # Return data as a list of dictionaries
+        return history[['date', 'open', 'high', 'low', 'close', 'volume']].to_dict('records')
     except Exception as e:
-        logging.error(f"Error fetching historical data for {symbol}: {e}")
+        logging.error(f"Error fetching historical prices for {symbol}: {e}")
         return []
 
 def get_sector_performance():
@@ -202,25 +211,96 @@ def get_sector_performance():
         logging.error(f"Error fetching sector performance: {e}")
         return []
 
-        # Reset index to make 'Date' a column and format it
-        history.reset_index(inplace=True)
-        history['Date'] = history['Date'].dt.strftime('%Y-%m-%d')
+def get_ai_prediction(symbol, timeframe='1M'):
+    """
+    Generates a more advanced prediction for different timeframes.
+    """
+    try:
+        ticker = get_ticker(symbol)
         
-        # Rename columns to be consistent with the frontend
-        history.rename(columns={
-            'Date': 'date',
-            'Open': 'open',
-            'High': 'high',
-            'Low': 'low',
-            'Close': 'close',
-            'Volume': 'volume'
-        }, inplace=True)
+        # Define parameters based on timeframe
+        if timeframe == '1D':
+            hist = ticker.history(period='1mo', interval='30m') # more data points for intraday
+            short_window, long_window = 10, 50 # e.g. 5 hours vs 25 hours
+        elif timeframe == '1W':
+            hist = ticker.history(period='3mo', interval='1d')
+            short_window, long_window = 5, 20 # 1 week vs 1 month
+        elif timeframe == '1M':
+            hist = ticker.history(period='1y', interval='1d')
+            short_window, long_window = 20, 60 # 1 month vs 3 months
+        else: # 3M
+            hist = ticker.history(period='2y', interval='1d')
+            short_window, long_window = 50, 200 # ~2.5 months vs ~10 months
+
+        if hist.empty or len(hist) < long_window:
+            logging.warning(f"Not enough historical data for {symbol} with timeframe {timeframe}")
+            return {'error': 'Not enough data'}
+
+        # Calculate SMAs
+        hist[f'SMA{short_window}'] = hist['Close'].rolling(window=short_window).mean()
+        hist[f'SMA{long_window}'] = hist['Close'].rolling(window=long_window).mean()
+
+        latest = hist.iloc[-1]
+        current_price = latest['Close']
+        sma_short = latest[f'SMA{short_window}']
+        sma_long = latest[f'SMA{long_window}']
+
+        if pd.isna(sma_short) or pd.isna(sma_long):
+            logging.warning(f"Could not calculate moving averages for {symbol}")
+            return {'error': 'Could not calculate moving averages'}
+
+        # Trend and Confidence
+        if sma_short > sma_long:
+            trend = 'bullish'
+            confidence = min(1.0, abs((sma_short - sma_long) / sma_long))
+        elif sma_short < sma_long:
+            trend = 'bearish'
+            confidence = min(1.0, abs((sma_long - sma_short) / sma_short))
+        else:
+            trend = 'neutral'
+            confidence = 0.5
         
-        # Return data as a list of dictionaries
-        return history[['date', 'open', 'high', 'low', 'close', 'volume']].to_dict('records')
+        # Predicted Price
+        returns = hist['Close'].pct_change().dropna()
+        if not returns.empty:
+            volatility = returns.std()
+        else:
+            volatility = 0
+        
+        time_factor_map = {'1D': 1, '1W': 5, '1M': 21, '3M': 63}
+        time_factor = time_factor_map.get(timeframe, 21)
+        scaled_volatility = volatility * (time_factor**0.5)
+
+        if trend == 'bullish':
+            predicted_change = scaled_volatility * confidence
+        elif trend == 'bearish':
+            predicted_change = -scaled_volatility * confidence
+        else:
+            predicted_change = 0
+            
+        predicted_price = current_price * (1 + predicted_change)
+
+        # Risk Level
+        if confidence > 0.7 and scaled_volatility < 0.05:
+             risk_level = 'low'
+        elif confidence > 0.5 and scaled_volatility < 0.1:
+            risk_level = 'medium'
+        else:
+            risk_level = 'high'
+        
+        return {
+            'symbol': symbol.upper(),
+            'currentPrice': current_price,
+            'predictedPrice': predicted_price,
+            'confidence': confidence,
+            'timeframe': timeframe,
+            'trend': trend,
+            'riskLevel': risk_level,
+        }
+
     except Exception as e:
-        logging.error(f"Error fetching historical prices for {symbol}: {e}")
-        return []
+        logging.error(f"Error generating AI prediction for {symbol}: {e}")
+        return None
 
 def get_trade_recommendation(symbol):
     """
@@ -372,84 +452,126 @@ def get_options_recommendation(symbol):
 
 def get_market_news(limit=10):
     """
-    Fetches market news with realistic mock data and current timestamps.
+    Fetches real market news using yfinance Search API.
     """
     try:
-        # For now, return realistic mock data with current timestamps
-        # This can be replaced with actual API calls when available
         import random
+        from datetime import datetime, timedelta
         
-        news_templates = [
-            {
-                'title': 'Federal Reserve Maintains Interest Rates at Current Levels',
-                'description': 'The Federal Reserve announced it will keep interest rates unchanged, citing ongoing economic stability and controlled inflation metrics.',
-                'link': 'https://finance.yahoo.com/news/fed-rates'
-            },
-            {
-                'title': 'Tech Stocks Rally as AI Sector Shows Strong Growth',
-                'description': 'Major technology companies see significant gains as artificial intelligence investments continue to drive market optimism.',
-                'link': 'https://finance.yahoo.com/news/tech-rally'
-            },
-            {
-                'title': 'Oil Prices Fluctuate Amid Global Supply Chain Concerns',
-                'description': 'Energy markets remain volatile as geopolitical tensions and supply chain disruptions impact crude oil pricing.',
-                'link': 'https://finance.yahoo.com/news/oil-prices'
-            },
-            {
-                'title': 'S&P 500 Reaches New Milestone as Market Sentiment Improves',
-                'description': 'The benchmark index continues its upward trajectory, driven by strong corporate earnings and positive economic indicators.',
-                'link': 'https://finance.yahoo.com/news/sp500-milestone'
-            },
-            {
-                'title': 'Cryptocurrency Market Shows Mixed Signals',
-                'description': 'Digital assets display varied performance as regulatory clarity and institutional adoption continue to evolve.',
-                'link': 'https://finance.yahoo.com/news/crypto-mixed'
-            },
-            {
-                'title': 'Banking Sector Outperforms Amid Rising Interest Rate Environment',
-                'description': 'Financial institutions benefit from improved net interest margins as rate environment remains favorable for lending.',
-                'link': 'https://finance.yahoo.com/news/banking-sector'
-            },
-            {
-                'title': 'Consumer Spending Data Indicates Economic Resilience',
-                'description': 'Latest retail sales figures suggest continued consumer confidence despite ongoing economic uncertainties.',
-                'link': 'https://finance.yahoo.com/news/consumer-spending'
-            },
-            {
-                'title': 'Healthcare Stocks Gain on Breakthrough Drug Approvals',
-                'description': 'Pharmaceutical companies see significant gains following FDA approvals for innovative treatments and therapies.',
-                'link': 'https://finance.yahoo.com/news/healthcare-gains'
-            }
-        ]
+        # Search terms for general market news
+        search_terms = ['market', 'stocks', 'economy', 'fed', 'earnings', 'trading']
         
-        # Randomly select news items
-        selected_news = random.sample(news_templates, min(limit, len(news_templates)))
+        all_news = []
         
-        news_items = []
-        now = datetime.now()
+        # Try to get news from multiple search terms
+        for term in search_terms[:3]:  # Limit to 3 searches to avoid rate limits
+            try:
+                search = yf.Search(term, news_count=limit)
+                news_results = search.news
+                
+                for article in news_results:
+                    # Extract relevant information from the news article
+                    title = article.get('title', 'Market News')
+                    description = article.get('summary', article.get('description', 'Financial market update'))
+                    link = article.get('link', 'https://finance.yahoo.com/news/')
+                    
+                    # Calculate time ago from published timestamp if available
+                    time_ago = "Recently"
+                    if 'published' in article:
+                        try:
+                            published_time = datetime.fromtimestamp(article['published'])
+                            time_diff = datetime.now() - published_time
+                            
+                            if time_diff.days > 0:
+                                time_ago = f"{time_diff.days} day{'s' if time_diff.days != 1 else ''} ago"
+                            elif time_diff.seconds > 3600:
+                                hours = time_diff.seconds // 3600
+                                time_ago = f"{hours} hour{'s' if hours != 1 else ''} ago"
+                            else:
+                                minutes = time_diff.seconds // 60
+                                time_ago = f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+                        except:
+                            time_ago = "Recently"
+                    
+                    news_item = {
+                        'title': title,
+                        'description': description[:200] + '...' if len(description) > 200 else description,
+                        'timeAgo': time_ago,
+                        'link': link
+                    }
+                    all_news.append(news_item)
+                    
+            except Exception as search_error:
+                logging.warning(f"Error searching for news with term '{term}': {search_error}")
+                continue
         
-        for i, template in enumerate(selected_news):
-            # Generate realistic timestamps (within last 24 hours)
-            hours_ago = random.randint(1, 24)
-            minutes_ago = random.randint(0, 59)
-            
-            if hours_ago == 1 and minutes_ago < 30:
-                time_ago = f"{minutes_ago} minute{'s' if minutes_ago != 1 else ''} ago"
-            elif hours_ago == 1:
-                time_ago = "1 hour ago"
-            else:
-                time_ago = f"{hours_ago} hours ago"
-            
-            news_item = {
-                'title': template['title'],
-                'description': template['description'],
-                'timeAgo': time_ago,
-                'link': template['link']
-            }
-            news_items.append(news_item)
+        # Remove duplicates based on title
+        seen_titles = set()
+        unique_news = []
+        for item in all_news:
+            if item['title'] not in seen_titles:
+                seen_titles.add(item['title'])
+                unique_news.append(item)
         
-        return news_items
+        # If we got real news, return it; otherwise fall back to mock data
+        if unique_news:
+            return unique_news[:limit]
+        else:
+            # Fallback to mock data if API fails
+            logging.warning("Failed to fetch real news, using fallback data")
+            return get_fallback_news(limit)
         
     except Exception as e:
-        logging.error(f"Error generating market news: {e}")
-        return []
+        logging.error(f"Error fetching market news: {e}")
+        return get_fallback_news(limit)
+
+def get_fallback_news(limit=10):
+    """
+    Fallback function that returns mock news data when the API fails.
+    """
+    import random
+    
+    news_templates = [
+        {
+            'title': 'Federal Reserve Maintains Interest Rates at Current Levels',
+            'description': 'The Federal Reserve announced it will keep interest rates unchanged, citing ongoing economic stability and controlled inflation metrics.',
+            'link': 'https://finance.yahoo.com/news/'
+        },
+        {
+            'title': 'Tech Stocks Rally as AI Sector Shows Strong Growth',
+            'description': 'Major technology companies see significant gains as artificial intelligence investments continue to drive market optimism.',
+            'link': 'https://finance.yahoo.com/news/'
+        },
+        {
+            'title': 'Oil Prices Fluctuate Amid Global Supply Chain Concerns',
+            'description': 'Energy markets remain volatile as geopolitical tensions and supply chain disruptions impact crude oil pricing.',
+            'link': 'https://finance.yahoo.com/news/'
+        },
+        {
+            'title': 'S&P 500 Reaches New Milestone as Market Sentiment Improves',
+            'description': 'The benchmark index continues its upward trajectory, driven by strong corporate earnings and positive economic indicators.',
+            'link': 'https://finance.yahoo.com/news/'
+        },
+        {
+            'title': 'Cryptocurrency Market Shows Mixed Signals',
+            'description': 'Digital assets display varied performance as regulatory clarity and institutional adoption continue to evolve.',
+            'link': 'https://finance.yahoo.com/news/'
+        }
+    ]
+    
+    selected_news = random.sample(news_templates, min(limit, len(news_templates)))
+    
+    news_items = []
+    for template in selected_news:
+        hours_ago = random.randint(1, 24)
+        time_ago = f"{hours_ago} hour{'s' if hours_ago != 1 else ''} ago"
+        
+        news_item = {
+            'title': template['title'],
+            'description': template['description'],
+            'timeAgo': time_ago,
+            'link': template['link']
+        }
+        news_items.append(news_item)
+    
+    return news_items

@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, ArrowLeft, BarChart2, BrainCircuit, Percent, Wifi, WifiOff } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Search, ArrowLeft, BarChart2, BrainCircuit, Percent, Wifi, WifiOff, FlaskConical } from 'lucide-react';
 import TradingPanel from '@/components/TradingPanel';
 import AITradeAdvisor from '@/components/AITradeAdvisor';
 import RealTimeStockChart from '@/components/RealTimeStockChart';
 import { usePolygonWebSocketData } from '@/hooks/usePolygonWebSocket';
 import { stockDataService } from '@/lib/stockDataService';
 import { CompanyInfo } from '@/lib/stockDataService';
+import { usePortfolio } from '@/context/PortfolioContext';
 
 // Define interfaces for the chart and company data
 interface ChartDataPoint {
@@ -64,9 +67,14 @@ export interface PolygonWsData {
 const TradingPage: React.FC = () => {
   const { symbol: routeSymbol } = useParams<{ symbol: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const { executeStockTrade } = usePortfolio();
   
   const [currentSymbol, setCurrentSymbol] = useState<string>(routeSymbol || 'AAPL');
   const [searchQuery, setSearchQuery] = useState<string>(currentSymbol);
+
+  const [isSimulatorMode, setIsSimulatorMode] = useState<boolean>(false);
   
   const [stockData, setStockData] = useState<DisplayStockData>({
     symbol: currentSymbol,
@@ -89,6 +97,13 @@ const TradingPage: React.FC = () => {
     latestNews,
     isConnected 
   } = usePolygonWebSocketData([currentSymbol], [], [currentSymbol]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('mode') === 'simulator') {
+      setIsSimulatorMode(true);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     const currentWsData: WsSymbolData | undefined = (wsStockData as PolygonWsData)?.[currentSymbol];
@@ -183,6 +198,15 @@ const TradingPage: React.FC = () => {
     }
   }, [currentSymbol]);
 
+  const handleExecuteTrade = (type: 'buy' | 'sell', quantity: number, price: number) => {
+    if (quantity > 0 && price > 0) {
+      executeStockTrade(currentSymbol, quantity, price, type, isSimulatorMode);
+    } else {
+      console.error("Invalid quantity or price for trade.");
+      // Optionally, add a user-facing toast notification here.
+    }
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedQuery = searchQuery.trim().toUpperCase();
@@ -220,15 +244,39 @@ const TradingPage: React.FC = () => {
           <h1 className="text-2xl font-bold">Trading</h1>
         </div>
 
-        <Button
-          variant="outline"
-          onClick={() => navigate(`/options/${currentSymbol || 'AAPL'}`)}
-          className="flex items-center"
-        >
-          <Percent className="h-4 w-4 mr-2" />
-          Options Trading
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center space-x-2">
+            <FlaskConical className={`h-5 w-5 ${isSimulatorMode ? 'text-purple-400' : 'text-gray-600'}`} />
+            <Label htmlFor="simulator-mode" className={`font-semibold ${isSimulatorMode ? 'text-purple-300' : 'text-gray-500'}`}>
+              Simulator
+            </Label>
+            <Switch
+              id="simulator-mode"
+              checked={isSimulatorMode}
+              onCheckedChange={setIsSimulatorMode}
+            />
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/options/${currentSymbol || 'AAPL'}`)}
+            className="flex items-center"
+          >
+            <Percent className="h-4 w-4 mr-2" />
+            Options Trading
+          </Button>
+        </div>
       </div>
+
+      {isSimulatorMode && (
+        <div className="mb-6 p-4 rounded-lg bg-purple-900/30 border border-purple-500/50 text-center">
+          <h3 className="text-lg font-bold text-purple-300">
+            🧪 Paper Trading Simulator is Active
+          </h3>
+          <p className="text-sm text-purple-400">
+            All trades executed in this mode are virtual and will not use real money.
+          </p>
+        </div>
+      )}
 
       {/* Stock Header */}
       <div className="mb-6">
@@ -308,6 +356,8 @@ const TradingPage: React.FC = () => {
           symbol={stockData.symbol}
           currentPrice={stockData.price}
           accountId={accountId}
+          onExecuteTrade={handleExecuteTrade}
+          isSimulator={isSimulatorMode}
         />
 
         <Card className="bg-black border border-gray-800">

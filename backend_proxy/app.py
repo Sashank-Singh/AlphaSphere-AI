@@ -137,6 +137,22 @@ def get_options_recommendation_route(symbol):
     except Exception as e:
         return jsonify({'error': 'Failed to generate options recommendation', 'details': str(e)}), 500
 
+@app.route('/api/yahoo/prediction/<string:symbol>', methods=['GET'])
+def get_prediction(symbol):
+    """
+    Endpoint to get an AI-based stock prediction.
+    """
+    try:
+        timeframe = request.args.get('timeframe', '1M')
+        prediction = yahoo_finance.get_ai_prediction(symbol, timeframe)
+        if prediction:
+            if 'error' in prediction:
+                return jsonify(prediction), 404
+            return jsonify(prediction)
+        return jsonify({'error': 'Could not generate prediction for symbol'}), 404
+    except Exception as e:
+        return jsonify({'error': 'Failed to generate prediction', 'details': str(e)}), 500
+
 @app.route('/api/yahoo/news', methods=['GET'])
 def get_market_news():
     """
