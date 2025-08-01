@@ -1,272 +1,274 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, TrendingUp, BarChart2, Brain, ArrowRight, Wifi, ShieldCheck, Users, Menu, X, Star, ChevronDown, ChevronUp } from 'lucide-react';
-import AIMarketSentiment from '@/components/AIMarketSentiment';
-import AISentimentAnalysis from '@/components/AISentimentAnalysis';
-import AITradeAdvisor from '@/components/AITradeAdvisor';
-import Typewriter from '@/components/Typewriter';
+import { ArrowRight, BarChart3, Brain, CheckCircle, Menu, X, TrendingUp, Shield, Users, Zap } from 'lucide-react';
+import Typewriter from '../components/Typewriter';
 
 const features = [
   {
     title: 'AI-Powered Analysis',
-    description: 'Leverage cutting-edge AI to gain deep insights from complex market data instantly.',
-    icon: <Brain className="h-7 w-7 text-cyan-400" />,
+    description: 'Advanced machine learning algorithms analyze market patterns and provide actionable insights.',
+    icon: <Brain className="h-6 w-6 text-gray-700" />
   },
   {
     title: 'Real-Time Data',
-    description: 'Stay ahead with live updates on stocks, options, and forex through stunning visualizations.',
-    icon: <Wifi className="h-7 w-7 text-purple-400" />,
+    description: 'Live market data and instant notifications keep you ahead of market movements.',
+    icon: <Zap className="h-6 w-6 text-gray-700" />
   },
   {
-    title: 'Smart Trading Tools',
-    description: 'Simulate strategies, backtest ideas, and trade with precision using intuitive platforms.',
-    icon: <BarChart2 className="h-7 w-7 text-pink-400" />,
-  },
-  {
-    title: 'Options & Strategies',
-    description: 'Master the market with advanced options analysis and AI-driven strategy builders.',
-    icon: <TrendingUp className="h-7 w-7 text-cyan-400" />,
+    title: 'Smart Trading',
+    description: 'Intelligent trading tools with backtesting and strategy optimization capabilities.',
+    icon: <BarChart3 className="h-6 w-6 text-gray-700" />
   },
   {
     title: 'Risk Management',
-    description: 'Protect your investments with intelligent portfolio optimization and real-time alerts.',
-    icon: <ShieldCheck className="h-7 w-7 text-purple-400" />,
-  },
-  {
-    title: 'Social & Community',
-    description: 'Engage with a network of traders, exchange strategies, and track market leaders.',
-    icon: <Users className="h-7 w-7 text-pink-400" />,
-  },
+    description: 'Comprehensive risk assessment and portfolio protection with automated alerts.',
+    icon: <Shield className="h-6 w-6 text-gray-700" />
+  }
 ];
 
-const testimonials = [
+const actualTools = [
   {
-    name: 'KimmyG',
-    handle: '@Kim_EE4',
-    quote: "I've been hitting high-confidence trades with incredible results. CRM calls soared 1500%, RIVN skyrocketed 2500%!"
+    title: 'AI Market Sentiment Analysis',
+    description: 'Real-time sentiment analysis from news, social media, and market data to gauge market mood.',
+    features: ['Social media sentiment tracking', 'News impact analysis', 'Market mood indicators']
   },
   {
-    name: 'Pseudonym',
-    handle: '@Pseudo_nym75',
-    quote: 'Combining convergence, MNF, and 0dte gex led to my best trading day ever. Captured every major move!'
+    title: 'AI Trading Advisor',
+    description: 'Intelligent trading recommendations based on technical analysis and market patterns.',
+    features: ['Buy/sell signals', 'Risk assessment', 'Entry/exit points']
   },
   {
-    name: 'Mike B',
-    handle: '@mikeisBACK2023',
-    quote: 'This platform is unmatched. Why pay more elsewhere for the same tools? Worth every cent.'
+    title: 'Portfolio Optimizer',
+    description: 'AI-powered portfolio optimization to maximize returns while minimizing risk.',
+    features: ['Asset allocation', 'Risk diversification', 'Performance tracking']
   },
   {
-    name: 'Holan',
-    handle: '@holantei',
-    quote: 'Close to my $500 daily target thanks to exceptional MNF and 0DTE tools!'
+    title: 'Predictive Price Forecasting',
+    description: 'Advanced machine learning models predict future price movements and trends.',
+    features: ['Price predictions', 'Trend analysis', 'Volatility forecasting']
   },
   {
-    name: 'Fenix',
-    handle: '@Ultimatefenixx',
-    quote: "I'm obsessed! GEX is unbeatable, and 0DTE trades are my go-to. Amazing community!"
+    title: 'Options Flow Analysis',
+    description: 'Track unusual options activity and institutional money flows.',
+    features: ['Options flow tracking', 'Institutional activity', 'Volume analysis']
   },
+  {
+    title: 'Risk Management Dashboard',
+    description: 'Comprehensive risk monitoring and management tools for your portfolio.',
+    features: ['Risk metrics', 'Stop-loss automation', 'Position sizing']
+  }
 ];
 
 const pricing = [
   {
-    title: 'Free Basic Access',
+    title: 'Starter',
     price: 'Free',
     features: [
-      'Market overview',
-      'AI news feed',
-      'Delayed analytics',
-      'Simple flow data',
-      'Daily scanner',
-      'Free discord channels',
+      'Basic market analysis',
+      'Limited AI insights',
+      'Community access',
+      'Email support'
     ],
     cta: 'Get Started',
-    highlight: false,
+    highlight: false
   },
   {
-    title: 'Full Pro Access',
-    price: '$69/mo',
+    title: 'Professional',
+    price: '$49',
     features: [
-      'Live summary',
-      'Live options flow',
-      'Advanced analytics',
-      'AI trade ideas',
-      'AI portfolios',
-      'Premium scanners',
-      'Algorithmic analysis',
-      'Discord premium community',
+      'Advanced AI analysis',
+      'Real-time data feeds',
+      'Portfolio optimization',
+      'Priority support',
+      'API access'
     ],
-    cta: 'Become Pro',
-    highlight: true,
+    cta: 'Start Free Trial',
+    highlight: true
   },
+  {
+    title: 'Enterprise',
+    price: 'Custom',
+    features: [
+      'Custom AI models',
+      'Dedicated support',
+      'White-label solution',
+      'Advanced integrations'
+    ],
+    cta: 'Contact Sales',
+    highlight: false
+  }
 ];
 
-// How it Works steps
-const howItWorks = [
-  {
-    icon: <Sparkles className="h-8 w-8 text-cyan-400" />, 
-    title: 'Instant Sign-Up',
-    description: 'Join in moments and unlock the full potential of AlphaSphere AI with a free account.'
-  },
-  {
-    icon: <Brain className="h-8 w-8 text-purple-400" />,
-    title: 'Analyze Markets',
-    description: 'Dive into stocks, options, and trends with real-time AI insights and powerful tools.'
-  },
-  {
-    icon: <BarChart2 className="h-8 w-8 text-pink-400" />,
-    title: 'Trade Smarter',
-    description: 'Backtest, simulate, and execute trades confidently with our advanced trading suite.'
-  },
-  {
-    icon: <Users className="h-8 w-8 text-cyan-400" />,
-    title: 'Community Power',
-    description: 'Connect with traders, share insights, and grow within a dynamic trading ecosystem.'
-  },
+const realStats = [
+  { number: '15+', label: 'AI Trading Tools' },
+  { number: '50+', label: 'Technical Indicators' },
+  { number: 'Real-time', label: 'Market Data' },
+  { number: '24/7', label: 'AI Analysis' }
 ];
 
 const HomePage: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [openFAQ, setOpenFAQ] = useState<number | null>(null);
+  const [selectedTool, setSelectedTool] = useState(0);
+  const [isInToolsSection, setIsInToolsSection] = useState(false);
+  const [scrollLocked, setScrollLocked] = useState(false);
+  const [scrollAccumulator, setScrollAccumulator] = useState(0);
+  const [lastScrollTime, setLastScrollTime] = useState(0);
+  const [currentTextIndex, setCurrentTextIndex] = useState(0);
 
-  const toggleFAQ = (index: number) => {
-    setOpenFAQ(openFAQ === index ? null : index);
-  };
-
-  const features = [
-    {
-      title: 'AI-Powered Analysis',
-      description: 'Leverage cutting-edge AI to gain deep insights from complex market data instantly.',
-      icon: <Brain className="h-8 w-8 text-blue-600" />,
-    },
-    {
-      title: 'Real-Time Data',
-      description: 'Stay ahead with live updates on stocks, options, and forex through stunning visualizations.',
-      icon: <Wifi className="h-8 w-8 text-purple-600" />,
-    },
-    {
-      title: 'Smart Trading Tools',
-      description: 'Simulate strategies, backtest ideas, and trade with precision using intuitive platforms.',
-      icon: <BarChart2 className="h-8 w-8 text-blue-600" />,
-    },
-    {
-      title: 'Options & Strategies',
-      description: 'Master the market with advanced options analysis and AI-driven strategy builders.',
-      icon: <TrendingUp className="h-8 w-8 text-purple-600" />,
-    },
-    {
-      title: 'Risk Management',
-      description: 'Protect your investments with intelligent portfolio optimization and real-time alerts.',
-      icon: <ShieldCheck className="h-8 w-8 text-blue-600" />,
-    },
-    {
-      title: 'Social & Community',
-      description: 'Engage with a network of traders, exchange strategies, and track market leaders.',
-      icon: <Users className="h-8 w-8 text-purple-600" />,
-    },
+  const typewriterTexts = [
+    "for Modern Investors",
+    "for Smart Traders",
+    "for Financial Growth",
+    "for Market Success",
+    "for Investment Excellence"
   ];
 
-  const solutions = [
-    {
-      title: 'AI Trading Advisors',
-      description: 'Get help, advice and guidance from professional AI-powered trading consultants that analyze market trends 24/7.',
-      cta: 'Follow our AI Advisors',
-      image: '/api/placeholder/300/200'
-    },
-    {
-      title: 'Options Trading',
-      description: 'Latest updates, trends, and developments in options trading world with advanced strategies and real-time alerts.',
-      cta: 'Learn Options Trading',
-      image: '/api/placeholder/300/200'
-    },
-    {
-      title: 'Market Insights',
-      description: 'In-depth analysis and expert opinions on the stock market with AI-powered predictions and trend analysis.',
-      cta: 'Read Market Analysis',
-      image: '/api/placeholder/300/200'
-    }
-  ];
+  // Cycle through typewriter texts
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTextIndex(prev => (prev + 1) % typewriterTexts.length);
+    }, 4000); // Change text every 4 seconds
+    
+    return () => clearInterval(interval);
+  }, [typewriterTexts.length]);
 
-  const faqData = [
-    {
-      question: 'How does AlphaSphere AI work?',
-      answer: 'AlphaSphere AI uses advanced machine learning algorithms to analyze market data, identify patterns, and provide real-time trading insights. Our platform processes millions of data points to give you accurate predictions and trading recommendations.'
-    },
-    {
-      question: 'Is my trading data secure?',
-      answer: 'Yes, we use bank-level encryption and security measures to protect your data. All trading information is encrypted and stored securely. We never share your personal trading strategies or account information with third parties.'
-    },
-    {
-      question: 'Can I use AlphaSphere with my existing broker?',
-      answer: 'Absolutely! AlphaSphere AI integrates with most major brokers and trading platforms. You can connect your existing accounts and start using our AI insights immediately without changing your current setup.'
-    },
-    {
-      question: 'What markets does AlphaSphere support?',
-      answer: 'We support stocks, options, forex, and cryptocurrency markets. Our AI analyzes data from multiple exchanges and provides insights across all major financial markets globally.'
-    },
-    {
-      question: 'How accurate are the AI predictions?',
-      answer: 'Our AI models have shown consistent accuracy rates above 75% in backtesting. However, all trading involves risk, and past performance doesn\'t guarantee future results. We recommend using our insights as part of a diversified trading strategy.'
-    },
-    {
-      question: 'Can beginners use AlphaSphere AI?',
-      answer: 'Yes! Our platform is designed for traders of all levels. We provide educational resources, guided tutorials, and clear explanations of all AI recommendations to help beginners learn while they trade.'
-    }
-  ];
+  useEffect(() => {
+    const handleScroll = (e: Event) => {
+      // Only apply scroll logic on larger screens (desktop)
+      if (window.innerWidth < 1024) return;
+      
+      const toolsSection = document.getElementById('tools');
+      if (!toolsSection) return;
 
-  const trustedLogos = [
-    'NASDAQ', 'NYSE', 'CME', 'CBOE', 'TD Ameritrade', 'E*TRADE', 'Interactive Brokers', 'Charles Schwab'
+      const rect = toolsSection.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      
+      // Check if tools section is in viewport
+      const isInView = rect.top <= 100 && rect.bottom >= viewportHeight - 100;
+      
+      if (isInView && !isInToolsSection) {
+        setIsInToolsSection(true);
+        setScrollLocked(true);
+        setScrollAccumulator(0);
+        // Prevent default scrolling when in tools section
+        e.preventDefault();
+      } else if (!isInView && isInToolsSection && selectedTool === 5) {
+        // Allow normal scrolling after viewing all tools
+        setIsInToolsSection(false);
+        setScrollLocked(false);
+        setScrollAccumulator(0);
+      }
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      // Only apply wheel logic on larger screens (desktop)
+      if (window.innerWidth < 1024) return;
+      if (!isInToolsSection || !scrollLocked) return;
+      
+      e.preventDefault();
+      
+      const now = Date.now();
+      const timeDiff = now - lastScrollTime;
+      
+      // Reset accumulator if too much time has passed (debounce)
+      if (timeDiff > 150) {
+        setScrollAccumulator(0);
+      }
+      
+      setLastScrollTime(now);
+      
+      // Accumulate scroll delta
+      const newAccumulator = scrollAccumulator + e.deltaY;
+      setScrollAccumulator(newAccumulator);
+      
+      // Only change tool when accumulator reaches threshold
+      const threshold = 120; // Increased threshold for slower switching
+      
+      if (Math.abs(newAccumulator) >= threshold) {
+        if (newAccumulator > 0) {
+          // Scrolling down - next tool
+          if (selectedTool < 5) {
+            setSelectedTool(prev => prev + 1);
+            setScrollAccumulator(0);
+          } else {
+            // Reached last tool, unlock scrolling
+            setScrollLocked(false);
+            setIsInToolsSection(false);
+            setScrollAccumulator(0);
+          }
+        } else {
+          // Scrolling up - previous tool
+          if (selectedTool > 0) {
+            setSelectedTool(prev => prev - 1);
+            setScrollAccumulator(0);
+          } else {
+            // At first tool, allow scrolling up to exit section
+            setScrollLocked(false);
+            setIsInToolsSection(false);
+            setScrollAccumulator(0);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: false });
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('wheel', handleWheel);
+    };
+  }, [isInToolsSection, selectedTool, scrollLocked, scrollAccumulator, lastScrollTime]);
+
+  const supportedMarkets = [
+    'NYSE', 'NASDAQ', 'Options', 'Forex', 'Crypto', 'Futures'
   ];
 
   return (
-    <div 
-      className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed text-gray-900 relative"
-      style={{ backgroundImage: 'url(/croppedbackground.png)' }}
-    >
-      {/* Global overlay for better text readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-50/80 via-white/75 to-blue-50/80 backdrop-blur-[1px]"></div>
-      <div className="relative z-10">
-              {/* Navigation */}
-        <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md">
-                  <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white drop-shadow-lg">AlphaSphere</span>
+    <div className="min-h-screen bg-white text-gray-900">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2">
+            <img src="/icon-removebg.png" alt="AlphaSphere" className="w-8 h-8" />
+            <span className="text-xl font-bold text-gray-900">AlphaSphere</span>
+          </Link>
+          
+          <div className="hidden md:flex items-center gap-8">
+            <a href="#features" className="text-gray-600 hover:text-gray-900 font-medium transition">Features</a>
+            <a href="#tools" className="text-gray-600 hover:text-gray-900 font-medium transition">Tools</a>
+            <a href="#pricing" className="text-gray-600 hover:text-gray-900 font-medium transition">Pricing</a>
+            <Link to="/dashboard" className="text-gray-600 hover:text-gray-900 font-medium transition">Dashboard</Link>
+          </div>
+          
+          <div className="hidden md:flex items-center gap-4">
+            <Link to="/auth" className="text-gray-600 hover:text-gray-900 font-medium transition">
+              Sign In
             </Link>
-            
-            <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-white/90 hover:text-white font-medium transition drop-shadow-sm">Features</a>
-              <a href="#solutions" className="text-white/90 hover:text-white font-medium transition drop-shadow-sm">Solutions</a>
-              <a href="#faq" className="text-white/90 hover:text-white font-medium transition drop-shadow-sm">FAQ</a>
-              <Link to="/dashboard" className="text-white/90 hover:text-white font-medium transition drop-shadow-sm">Dashboard</Link>
-            </div>
-            
-            <div className="hidden md:block">
-              <Link 
-                to="/auth" 
-                className="px-6 py-2 bg-white text-purple-700 font-semibold rounded-lg hover:bg-gray-50 transition shadow-lg"
-              >
-                Get Started
-              </Link>
-            </div>
-            
-            <button 
-              className="md:hidden text-white drop-shadow-sm" 
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            <Link 
+              to="/auth" 
+              className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition"
             >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
+              Get Started
+            </Link>
+          </div>
+          
+          <button 
+            className="md:hidden text-gray-600" 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
         
         {isMenuOpen && (
-          <div className="md:hidden bg-black/20 backdrop-blur-md border-b border-white/20">
+          <div className="md:hidden bg-white border-t border-gray-100">
             <div className="flex flex-col px-6 py-4 space-y-4">
-              <a href="#features" className="text-white/90 hover:text-white font-medium drop-shadow-sm">Features</a>
-              <a href="#solutions" className="text-white/90 hover:text-white font-medium drop-shadow-sm">Solutions</a>
-              <a href="#faq" className="text-white/90 hover:text-white font-medium drop-shadow-sm">FAQ</a>
-              <Link to="/dashboard" className="text-white/90 hover:text-white font-medium drop-shadow-sm">Dashboard</Link>
-              <Link to="/auth" className="px-6 py-2 bg-white text-purple-700 font-semibold rounded-lg hover:bg-gray-50 transition text-center shadow-lg">
+              <a href="#features" className="text-gray-600 hover:text-gray-900 font-medium">Features</a>
+              <a href="#tools" className="text-gray-600 hover:text-gray-900 font-medium">Tools</a>
+              <a href="#pricing" className="text-gray-600 hover:text-gray-900 font-medium">Pricing</a>
+              <Link to="/dashboard" className="text-gray-600 hover:text-gray-900 font-medium">Dashboard</Link>
+              <Link to="/auth" className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition text-center">
                 Get Started
               </Link>
             </div>
@@ -275,255 +277,459 @@ const HomePage: React.FC = () => {
       </nav>
 
       {/* Hero Section */}
-      <section 
-        className="pt-24 pb-32 bg-cover bg-center bg-no-repeat relative"
-        style={{ backgroundImage: 'url(/herobackground.png)' }}
-      >
-        {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/20"></div>
-        
-        {/* Smooth transition curve at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent"></div>
-        
-        <div className="container mx-auto px-6 relative z-10">
+      <section className="pt-24 sm:pt-32 pb-16 sm:pb-20">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <Typewriter
-              text="Revolutionize Your Trading with AI"
-              className="text-4xl sm:text-6xl md:text-7xl font-bold text-white mb-8 leading-tight drop-shadow-lg"
-              speed={30}
-            />
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+              AI-Powered Trading
+              <Typewriter 
+                text={typewriterTexts[currentTextIndex]}
+                speed={50}
+                className="block text-gray-600"
+              />
+            </h1>
             
-            <p className="text-xl text-gray-100 mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
-              Unleash the power of artificial intelligence to decode market patterns, forecast trends, and execute trades with unparalleled precision in real time.
+            <p className="text-lg sm:text-xl text-gray-600 mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed">
+              Advanced machine learning algorithms analyze market patterns and provide actionable insights to help you make better investment decisions.
             </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12 sm:mb-16">
               <Link 
                 to="/dashboard" 
-                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-purple-700 font-semibold rounded-lg hover:bg-gray-50 transition text-lg shadow-xl"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition"
               >
-                Launch Trading Platform
-                <ArrowRight className="h-5 w-5" />
+                Start Free Trial
+                <ArrowRight className="h-4 w-4" />
               </Link>
               <Link 
-                to="/about" 
-                className="inline-flex items-center gap-2 px-8 py-4 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-purple-700 transition text-lg shadow-lg"
+                to="/demo" 
+                className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition"
               >
-                Discover More
+                View Demo
               </Link>
             </div>
-          </div>
-          
-          {/* Trusted by section */}
-          <div className="mt-20 text-center">
-            <p className="text-sm text-gray-200 mb-8 font-semibold tracking-wider uppercase drop-shadow-md">
-              2048+ TRADERS TRUST AlphaSphere
-            </p>
-            <div className="flex flex-wrap justify-center items-center gap-8 opacity-90">
-              {trustedLogos.map((logo, index) => (
-                <div key={index} className="text-gray-100 font-semibold text-lg drop-shadow-sm">
-                  {logo}
+            
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-12 sm:mb-16">
+              {realStats.map((stat, index) => (
+                <div key={index} className="text-center">
+                  <div className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">{stat.number}</div>
+                  <div className="text-sm text-gray-600">{stat.label}</div>
                 </div>
               ))}
+            </div>
+            
+            {/* Supported Markets */}
+            <div className="text-center">
+              <p className="text-sm text-gray-500 mb-6 font-medium">
+                Supporting all major markets
+              </p>
+              <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
+                {supportedMarkets.map((market, index) => (
+                  <div key={index} className="text-gray-400 font-medium text-sm">
+                    {market}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section 
-        id="features" 
-        className="py-20 -mt-16 pt-24 relative" 
-        style={{ background: 'linear-gradient(135deg, #8A06F0 0%, #A009F8 50%, #A20AF3 100%)' }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-white/95 to-white/90"></div>
-        <div className="container mx-auto px-6 relative z-10">
+      <section id="features" className="py-16 sm:py-20 bg-gray-50">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Unmatched Features for Modern Traders
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Everything you need to trade smarter
             </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Powerful tools and insights designed for modern investors
+            </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 text-center hover:shadow-xl hover:bg-white/90 transition-all duration-300 border border-gray-100">
-                <div className="flex justify-center mb-6">
+              <div key={index} className="bg-white rounded-lg p-6 hover:shadow-lg transition-shadow">
+                <div className="mb-4">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">{feature.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How it Works Section */}
-      <section 
-        className="py-20 relative" 
-        style={{ background: 'linear-gradient(45deg, #6008E8 0%, #8A06F0 60%, #A009F8 100%)' }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-white/90 to-white/85"></div>
-        <div className="container mx-auto px-6 relative z-10">
+      {/* AI Tools Section */}
+      <section id="tools" className="py-16 sm:py-20">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Your Path to Trading Mastery
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Powerful AI Trading Tools
             </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Advanced AI-powered tools to enhance your trading decisions
+            </p>
           </div>
           
-          <div className="grid md:grid-cols-4 gap-8">
-            {howItWorks.map((step, index) => (
-              <div key={index} className="bg-white/85 backdrop-blur-sm rounded-2xl p-8 text-center shadow-lg hover:shadow-xl hover:bg-white/95 transition-all duration-300 border border-gray-100">
-                <div className="flex justify-center mb-6">
-                  {step.icon}
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">{step.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{step.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Live AI Widgets Section */}
-      <section 
-        className="py-20 relative" 
-        style={{ background: 'linear-gradient(225deg, #A20AF3 0%, #6008E8 50%, #8A06F0 100%)' }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-white/85 to-white/80"></div>
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Real-Time AI Market Intelligence
-            </h2>
-          </div>
-          
-          <div className="space-y-16 max-w-6xl mx-auto">
-            {/* First Row: Component on Left, Text on Right */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <div className="flex justify-center">
-                <AIMarketSentiment />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">AI Market Sentiment</h3>
-                <p className="text-gray-600 leading-relaxed text-lg">
-                  Get a comprehensive overview of market sentiment with AI-driven insights. This tool analyzes vast amounts of data to provide real-time sentiment scores, helping you gauge the overall mood of the market.
-                </p>
+          {/* Mobile View - Tab-based */}
+          <div className="lg:hidden">
+            {/* Mobile Tab Navigation */}
+            <div className="flex overflow-x-auto pb-4 mb-6 scrollbar-hide">
+              <div className="flex space-x-2 min-w-max px-1">
+                {actualTools.map((tool, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedTool(index)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                      selectedTool === index
+                        ? 'bg-black text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {tool.title.replace('AI ', '').replace(' Analysis', '').replace(' Dashboard', '')}
+                  </button>
+                ))}
               </div>
             </div>
             
-            {/* Second Row: Text on Left, Component on Right */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <div className="order-2 md:order-1">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">AI Sentiment Analysis</h3>
-                <p className="text-gray-600 leading-relaxed text-lg">
-                  Dive deeper into individual stock sentiment with detailed analysis. Understand the emotional tone behind market movements for specific securities like AAPL, empowering you to make informed trading decisions.
+            {/* Mobile Tool Card */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                  {actualTools[selectedTool].title}
+                </h3>
+                <p className="text-gray-600 leading-relaxed mb-4">
+                  {actualTools[selectedTool].description}
                 </p>
               </div>
-              <div className="order-1 md:order-2 flex justify-center">
-                <AISentimentAnalysis symbol="AAPL" />
+              
+              {/* Mobile Interactive Demo */}
+               <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+                {selectedTool === 0 && (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-900 text-sm">Live Sentiment</h4>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="p-2 bg-green-100 rounded">
+                        <div className="text-lg font-bold text-green-600">72%</div>
+                        <div className="text-xs text-gray-600">Bullish</div>
+                      </div>
+                      <div className="p-2 bg-yellow-100 rounded">
+                        <div className="text-lg font-bold text-yellow-600">18%</div>
+                        <div className="text-xs text-gray-600">Neutral</div>
+                      </div>
+                      <div className="p-2 bg-red-100 rounded">
+                        <div className="text-lg font-bold text-red-600">10%</div>
+                        <div className="text-xs text-gray-600">Bearish</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedTool === 1 && (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-900 text-sm">AI Recommendation</h4>
+                    <div className="p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="font-medium text-blue-900 text-sm">BUY - AAPL</span>
+                      </div>
+                      <div className="text-xs text-gray-600">Confidence: 87%</div>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedTool === 2 && (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-900 text-sm">Portfolio Risk</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-600">Risk Level</span>
+                        <span className="text-xs font-medium">Moderate</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-blue-500 h-2 rounded-full" style={{width: '65%'}}></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedTool === 3 && (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-900 text-sm">Price Forecast</h4>
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded">
+                      <div>
+                        <div className="text-lg font-bold text-gray-900">$187.25</div>
+                        <div className="text-xs text-gray-600">7-day prediction</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-green-600 font-medium text-sm">+5.2%</div>
+                        <div className="text-xs text-gray-500">89% accuracy</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedTool === 4 && (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-900 text-sm">Options Flow</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between p-2 bg-green-50 rounded">
+                        <span className="text-xs">Call Sweep</span>
+                        <span className="text-xs font-medium text-green-600">$2.1M</span>
+                      </div>
+                      <div className="flex justify-between p-2 bg-red-50 rounded">
+                        <span className="text-xs">Put Block</span>
+                        <span className="text-xs font-medium text-red-600">$890K</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedTool === 5 && (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-900 text-sm">Risk Assessment</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="text-center p-2 bg-yellow-50 rounded">
+                        <div className="text-sm font-bold text-yellow-600">Medium</div>
+                        <div className="text-xs text-gray-600">Risk</div>
+                      </div>
+                      <div className="text-center p-2 bg-green-50 rounded">
+                        <div className="text-sm font-bold text-green-600">0.85</div>
+                        <div className="text-xs text-gray-600">Beta</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-            
-            {/* Third Row: Component on Left, Text on Right */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <div className="flex justify-center">
-                <AITradeAdvisor symbol="AAPL" accountId="demo" />
-              </div>
+              
+              {/* Mobile Features List */}
               <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">AI Trade Advisor</h3>
-                <p className="text-gray-600 leading-relaxed text-lg">
-                  Receive personalized trade recommendations based on AI analysis. This advisor provides actionable insights and strategies for trading specific stocks like AAPL, tailored to current market conditions.
-                </p>
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Key Features</h4>
+                <ul className="space-y-2">
+                  {actualTools[selectedTool].features.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-center gap-2">
+                      <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                      <span className="text-xs text-gray-600">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Portfolio Management Section */}
-      <section 
-        className="py-20 relative" 
-        style={{ background: 'linear-gradient(90deg, #A009F8 0%, #A20AF3 40%, #6008E8 100%)' }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-white/80 to-white/75"></div>
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-gray-100">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-                Manage all your investments all over the world
-              </h2>
-              <p className="text-xl text-gray-600 leading-relaxed">
-                Our AI-powered platform gives you complete control over your global investment portfolio. Monitor, analyze, and optimize your trades across multiple markets with real-time insights and automated strategies.
-              </p>
-            </div>
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-8 text-white shadow-xl">
-              <div className="h-64 flex items-center justify-center text-lg font-semibold">
-                Portfolio Dashboard Preview
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section 
-        className="py-20 relative" 
-        style={{ background: 'linear-gradient(315deg, #6008E8 0%, #A009F8 30%, #A20AF3 70%, #8A06F0 100%)' }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-white/75 to-white/70"></div>
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Voices of Our Trading Community
-            </h2>
           </div>
           
-          <div className="flex gap-6 overflow-x-auto scrollbar-none pb-4">
-            {testimonials.map((testimonial, index) => (
-              <div key={index} className="min-w-[320px] max-w-[340px] bg-white/85 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 flex flex-col gap-4 hover:shadow-xl hover:bg-white/95 transition-all duration-300">
-                <div className="text-gray-700 text-base italic leading-relaxed">"{testimonial.quote}"</div>
-                <div className="flex items-center gap-3 mt-2">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                    {testimonial.name[0]}
-                  </div>
-                  <div>
-                    <div className="font-bold text-gray-900">{testimonial.name}</div>
-                    <div className="text-sm text-blue-600">{testimonial.handle}</div>
-                  </div>
-                </div>
+          {/* Desktop View - Original Layout */}
+          <div className="hidden lg:grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+            {/* Tool Cards - Left Side */}
+            <div className="space-y-4">
+              {/* Desktop Scroll Indicator */}
+              <div className="text-center mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-700 font-medium">💡 Scroll through this section to explore tools automatically</p>
               </div>
-            ))}
+              
+              {actualTools.map((tool, index) => (
+                <div 
+                  key={index} 
+                  className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 ${
+                    selectedTool === index 
+                      ? 'border-black bg-gray-50 shadow-md' 
+                      : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                  }`}
+                  onClick={() => setSelectedTool(index)}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900">{tool.title}</h3>
+                  </div>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    {tool.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+            
+            {/* Tool Showcase - Right Side */}
+            <div className="bg-white border border-gray-200 rounded-lg p-8">
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                  {actualTools[selectedTool].title}
+                </h3>
+                <p className="text-gray-600 leading-relaxed mb-6">
+                  {actualTools[selectedTool].description}
+                </p>
+              </div>
+              
+              {/* Desktop Interactive Demo Component */}
+              <div className="mb-8 p-6 bg-gray-50 rounded-lg border">
+                {selectedTool === 0 && (
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-900">Live Sentiment Analysis</h4>
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div className="p-3 bg-green-100 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">72%</div>
+                        <div className="text-sm text-gray-600">Bullish</div>
+                      </div>
+                      <div className="p-3 bg-yellow-100 rounded-lg">
+                        <div className="text-2xl font-bold text-yellow-600">18%</div>
+                        <div className="text-sm text-gray-600">Neutral</div>
+                      </div>
+                      <div className="p-3 bg-red-100 rounded-lg">
+                        <div className="text-2xl font-bold text-red-600">10%</div>
+                        <div className="text-sm text-gray-600">Bearish</div>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-500">Real-time analysis from 10,000+ sources</div>
+                  </div>
+                )}
+                
+                {selectedTool === 1 && (
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-900">AI Trading Recommendation</h4>
+                    <div className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <span className="font-medium text-blue-900">BUY Signal - AAPL</span>
+                      </div>
+                      <div className="text-sm text-gray-600">Confidence: 87% | Target: $195.50</div>
+                      <div className="text-xs text-gray-500 mt-1">Based on technical patterns and market sentiment</div>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedTool === 2 && (
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-900">Portfolio Optimization</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Risk Level</span>
+                        <span className="text-sm font-medium">Moderate</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-blue-500 h-2 rounded-full" style={{width: '65%'}}></div>
+                      </div>
+                      <div className="text-xs text-gray-500">Expected Return: 12.4% | Sharpe Ratio: 1.8</div>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedTool === 3 && (
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-900">Price Forecast</h4>
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg">
+                      <div>
+                        <div className="text-lg font-bold text-gray-900">$187.25</div>
+                        <div className="text-sm text-gray-600">7-day prediction</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-green-600 font-medium">+5.2%</div>
+                        <div className="text-xs text-gray-500">Accuracy: 89%</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedTool === 4 && (
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-900">Options Flow Activity</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between p-2 bg-green-50 rounded">
+                        <span className="text-sm">Large Call Sweep</span>
+                        <span className="text-sm font-medium text-green-600">$2.1M</span>
+                      </div>
+                      <div className="flex justify-between p-2 bg-red-50 rounded">
+                        <span className="text-sm">Put Block</span>
+                        <span className="text-sm font-medium text-red-600">$890K</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedTool === 5 && (
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-900">Risk Assessment</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="text-center p-3 bg-yellow-50 rounded">
+                        <div className="text-lg font-bold text-yellow-600">Medium</div>
+                        <div className="text-xs text-gray-600">Portfolio Risk</div>
+                      </div>
+                      <div className="text-center p-3 bg-green-50 rounded">
+                        <div className="text-lg font-bold text-green-600">0.85</div>
+                        <div className="text-xs text-gray-600">Beta Score</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="mb-8">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Key Features</h4>
+                <ul className="space-y-3">
+                  {actualTools[selectedTool].features.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-center gap-3">
+                      <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                      <span className="text-gray-700">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div className="flex gap-3">
+                <button className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition">
+                  Try Now
+                </button>
+                <button className="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition">
+                  Learn More
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section 
-        className="py-20 relative" 
-        style={{ background: 'linear-gradient(180deg, #A20AF3 0%, #8A06F0 50%, #A009F8 100%)' }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-white/70 to-white/65"></div>
-        <div className="container mx-auto px-6 relative z-10">
+      <section id="pricing" className="py-16 sm:py-20 bg-gray-50">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Choose Your Trading Plan
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Simple, transparent pricing
             </h2>
+            <p className="text-lg text-gray-600">
+              Choose the plan that's right for you
+            </p>
           </div>
           
-          <div className="flex flex-col md:flex-row gap-8 justify-center items-center max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
             {pricing.map((plan, index) => (
-              <div key={index} className={`flex-1 max-w-sm bg-white/90 backdrop-blur-sm border rounded-2xl p-8 text-center transition-all duration-300 ${plan.highlight ? 'border-blue-500 shadow-xl scale-105 hover:shadow-2xl' : 'border-gray-200 shadow-lg hover:shadow-xl'}`}>
-                <h3 className="font-bold text-2xl text-gray-900 mb-3">{plan.title}</h3>
-                <div className="text-4xl font-bold mb-6 text-blue-600">{plan.price}</div>
-                <ul className="mb-8 space-y-3 text-gray-600 text-left">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-center gap-3">
-                      <span className="w-2 h-2 rounded-full bg-blue-600 inline-block" />
-                      {feature}
+              <div key={index} className={plan.highlight ? 'bg-white rounded-lg p-8 ring-2 ring-black' : 'bg-white rounded-lg p-8 border border-gray-200'}>
+                {plan.highlight && (
+                  <div className="text-center mb-4">
+                    <span className="bg-black text-white px-3 py-1 rounded-full text-sm font-medium">
+                      Most Popular
+                    </span>
+                  </div>
+                )}
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{plan.title}</h3>
+                  <div className="text-3xl font-bold text-gray-900">{plan.price}</div>
+                  {plan.price !== 'Custom' && plan.price !== 'Free' && (
+                    <div className="text-gray-500 text-sm">per month</div>
+                  )}
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-center gap-3">
+                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      <span className="text-gray-600 text-sm">{feature}</span>
                     </li>
                   ))}
                 </ul>
-                <button className={`w-full px-6 py-3 rounded-lg font-semibold transition ${plan.highlight ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'}`}>
+                <button 
+                  className={plan.highlight 
+                    ? 'w-full py-3 px-4 rounded-lg font-medium transition bg-black text-white hover:bg-gray-800' 
+                    : 'w-full py-3 px-4 rounded-lg font-medium transition border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }
+                >
                   {plan.cta}
                 </button>
               </div>
@@ -532,188 +738,87 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Solutions Section */}
-      <section 
-        id="solutions" 
-        className="py-20 relative" 
-        style={{ background: 'linear-gradient(60deg, #8A06F0 0%, #6008E8 40%, #A20AF3 80%, #A009F8 100%)' }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-white/65 to-white/60"></div>
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              One platform endless solutions
+      {/* CTA Section */}
+      <section className="py-16 sm:py-20">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Ready to start trading smarter?
             </h2>
-          </div>
-          
-          <div className="flex justify-center mb-12">
-            <div className="flex bg-white/80 backdrop-blur-sm rounded-lg p-1 border border-gray-200">
-              <button className="px-6 py-2 bg-blue-600 text-white rounded-md font-semibold">Advisors</button>
-              <button className="px-6 py-2 text-gray-600 hover:text-gray-900 font-semibold">Options</button>
-              <button className="px-6 py-2 text-gray-600 hover:text-gray-900 font-semibold">Insights</button>
-            </div>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            {solutions.map((solution, index) => (
-              <div key={index} className="bg-white/85 backdrop-blur-sm rounded-2xl p-8 border border-gray-100 hover:shadow-xl transition-all duration-300">
-                <div className="bg-gray-200 rounded-xl h-48 mb-6 flex items-center justify-center text-gray-500">
-                  Solution Image {index + 1}
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">{solution.title}</h3>
-                <p className="text-gray-600 mb-6 leading-relaxed">{solution.description}</p>
-                <a href="#" className="text-blue-600 font-semibold hover:text-blue-700 transition">
-                  {solution.cta}
-                </a>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Community Section */}
-      <section 
-        className="py-20 relative" 
-        style={{ background: 'linear-gradient(270deg, #A009F8 0%, #A20AF3 33%, #8A06F0 66%, #6008E8 100%)' }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-white/60 to-white/55"></div>
-        <div className="container mx-auto px-6 text-center relative z-10">
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-12 border border-gray-100 shadow-xl max-w-4xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-8">Join Our Trading Network</h2>
-            <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Engage with fellow traders, access exclusive insights, and stay ahead of market opportunities.
+            <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+              Experience the power of AI-driven trading tools and make smarter investment decisions.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-6">
-              <a 
-                href="https://discord.com/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow-lg"
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link 
+                to="/dashboard" 
+                className="inline-flex items-center gap-2 px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition"
               >
-                Join Discord
-              </a>
-              <a 
-                href="/newsletter" 
-                className="px-8 py-4 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition shadow-lg"
+                Start Free Trial
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link 
+                to="/demo" 
+                className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition"
               >
-                Subscribe to Newsletter
-              </a>
+                Schedule Demo
+              </Link>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section 
-        id="faq" 
-        className="py-20 relative" 
-        style={{ background: 'linear-gradient(135deg, #6008E8 0%, #A20AF3 25%, #A009F8 75%, #8A06F0 100%)' }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-white/55 to-white/50"></div>
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                Answers to all your questions
-              </h2>
-            </div>
-            
-            <div className="space-y-4">
-              {faqData.map((faq, index) => (
-                <div key={index} className="bg-white/85 backdrop-blur-sm rounded-lg border border-gray-200 shadow-lg">
-                  <button
-                    className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-white/95 transition"
-                    onClick={() => toggleFAQ(index)}
-                  >
-                    <span className="font-semibold text-gray-900">{faq.question}</span>
-                    {openFAQ === index ? (
-                      <ChevronUp className="h-5 w-5 text-gray-500" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5 text-gray-500" />
-                    )}
-                  </button>
-                  {openFAQ === index && (
-                    <div className="px-6 pb-4">
-                      <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-8">
-            Enter the New Era of Trading
-          </h2>
-          <Link 
-            to="/auth" 
-            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition text-lg"
-          >
-            Start Trading Today
-            <ArrowRight className="h-5 w-5" />
-          </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16">
-        <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-8">
-            {/* <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                  <Sparkles className="h-5 w-5 text-white" />
-                </div>
-                <span className="text-xl font-bold">AlphaSphere</span>
-              </div>
-              <p className="text-gray-400 mb-4">
-                2972 Westheimer Rd. Santa Ana, Illinois 85486
-              </p>
-              <p className="text-gray-400">
-                +1 888 888 88 88<br />
-                help@alphasphere.ai
-              </p>
-            </div> */}
-            
+      <footer className="bg-gray-50 border-t border-gray-200 py-8 sm:py-12">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
             <div>
-              <h4 className="font-semibold mb-4">Navigate</h4>
-              <div className="space-y-2 text-gray-400">
-                <a href="#features" className="block hover:text-white transition">Features</a>
-                <a href="#solutions" className="block hover:text-white transition">Solutions</a>
-                <a href="#faq" className="block hover:text-white transition">FAQ</a>
-                <Link to="/privacy" className="block hover:text-white transition">Privacy Policy</Link>
-              </div>
+              <Link to="/" className="flex items-center gap-2 mb-4">
+                <img src="/icon.png" alt="AlphaSphere" className="w-6 h-6" />
+                <span className="text-lg font-bold text-gray-900">AlphaSphere</span>
+              </Link>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                AI-powered trading platform for modern investors.
+              </p>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Platform</h4>
-              <div className="space-y-2 text-gray-400">
-                <Link to="/dashboard" className="block hover:text-white transition">Dashboard</Link>
-                <Link to="/market" className="block hover:text-white transition">Market</Link>
-                <Link to="/portfolio" className="block hover:text-white transition">Portfolio</Link>
-                <Link to="/trading" className="block hover:text-white transition">Trading</Link>
-              </div>
+              <h4 className="font-semibold text-gray-900 mb-3">Product</h4>
+              <ul className="space-y-2">
+                <li><a href="#features" className="text-gray-600 hover:text-gray-900 text-sm transition">Features</a></li>
+                <li><a href="#pricing" className="text-gray-600 hover:text-gray-900 text-sm transition">Pricing</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-gray-900 text-sm transition">API</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-gray-900 text-sm transition">Security</a></li>
+              </ul>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">AlphaSphere</h4>
-              <div className="space-y-2 text-gray-400">
-                <p>Advanced AI-powered trading platform for modern investors.</p>
-              </div>
+              <h4 className="font-semibold text-gray-900 mb-3">Company</h4>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-gray-600 hover:text-gray-900 text-sm transition">About</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-gray-900 text-sm transition">Blog</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-gray-900 text-sm transition">Careers</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-gray-900 text-sm transition">Contact</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3">Support</h4>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-gray-600 hover:text-gray-900 text-sm transition">Help Center</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-gray-900 text-sm transition">Documentation</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-gray-900 text-sm transition">Privacy Policy</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-gray-900 text-sm transition">Terms of Service</a></li>
+              </ul>
             </div>
           </div>
           
-          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>Copyright © 2025 AlphaSphere AI. Designed with precision.</p>
+          <div className="border-t border-gray-200 mt-8 pt-8 text-center">
+            <p className="text-gray-500 text-sm">
+              © 2025 AlphaSphere AI. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>
-      </div>
     </div>
   );
 };

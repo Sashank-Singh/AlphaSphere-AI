@@ -1,26 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  BarChart2, 
-  Search, 
-  Star, 
-  Activity, 
-  Globe, 
-  Zap,
-  ArrowUp,
-  ArrowDown,
-  Eye,
-  Filter,
-  RefreshCw
-} from 'lucide-react';
 import { usePolygonWebSocketData } from '@/hooks/usePolygonWebSocket';
 import { stockDataService, StockQuote } from '@/lib/stockDataService';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { MarketOverview, TopStock, MarketIndex, Sector } from '@/types';
 
 // Market overview symbols for real-time data
 const MARKET_OVERVIEW_SYMBOLS = {
@@ -42,13 +25,7 @@ const initialMarketOverview = {
   lastUpdated: new Date()
 };
 
-// Company names mapping for trending stocks
-const TRENDING_COMPANY_NAMES = {
-  'NVDA': 'NVIDIA Corp.',
-  'TSLA': 'Tesla, Inc.',
-  'AAPL': 'Apple Inc.',
-  'MSFT': 'Microsoft Corp.'
-};
+
 
 // Company names and market cap mapping for top stocks
 const TOP_STOCKS_INFO = {
@@ -93,13 +70,13 @@ const SECTOR_ETFS = {
 };
 
 const formatChange = (change: number, showSign: boolean = true) => (
-  <span className={change >= 0 ? 'text-profit' : 'text-loss'}>
+  <span className={change >= 0 ? 'text-green-500' : 'text-red-500'}>
     {showSign && change >= 0 ? '+' : ''}{change.toFixed(2)}
   </span>
 );
 
 const formatPercent = (percent: number) => (
-  <span className={percent >= 0 ? 'text-profit' : 'text-loss'}>
+  <span className={percent >= 0 ? 'text-green-500' : 'text-red-500'}>
     {percent >= 0 ? '+' : ''}{percent.toFixed(2)}%
   </span>
 );
@@ -112,27 +89,13 @@ const MarketPage: React.FC = () => {
   // Use Polygon WebSocket for real-time stock data
   const { stockData, isConnected } = usePolygonWebSocketData(REALTIME_SYMBOLS);
 
-  const [marketOverview, setMarketOverview] = useState(initialMarketOverview);
-  const [indices, setIndices] = useState<any[]>([]);
+  const [marketOverview, setMarketOverview] = useState<MarketOverview>(initialMarketOverview);
+  const [indices, setIndices] = useState<MarketIndex[]>([]);
   const [isLoadingMarketData, setIsLoadingMarketData] = useState(true);
-  // Trending stocks state with real-time data only
-  const [trendingStocks, setTrendingStocks] = useState<any[]>([]);
-  const [isLoadingTrending, setIsLoadingTrending] = useState(true);
-  const trendingSymbols = ['NVDA', 'TSLA', 'AAPL', 'MSFT'];
-  
-  // Enhanced trending stocks with WebSocket data overlay
-  const enhancedTrendingStocks = trendingStocks.map(stock => {
-    const realTimeData = stockData[stock.symbol];
-    return realTimeData ? {
-      ...stock,
-      price: realTimeData.price,
-      change: realTimeData.change,
-      changePercent: realTimeData.changePercent
-    } : stock;
-  });
+
 
   // Top stocks state with real-time data only
-  const [topStocks, setTopStocks] = useState<any[]>([]);
+  const [topStocks, setTopStocks] = useState<TopStock[]>([]);
   const [isLoadingTopStocks, setIsLoadingTopStocks] = useState(true);
   
   // Enhanced top stocks with WebSocket data overlay
@@ -146,18 +109,16 @@ const MarketPage: React.FC = () => {
     } : stock;
   });
 
-
-  const [sectors, setSectors] = useState<any[]>([]);
+  const [sectors, setSectors] = useState<Sector[]>([]);
   const [isLoadingSectors, setIsLoadingSectors] = useState(true);
-  const [tab, setTab] = useState<'stocks' | 'indices' | 'sectors'>('stocks'); // Changed default to stocks
+  const [tab, setTab] = useState<'stocks' | 'indices' | 'sectors'>('stocks');
   const [searchTerm, setSearchTerm] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Load initial market data including trending stocks
+  // Load initial market data
   useEffect(() => {
     const loadMarketData = async () => {
       setIsLoadingMarketData(true);
-      setIsLoadingTrending(true);
       try {
         // Fetch market overview data
         const [spyData, qqqData, diaData, vixData] = await Promise.all([
@@ -166,27 +127,6 @@ const MarketPage: React.FC = () => {
           stockDataService.getStockQuote(MARKET_OVERVIEW_SYMBOLS.dow),
           stockDataService.getStockQuote(MARKET_OVERVIEW_SYMBOLS.vix)
         ]);
-        
-        // Fetch trending stocks data
-        const trendingData = await Promise.all(
-          trendingSymbols.map(symbol => stockDataService.getStockQuote(symbol))
-        );
-        
-        // Update trending stocks with real-time data
-        const updatedTrendingStocks = trendingData.map((data) => {
-          return {
-            symbol: data.symbol,
-            name: TRENDING_COMPANY_NAMES[data.symbol as keyof typeof TRENDING_COMPANY_NAMES] || data.symbol,
-            price: data.price,
-            change: data.change,
-            changePercent: data.changePercent,
-            volume: `${(data.volume / 1_000_000).toFixed(1)}M`,
-            isHot: Math.abs(data.changePercent) > 3
-          };
-        });
-        
-        setTrendingStocks(updatedTrendingStocks);
-        setIsLoadingTrending(false);
 
         // Fetch top stocks data
         const topStocksSymbols = Object.keys(TOP_STOCKS_INFO);
@@ -277,7 +217,6 @@ const MarketPage: React.FC = () => {
         console.error('Error loading market data:', error);
       } finally {
         setIsLoadingMarketData(false);
-        setIsLoadingTrending(false);
       }
     };
 
@@ -298,26 +237,6 @@ const MarketPage: React.FC = () => {
         stockDataService.getStockQuote(MARKET_OVERVIEW_SYMBOLS.dow),
         stockDataService.getStockQuote(MARKET_OVERVIEW_SYMBOLS.vix)
       ]);
-      
-      // Fetch fresh trending stocks data
-      const trendingData = await Promise.all(
-        trendingSymbols.map(symbol => stockDataService.getStockQuote(symbol))
-      );
-      
-      // Update trending stocks
-      const updatedTrendingStocks = trendingData.map((data) => {
-        return {
-          symbol: data.symbol,
-          name: TRENDING_COMPANY_NAMES[data.symbol as keyof typeof TRENDING_COMPANY_NAMES] || data.symbol,
-          price: data.price,
-          change: data.change,
-          changePercent: data.changePercent,
-          volume: `${(data.volume / 1_000_000).toFixed(1)}M`,
-          isHot: Math.abs(data.changePercent) > 3
-        };
-      });
-      
-      setTrendingStocks(updatedTrendingStocks);
 
       // Fetch top stocks data
       const topStocksSymbols = Object.keys(TOP_STOCKS_INFO);
@@ -415,370 +334,337 @@ const MarketPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="container mx-auto px-4 py-6 max-w-7xl space-y-8">
-        
-        {/* Market Overview Header */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-                Market Overview
-              </h1>
-              <div className="flex items-center gap-4 mt-2">
-                <p className="text-muted-foreground">Real-time market data and analysis</p>
-                {!isLoadingMarketData && marketOverview.lastUpdated && (
-                  <Badge variant="outline" className="text-xs">
-                    Updated: {marketOverview.lastUpdated.toLocaleTimeString()}
-                  </Badge>
-                )}
-                {isConnected && (
-                  <Badge variant="secondary" className="text-xs">
-                    <div className="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></div>
-                    Live
-                  </Badge>
-                )}
+    <ProtectedRoute>
+      <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
+          {/* Market Overview Header */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-main mb-2">Market Overview</h1>
+                <div className="flex items-center gap-4">
+                  <p className="text-secondary">Real-time market data and analysis</p>
+                  {!isLoadingMarketData && marketOverview.lastUpdated && (
+                    <span className="text-xs text-secondary">
+                      Updated: {marketOverview.lastUpdated.toLocaleTimeString()}
+                    </span>
+                  )}
+                  {isConnected && (
+                    <span className="text-xs text-green-500 flex items-center gap-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      Live
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button 
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="bg-card border border-card px-4 py-2 rounded-lg text-main hover:bg-gray-700 transition-colors flex items-center gap-2"
+              >
+                <span className={`icon ${isRefreshing ? 'animate-spin' : ''}`}>
+                  refresh
+                </span>
+                Refresh
+              </button>
+            </div>
+
+            {/* Key Market Metrics */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div 
+                className="bg-card p-4 rounded-lg border border-card hover:border-primary/50 hover:bg-gray-700/50 transition-all duration-300 cursor-pointer"
+                onClick={() => navigate('/stocks/SPY')}
+              >
+                <div>
+                  <p className="text-sm text-secondary">S&P 500</p>
+                  {isLoadingMarketData ? (
+                    <div className="space-y-2">
+                      <div className="h-8 w-20 bg-gray-700 animate-pulse rounded"></div>
+                      <div className="h-4 w-16 bg-gray-700 animate-pulse rounded"></div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-main">${marketOverview.sp500.value.toFixed(2)}</p>
+                      <p className={`text-sm ${marketOverview.sp500.changePercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        {formatChange(marketOverview.sp500.change, true)} ({formatPercent(marketOverview.sp500.changePercent)})
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div 
+                className="bg-card p-4 rounded-lg border border-card hover:border-primary/50 hover:bg-gray-700/50 transition-all duration-300 cursor-pointer"
+                onClick={() => navigate('/stocks/QQQ')}
+              >
+                <div>
+                  <p className="text-sm text-secondary">NASDAQ</p>
+                  {isLoadingMarketData ? (
+                    <div className="space-y-2">
+                      <div className="h-8 w-20 bg-gray-700 animate-pulse rounded"></div>
+                      <div className="h-4 w-16 bg-gray-700 animate-pulse rounded"></div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-main">${marketOverview.nasdaq.value.toFixed(2)}</p>
+                      <p className={`text-sm ${marketOverview.nasdaq.changePercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        {formatChange(marketOverview.nasdaq.change, true)} ({formatPercent(marketOverview.nasdaq.changePercent)})
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div 
+                className="bg-card p-4 rounded-lg border border-card hover:border-primary/50 hover:bg-gray-700/50 transition-all duration-300 cursor-pointer"
+                onClick={() => navigate('/stocks/DIA')}
+              >
+                <div>
+                  <p className="text-sm text-secondary">Dow Jones</p>
+                  {isLoadingMarketData ? (
+                    <div className="space-y-2">
+                      <div className="h-8 w-20 bg-gray-700 animate-pulse rounded"></div>
+                      <div className="h-4 w-16 bg-gray-700 animate-pulse rounded"></div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-main">${marketOverview.dow.value.toFixed(2)}</p>
+                      <p className={`text-sm ${marketOverview.dow.changePercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        {formatChange(marketOverview.dow.change, true)} ({formatPercent(marketOverview.dow.changePercent)})
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div 
+                className="bg-card p-4 rounded-lg border border-card hover:border-primary/50 hover:bg-gray-700/50 transition-all duration-300 cursor-pointer"
+                onClick={() => navigate('/stocks/^VIX')}
+              >
+                <div>
+                  <p className="text-sm text-secondary">VIX</p>
+                  {isLoadingMarketData ? (
+                    <div className="space-y-2">
+                      <div className="h-8 w-20 bg-gray-700 animate-pulse rounded"></div>
+                      <div className="h-4 w-16 bg-gray-700 animate-pulse rounded"></div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-main">{marketOverview.vix.value.toFixed(2)}</p>
+                      <p className={`text-sm ${marketOverview.vix.changePercent >= 0 ? 'text-red-500' : 'text-green-500'}`}>
+                        {formatChange(marketOverview.vix.change, true)} ({formatPercent(marketOverview.vix.changePercent)})
+                      </p>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="glass-card"
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-          </div>
 
-          {/* Key Market Metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="glass-card hover-scale card-hover-effect">
-              <CardContent className="p-4">
+            {/* Market Sentiment and Volume */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-card p-4 rounded-lg border border-card">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">S&P 500</p>
-                    {isLoadingMarketData ? (
-                      <div className="space-y-2">
-                        <div className="h-8 w-20 bg-muted animate-pulse rounded"></div>
-                        <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="text-2xl font-bold">${marketOverview.sp500.value.toFixed(2)}</p>
-                        <p className="text-sm">{formatPercent(marketOverview.sp500.changePercent)}</p>
-                      </>
-                    )}
+                    <p className="text-sm text-secondary">Market Sentiment</p>
+                    <p className={`text-lg font-semibold ${
+                      marketOverview.sentiment === 'bullish' ? 'text-green-500' : 
+                      marketOverview.sentiment === 'bearish' ? 'text-red-500' : 'text-yellow-500'
+                    }`}>
+                      {marketOverview.sentiment.charAt(0).toUpperCase() + marketOverview.sentiment.slice(1)}
+                    </p>
                   </div>
-                  <BarChart2 className="h-8 w-8 text-blue-400" />
+                  <span className={`icon text-2xl ${
+                    marketOverview.sentiment === 'bullish' ? 'text-green-500' : 
+                    marketOverview.sentiment === 'bearish' ? 'text-red-500' : 'text-yellow-500'
+                  }`}>
+                    {marketOverview.sentiment === 'bullish' ? 'trending_up' : 
+                     marketOverview.sentiment === 'bearish' ? 'trending_down' : 'trending_flat'}
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card hover-scale card-hover-effect">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">NASDAQ</p>
-                    {isLoadingMarketData ? (
-                      <div className="space-y-2">
-                        <div className="h-8 w-20 bg-muted animate-pulse rounded"></div>
-                        <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="text-2xl font-bold">${marketOverview.nasdaq.value.toFixed(2)}</p>
-                        <p className="text-sm">{formatPercent(marketOverview.nasdaq.changePercent)}</p>
-                      </>
-                    )}
-                  </div>
-                  <TrendingUp className="h-8 w-8 text-purple-400" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card hover-scale card-hover-effect">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Dow Jones</p>
-                    {isLoadingMarketData ? (
-                      <div className="space-y-2">
-                        <div className="h-8 w-20 bg-muted animate-pulse rounded"></div>
-                        <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="text-2xl font-bold">${marketOverview.dow.value.toFixed(2)}</p>
-                        <p className="text-sm">{formatPercent(marketOverview.dow.changePercent)}</p>
-                      </>
-                    )}
-                  </div>
-                  <BarChart2 className="h-8 w-8 text-green-400" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card hover-scale card-hover-effect">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">VIX</p>
-                    {isLoadingMarketData ? (
-                      <div className="space-y-2">
-                        <div className="h-8 w-20 bg-muted animate-pulse rounded"></div>
-                        <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="text-2xl font-bold">{marketOverview.vix.value.toFixed(2)}</p>
-                        <p className="text-sm">{formatPercent(marketOverview.vix.changePercent)}</p>
-                      </>
-                    )}
-                  </div>
-                  <Activity className="h-8 w-8 text-orange-400" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Trending Stocks Section */}
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-yellow-400" />
-                Trending Now
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {isLoadingTrending ? (
-                  // Loading skeleton for trending stocks
-                  Array.from({ length: 4 }).map((_, index) => (
-                    <div key={index} className="p-4 rounded-lg bg-gradient-to-br from-gray-900/50 to-gray-800/50 border border-gray-700/50 animate-pulse">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <div className="h-5 w-16 bg-gray-700 rounded"></div>
-                            <div className="h-4 w-8 bg-red-600 rounded"></div>
-                          </div>
-                          <div className="h-3 w-24 bg-gray-600 rounded mt-1"></div>
-                        </div>
-                        <div className="h-4 w-4 bg-gray-600 rounded"></div>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="h-6 w-20 bg-gray-700 rounded"></div>
-                        <div className="h-4 w-16 bg-gray-600 rounded"></div>
-                        <div className="h-3 w-18 bg-gray-600 rounded"></div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  enhancedTrendingStocks.map(stock => (
-                    <div
-                      key={stock.symbol}
-                      className="p-4 rounded-lg bg-gradient-to-br from-gray-900/50 to-gray-800/50 border border-gray-700/50 hover:border-primary/50 transition-all cursor-pointer hover-scale"
-                      onClick={() => navigate(`/stocks/${stock.symbol}`)}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-lg">{stock.symbol}</span>
-                            {stock.isHot && <Badge variant="destructive" className="text-xs">HOT</Badge>}
-                            {isConnected && <div className="h-2 w-2 bg-green-400 rounded-full animate-pulse" title="Live Data"></div>}
-                          </div>
-                          <p className="text-xs text-muted-foreground truncate">{stock.name}</p>
-                        </div>
-                        {stock.changePercent >= 0 ? (
-                          <ArrowUp className="h-4 w-4 text-profit" />
-                        ) : (
-                          <ArrowDown className="h-4 w-4 text-loss" />
-                        )}
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xl font-semibold">${stock.price.toFixed(2)}</p>
-                        <p className="text-sm">{formatPercent(stock.changePercent)}</p>
-                        <p className="text-xs text-muted-foreground">Vol: {stock.volume}</p>
-                      </div>
-                    </div>
-                  ))
-                )}
               </div>
-            </CardContent>
-          </Card>
-        </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <div className="flex gap-2">
-            <button
-              className={`px-6 py-3 rounded-full font-semibold transition-all ${
-                tab === 'stocks' 
-                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' 
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border'
-              }`}
-              onClick={() => setTab('stocks')}
-            >
-              <TrendingUp className="h-4 w-4 mr-2 inline" />
-              Stocks
-            </button>
-          <button
-              className={`px-6 py-3 rounded-full font-semibold transition-all ${
-                tab === 'indices' 
-                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' 
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border'
-              }`}
-            onClick={() => setTab('indices')}
-          >
-              <BarChart2 className="h-4 w-4 mr-2 inline" />
-            Indices
-          </button>
-          <button
-              className={`px-6 py-3 rounded-full font-semibold transition-all ${
-                tab === 'sectors' 
-                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' 
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border'
-              }`}
-            onClick={() => setTab('sectors')}
-          >
-              <Activity className="h-4 w-4 mr-2 inline" />
-            Sectors
-          </button>
-          </div>
-
-          {tab === 'stocks' && (
-            <div className="flex gap-2 w-full sm:w-auto">
-              <div className="relative flex-1 sm:flex-none">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search stocks..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-background/50 border-border"
-                />
+              <div className="bg-card p-4 rounded-lg border border-card">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-secondary">Total Volume</p>
+                    <p className="text-lg font-semibold text-main">{marketOverview.volume}</p>
+                  </div>
+                  <span className="icon text-blue-400 text-2xl">analytics</span>
+                </div>
               </div>
-              <Button variant="outline" size="icon" className="border-border">
-                <Filter className="h-4 w-4" />
-              </Button>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Tab Content */}
-        <div className="space-y-6">
-          {tab === 'stocks' && (
-            <Card className="glass-card">
-                <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-blue-400" />
+          {/* Navigation Tabs */}
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mt-8">
+            <div className="flex gap-2">
+              <button
+                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                  tab === 'stocks' 
+                    ? 'bg-primary text-white' 
+                    : 'bg-card text-secondary hover:text-main border border-card'
+                }`}
+                onClick={() => setTab('stocks')}
+              >
+                Stocks
+              </button>
+              <button
+                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                  tab === 'indices' 
+                    ? 'bg-primary text-white' 
+                    : 'bg-card text-secondary hover:text-main border border-card'
+                }`}
+                onClick={() => setTab('indices')}
+              >
+                Indices
+              </button>
+              <button
+                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                  tab === 'sectors' 
+                    ? 'bg-primary text-white' 
+                    : 'bg-card text-secondary hover:text-main border border-card'
+                }`}
+                onClick={() => setTab('sectors')}
+              >
+                Sectors
+              </button>
+            </div>
+
+            {tab === 'stocks' && (
+              <div className="flex gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:flex-none">
+                  <span className="icon absolute left-3 top-3 text-secondary">search</span>
+                  <input
+                    placeholder="Search stocks..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 bg-card border border-card rounded-lg px-4 py-2 text-main placeholder-secondary w-full"
+                  />
+                </div>
+                <button className="bg-card border border-card px-4 py-2 rounded-lg text-main hover:bg-gray-700 transition-colors">
+                  <span className="icon">filter_list</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Tab Content */}
+          <div className="space-y-6 mt-6">
+            {tab === 'stocks' && (
+              <div className="bg-card p-6 rounded-lg border border-card">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-main flex items-center gap-2">
+                    <span className="icon text-blue-400">trending_up</span>
                     Top Stocks
-                  </CardTitle>
-                  <Badge variant="secondary" className="text-xs">
-                    <Eye className="h-3 w-3 mr-1" />
-                    Live Data
-                  </Badge>
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-secondary flex items-center gap-1">
+                      <span className="icon">visibility</span>
+                      Live Data
+                    </span>
+                    <button className="bg-primary px-3 py-1 rounded text-white text-xs hover:bg-primary/80 transition-colors">
+                      View All
+                    </button>
+                  </div>
                 </div>
-                </CardHeader>
-                <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {isLoadingTopStocks ? (
-                    Array.from({ length: 10 }).map((_, index) => (
-                      <div key={index} className="p-4 rounded-lg bg-gradient-to-br from-card/80 to-card/40 border border-border/50 animate-pulse">
-                        <div className="space-y-3">
+                    Array.from({ length: 8 }).map((_, index) => (
+                      <div key={index} className="p-6 rounded-xl bg-gray-800/50 border border-gray-700/50 animate-pulse">
+                        <div className="space-y-4">
                           <div className="flex items-start justify-between">
                             <div>
-                              <div className="h-5 w-16 bg-muted rounded mb-1"></div>
-                              <div className="h-3 w-24 bg-muted rounded"></div>
+                              <div className="h-6 w-20 bg-gray-700 rounded mb-2"></div>
+                              <div className="h-4 w-32 bg-gray-700 rounded"></div>
                             </div>
-                            <div className="h-4 w-4 bg-muted rounded"></div>
+                            <div className="h-5 w-5 bg-gray-700 rounded"></div>
+                          </div>
+                          <div className="space-y-3">
+                            <div className="h-10 w-24 bg-gray-700 rounded"></div>
+                            <div className="h-5 w-20 bg-gray-700 rounded"></div>
                           </div>
                           <div className="space-y-2">
-                            <div className="h-8 w-20 bg-muted rounded"></div>
-                            <div className="h-4 w-16 bg-muted rounded"></div>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="h-3 w-full bg-muted rounded"></div>
-                            <div className="h-3 w-full bg-muted rounded"></div>
+                            <div className="h-4 w-full bg-gray-700 rounded"></div>
+                            <div className="h-4 w-full bg-gray-700 rounded"></div>
                           </div>
                         </div>
                       </div>
                     ))
                   ) : (
-                    filteredStocks.map(stock => (
-                    <div
-                      key={stock.symbol}
-                      className="p-4 rounded-lg bg-gradient-to-br from-card/80 to-card/40 border border-border/50 hover:border-primary/50 transition-all cursor-pointer hover-scale group"
-                      onClick={() => navigate(`/stocks/${stock.symbol}`)}
-                    >
-                      <div className="space-y-3">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-bold text-lg group-hover:text-primary transition-colors">
-                              {stock.symbol}
-                            </h3>
-                            <p className="text-xs text-muted-foreground truncate">{stock.name}</p>
+                    filteredStocks.slice(0, 8).map(stock => (
+                      <div
+                        key={stock.symbol}
+                        className="p-6 rounded-xl bg-gray-800/50 border border-gray-700/50 hover:border-primary/50 hover:bg-gray-800/70 transition-all duration-300 cursor-pointer group"
+                        onClick={() => navigate(`/stocks/${stock.symbol}`)}
+                      >
+                        <div className="space-y-4">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="font-bold text-xl text-main group-hover:text-primary transition-colors">
+                                {stock.symbol}
+                              </h3>
+                              <p className="text-sm text-secondary truncate mt-1">{stock.name}</p>
+                            </div>
+                            <button className="p-2 rounded-lg bg-gray-700/50 hover:bg-yellow-500/20 transition-colors group">
+                              <span className="icon text-secondary group-hover:text-yellow-400 transition-colors">star</span>
+                            </button>
                           </div>
-                          <Star className="h-4 w-4 text-muted-foreground hover:text-yellow-400 transition-colors" />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <p className="text-2xl font-bold">${stock.price.toFixed(2)}</p>
-                          <div className="flex items-center gap-2">
-                            {formatChange(stock.change)}
-                            {formatPercent(stock.changePercent)}
+                          
+                          <div className="space-y-3">
+                            <p className="text-3xl font-bold text-main">${stock.price.toFixed(2)}</p>
+                            <div className="flex items-center gap-3">
+                              <span className={`text-lg font-semibold ${stock.changePercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)}
+                              </span>
+                              <span className={`text-sm ${stock.changePercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                ({stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%)
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                        
-                        <div className="space-y-1 text-xs text-muted-foreground">
-                          <div className="flex justify-between">
-                            <span>Volume:</span>
-                            <span>{(stock.volume / 1_000_000).toFixed(1)}M</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Market Cap:</span>
-                            <span>{stock.marketCap}</span>
+                          
+                          <div className="space-y-2 text-sm text-secondary">
+                            <div className="flex justify-between items-center">
+                              <span>Volume</span>
+                              <span className="font-medium text-main">{(stock.volume / 1_000_000).toFixed(1)}M</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span>Market Cap</span>
+                              <span className="font-medium text-main">{stock.marketCap}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
                     ))
                   )}
                 </div>
-                </CardContent>
-              </Card>
-        )}
+              </div>
+            )}
 
-          {tab === 'indices' && (
-            <Card className="glass-card">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart2 className="h-5 w-5 text-purple-400" />
+            {tab === 'indices' && (
+              <div className="bg-card p-6 rounded-lg border border-card">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-main flex items-center gap-2">
+                    <span className="icon text-purple-400">bar_chart</span>
                     Market Indices
-                  </CardTitle>
-                  <Badge variant="secondary" className="text-xs">
-                    <Eye className="h-3 w-3 mr-1" />
+                  </h2>
+                  <span className="text-xs text-secondary flex items-center gap-1">
+                    <span className="icon">visibility</span>
                     Real-time Data
-                  </Badge>
+                  </span>
                 </div>
-              </CardHeader>
-              <CardContent>
                 {isLoadingMarketData ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[...Array(6)].map((_, i) => (
-                      <div key={i} className="p-6 rounded-lg bg-gradient-to-br from-card/80 to-card/40 border border-border/50">
+                      <div key={i} className="p-6 rounded-lg bg-gray-800 border border-gray-700">
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <div className="h-6 w-16 bg-muted animate-pulse rounded"></div>
-                            <div className="h-5 w-5 bg-muted animate-pulse rounded"></div>
+                            <div className="h-6 w-16 bg-gray-700 animate-pulse rounded"></div>
+                            <div className="h-5 w-5 bg-gray-700 animate-pulse rounded"></div>
                           </div>
-                          <div className="h-4 w-32 bg-muted animate-pulse rounded"></div>
+                          <div className="h-4 w-32 bg-gray-700 animate-pulse rounded"></div>
                           <div className="space-y-2">
-                            <div className="h-8 w-24 bg-muted animate-pulse rounded"></div>
-                            <div className="h-4 w-20 bg-muted animate-pulse rounded"></div>
-                            <div className="h-3 w-16 bg-muted animate-pulse rounded"></div>
+                            <div className="h-8 w-24 bg-gray-700 animate-pulse rounded"></div>
+                            <div className="h-4 w-20 bg-gray-700 animate-pulse rounded"></div>
+                            <div className="h-3 w-16 bg-gray-700 animate-pulse rounded"></div>
                           </div>
                         </div>
                       </div>
@@ -789,63 +675,59 @@ const MarketPage: React.FC = () => {
                     {indices.map(index => (
                       <div
                         key={index.symbol}
-                        className="p-6 rounded-lg bg-gradient-to-br from-card/80 to-card/40 border border-border/50 hover:border-primary/50 transition-all hover-scale cursor-pointer"
+                        className="p-6 rounded-lg bg-gray-800 border border-gray-700 hover:border-primary transition-all cursor-pointer"
                         onClick={() => navigate(`/stocks/${index.symbol}`)}
                       >
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <h3 className="font-bold text-lg">{index.symbol}</h3>
+                            <h3 className="font-bold text-lg text-main">{index.symbol}</h3>
                             <div className="flex items-center gap-1">
                               {index.changePercent >= 0 ? (
-                                <ArrowUp className="h-4 w-4 text-profit" />
+                                <span className="icon text-green-500">trending_up</span>
                               ) : (
-                                <ArrowDown className="h-4 w-4 text-loss" />
+                                <span className="icon text-red-500">trending_down</span>
                               )}
-                              <BarChart2 className="h-5 w-5 text-blue-400" />
+                              <span className="icon text-blue-400">bar_chart</span>
                             </div>
                           </div>
-                          <p className="text-sm text-muted-foreground">{index.name}</p>
+                          <p className="text-sm text-secondary">{index.name}</p>
                           <div className="space-y-2">
-                            <p className="text-3xl font-bold">${index.value.toFixed(2)}</p>
+                            <p className="text-3xl font-bold text-main">${index.value.toFixed(2)}</p>
                             <div className="flex items-center gap-2">
                               {formatChange(index.change)}
                               {formatPercent(index.changePercent)}
                             </div>
-                            <p className="text-xs text-muted-foreground">Volume: {index.volume}</p>
+                            <p className="text-xs text-secondary">Volume: {index.volume}</p>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-        )}
+              </div>
+            )}
 
-          {tab === 'sectors' && (
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-green-400" />
+            {tab === 'sectors' && (
+              <div className="bg-card p-6 rounded-lg border border-card">
+                <h2 className="text-lg font-semibold text-main mb-4 flex items-center gap-2">
+                  <span className="icon text-green-400">activity</span>
                   Sector Performance
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {isLoadingSectors ? (
                     Array.from({ length: 11 }).map((_, index) => (
-                      <div key={index} className="p-4 rounded-lg bg-gradient-to-br from-card/80 to-card/40 border border-border/50 animate-pulse">
+                      <div key={index} className="p-4 rounded-lg bg-gray-800 border border-gray-700 animate-pulse">
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <div className="h-4 w-32 bg-muted rounded"></div>
-                            <div className="h-4 w-4 bg-muted rounded"></div>
+                            <div className="h-4 w-32 bg-gray-700 rounded"></div>
+                            <div className="h-4 w-4 bg-gray-700 rounded"></div>
                           </div>
                           <div className="space-y-2">
-                            <div className="h-4 w-16 bg-muted rounded"></div>
+                            <div className="h-4 w-16 bg-gray-700 rounded"></div>
                             <div className="space-y-1">
-                              <div className="h-3 w-full bg-muted rounded"></div>
-                              <div className="h-3 w-full bg-muted rounded"></div>
-                              <div className="h-3 w-full bg-muted rounded"></div>
+                              <div className="h-3 w-full bg-gray-700 rounded"></div>
+                              <div className="h-3 w-full bg-gray-700 rounded"></div>
+                              <div className="h-3 w-full bg-gray-700 rounded"></div>
                             </div>
                           </div>
                         </div>
@@ -853,50 +735,49 @@ const MarketPage: React.FC = () => {
                     ))
                   ) : (
                     sectors.map(sector => (
-                    <div
-                      key={sector.name}
-                      className="p-4 rounded-lg bg-gradient-to-br from-card/80 to-card/40 border border-border/50 hover:border-primary/50 transition-all hover-scale"
-                    >
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-semibold">{sector.name}</h3>
-                          {sector.change >= 0 ? (
-                            <ArrowUp className="h-4 w-4 text-profit" />
-                          ) : (
-                            <ArrowDown className="h-4 w-4 text-loss" />
-                          )}
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            {formatPercent(sector.change)}
+                      <div
+                        key={sector.name}
+                        className="p-4 rounded-lg bg-gray-800 border border-gray-700 hover:border-primary transition-all"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-semibold text-main">{sector.name}</h3>
+                            {sector.change >= 0 ? (
+                              <span className="icon text-green-500">trending_up</span>
+                            ) : (
+                              <span className="icon text-red-500">trending_down</span>
+                            )}
                           </div>
-                          <div className="text-xs text-muted-foreground space-y-1">
-                            <div className="flex justify-between">
-                              <span>Index Value:</span>
-                              <span>${sector.price.toLocaleString()}</span>
+                          
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              {formatPercent(sector.change)}
                             </div>
-                            <div className="flex justify-between">
-                              <span>Companies:</span>
-                              <span>{sector.companies}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Leader:</span>
-                              <span className="font-medium">{sector.leader}</span>
+                            <div className="text-xs text-secondary space-y-1">
+                              <div className="flex justify-between">
+                                <span>Index Value:</span>
+                                <span>${sector.price.toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Companies:</span>
+                                <span>{sector.companies}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Leader:</span>
+                                <span className="font-medium text-main">{sector.leader}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
                     ))
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            )}
           </div>
-      </div>
-    </div>
+        </main>
+    </ProtectedRoute>
   );
 };
 

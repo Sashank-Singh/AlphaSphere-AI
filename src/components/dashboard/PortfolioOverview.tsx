@@ -1,46 +1,102 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Activity } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { usePortfolio } from '@/context/PortfolioContext';
-import { formatCurrency } from '@/lib/utils';
+import { stockDataService } from '@/lib/stockDataService';
 
 const PortfolioOverview: React.FC = () => {
   const { portfolio } = usePortfolio();
+  const [dailyChange, setDailyChange] = useState({ amount: 0, percent: 0 });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const calculateDailyChange = async () => {
+      try {
+        setIsLoading(true);
+        let totalChange = 0;
+        let totalValue = 0;
+
+        // Calculate changes for each position
+        for (const position of portfolio.positions) {
+          try {
+            const quote = await stockDataService.getStockQuote(position.symbol);
+            const positionValue = position.quantity * quote.price;
+            const positionChange = positionValue - (position.quantity * position.averagePrice);
+            
+            totalChange += positionChange;
+            totalValue += positionValue;
+          } catch (error) {
+            console.error(`Error fetching quote for ${position.symbol}:`, error);
+          }
+        }
+
+        const percentChange = totalValue > 0 ? (totalChange / (totalValue - totalChange)) * 100 : 0;
+        
+        setDailyChange({
+          amount: totalChange,
+          percent: percentChange
+        });
+      } catch (error) {
+        console.error('Error calculating daily change:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    calculateDailyChange();
+    
+    // Update every 30 seconds
+    const interval = setInterval(calculateDailyChange, 30000);
+    return () => clearInterval(interval);
+  }, [portfolio.positions]);
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  };
+
+  const formatPercent = (percent: number) => {
+    return `${percent >= 0 ? '+' : ''}${percent.toFixed(2)}%`;
+  };
 
   return (
-    <Card className="lg:col-span-2 bg-card text-foreground border-border">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center justify-between text-lg">
-          Portfolio Overview
-          <Badge variant="secondary" className="gap-1">
-            <Activity className="h-3 w-3" />
-            Live
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <div className="text-2xl font-bold">{formatCurrency(portfolio.totalValue)}</div>
-          <div className="flex items-center gap-2 text-green-500">
-            <TrendingUp className="h-3 w-3" />
-            <span className="text-sm">+2.4% (+${((portfolio.totalValue * 0.024)).toFixed(2)}) today</span>
-          </div>
+    <div className="bg-card p-6 rounded-lg border border-card">
+      <h2 className="text-lg font-semibold text-main mb-4">Portfolio Overview</h2>
+      
+      {isLoading ? (
+        <div className="animate-pulse">
+          <div className="h-10 bg-gray-700 rounded mb-2"></div>
+          <div className="h-4 bg-gray-700 rounded w-32"></div>
         </div>
-        
-        <div className="grid grid-cols-2 gap-4 pt-2">
-          <div className="space-y-1">
-            <div className="text-xs opacity-80">Available Cash</div>
-            <div className="text-lg font-semibold">{formatCurrency(portfolio.cash)}</div>
-          </div>
-          <div className="space-y-1">
-            <div className="text-xs opacity-80">Positions</div>
-            <div className="text-lg font-semibold">{portfolio.positions.length}</div>
-          </div>
+      ) : (
+        <>
+          <p className="text-4xl font-bold text-white">
+            {formatCurrency(portfolio.totalValue)}
+          </p>
+          <p className={`text-sm ${dailyChange.percent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {formatPercent(dailyChange.percent)} ({formatCurrency(dailyChange.amount)}) today
+          </p>
+        </>
+      )}
+      
+      <div className="flex justify-between mt-6">
+        <div>
+          <p className="text-sm text-secondary">Available Cash</p>
+          <p className="text-lg font-medium text-main">
+            {formatCurrency(portfolio.cash)}
+          </p>
         </div>
-      </CardContent>
-    </Card>
+        <div>
+          <p className="text-sm text-secondary">Positions</p>
+          <p className="text-lg font-medium text-main">
+            {portfolio.positions.length + portfolio.optionPositions.length}
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };
 

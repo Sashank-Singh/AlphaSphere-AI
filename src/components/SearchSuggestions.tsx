@@ -1,126 +1,122 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Search } from 'lucide-react';
+import React from 'react';
 import { stockDataService } from '@/lib/stockDataService';
-import { StockQuote } from '@/lib/mockStockService';
-import { useNavigate } from 'react-router-dom';
+
+interface SearchSuggestion {
+  symbol: string;
+  name: string;
+  price: number;
+  changePercent: number;
+}
 
 interface SearchSuggestionsProps {
   query: string;
-  onSelect: (symbol: string) => void;
+  onSuggestionClick: (symbol: string) => void;
+  onViewAllClick: (query: string) => void;
+  isLoading: boolean;
+  suggestions: SearchSuggestion[];
+  selectedIndex?: number;
 }
 
+const SearchSuggestions: React.FC<SearchSuggestionsProps> = ({
+  query,
+  onSuggestionClick,
+  onViewAllClick,
+  isLoading,
+  suggestions,
+  selectedIndex = -1
+}) => {
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  };
 
+  const formatPercent = (percent: number) => {
+    return `${percent >= 0 ? '+' : ''}${percent.toFixed(2)}%`;
+  };
 
-const SearchSuggestions: React.FC<SearchSuggestionsProps> = ({ query, onSelect }) => {
-  const navigate = useNavigate();
-  const [suggestions, setSuggestions] = useState<StockQuote[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  if (isLoading) {
+    return (
+      <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-card rounded-lg shadow-lg z-50">
+        <div className="p-4 text-center">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+          <p className="text-sm text-secondary mt-2">Searching...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const popularStocks = [
-    { symbol: 'AAPL', name: 'Apple Inc.' },
-    { symbol: 'MSFT', name: 'Microsoft Corporation' },
-    { symbol: 'GOOGL', name: 'Alphabet Inc.' },
-    { symbol: 'AMZN', name: 'Amazon.com Inc.' },
-    { symbol: 'TSLA', name: 'Tesla Inc.' },
-    { symbol: 'META', name: 'Meta Platforms Inc.' },
-    { symbol: 'NVDA', name: 'NVIDIA Corporation' },
-    { symbol: 'JPM', name: 'JPMorgan Chase & Co.' },
-    { symbol: 'V', name: 'Visa Inc.' },
-    { symbol: 'JNJ', name: 'Johnson & Johnson' }
-  ];
+  if (suggestions.length === 0 && query.trim()) {
+    return (
+      <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-card rounded-lg shadow-lg z-50">
+        <div className="p-4 text-center">
+          <span className="icon text-2xl text-gray-600 mb-2 block">search_off</span>
+          <p className="text-sm text-secondary">No stocks found</p>
+        </div>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      if (query.length > 0) {
-        setIsLoading(true);
-        try {
-          const filtered = popularStocks.filter(stock => 
-            stock.symbol.toLowerCase().includes(query.toLowerCase()) ||
-            stock.name.toLowerCase().includes(query.toLowerCase())
-          ).slice(0, 5);
-          
-          const stockPromises = filtered.map(stock => 
-            stockDataService.getStockQuote(stock.symbol).catch(err => {
-              console.error(`Error fetching ${stock.symbol}:`, err);
-              return null;
-            })
-          );
-          
-          const stockData = await Promise.all(stockPromises);
-          const validStocks = stockData.filter((stock): stock is StockQuote => stock !== null);
-          setSuggestions(validStocks);
-        } catch (error) {
-          console.error('Error fetching suggestions:', error);
-          setSuggestions([]);
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
-        setSuggestions([]);
-      }
-    };
-
-    const debounceTimer = setTimeout(fetchSuggestions, 300);
-    return () => clearTimeout(debounceTimer);
-  }, [query]);
-
-  if (suggestions.length === 0 && !isLoading) {
+  if (suggestions.length === 0) {
     return null;
   }
 
   return (
-    <Card className="absolute top-full left-0 right-0 mt-1 z-50 max-h-[300px] overflow-y-auto">
-      <CardContent className="p-0">
-        {isLoading ? (
-          <div className="p-3">
-            <div className="flex items-center space-x-3 animate-pulse">
-              <div className="h-4 w-4 bg-muted rounded"></div>
+    <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-card rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+      <div className="py-2">
+        {suggestions.map((suggestion, index) => (
+          <button
+            key={suggestion.symbol}
+            className={`w-full px-4 py-3 text-left transition-colors flex items-center justify-between group ${
+              index === selectedIndex 
+                ? 'bg-gray-700/70 border-l-2 border-primary' 
+                : 'hover:bg-gray-700/50'
+            }`}
+            onClick={() => onSuggestionClick(suggestion.symbol)}
+          >
+            <div className="flex items-center space-x-3">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                index === selectedIndex 
+                  ? 'bg-primary text-white' 
+                  : 'bg-gray-700 group-hover:bg-gray-600'
+              }`}>
+                <span className="text-xs font-semibold">
+                  {suggestion.symbol.charAt(0)}
+                </span>
+              </div>
               <div>
-                <div className="h-4 bg-muted rounded w-16 mb-1"></div>
-                <div className="h-3 bg-muted rounded w-24"></div>
+                <p className="font-semibold text-main">{suggestion.symbol}</p>
+                <p className="text-sm text-secondary">{suggestion.name}</p>
               </div>
             </div>
-          </div>
-        ) : (
-          suggestions.map((stock) => (
-            <div
-              key={stock.symbol}
-              className="flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer transition-colors border-b last:border-b-0"
-              onClick={() => {
-                onSelect(stock.symbol);
-                navigate(`/stocks/${stock.symbol}`);
-              }}
-            >
-              <div className="flex items-center space-x-3">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <div className="font-semibold">{stock.symbol}</div>
-                  <div className="text-sm text-muted-foreground">{stock.name || `${stock.symbol} Inc.`}</div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="text-right">
-                  <div className="font-semibold">${stock.price.toFixed(2)}</div>
-                  <div className={`text-sm flex items-center ${
-                    stock.changePercent >= 0 ? 'text-green-500' : 'text-red-500'
-                  }`}>
-                    {stock.changePercent >= 0 ? (
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3 mr-1" />
-                    )}
-                    {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
-                  </div>
-                </div>
-              </div>
+            <div className="text-right">
+              <p className="font-medium text-main">{formatCurrency(suggestion.price)}</p>
+              <p className={`text-sm ${suggestion.changePercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {formatPercent(suggestion.changePercent)}
+              </p>
             </div>
-          ))
-        )}
-      </CardContent>
-    </Card>
+          </button>
+        ))}
+        
+        <div className="border-t border-card mt-2 pt-2">
+          <button
+            className={`w-full px-4 py-2 text-left text-sm transition-colors flex items-center ${
+              selectedIndex === suggestions.length 
+                ? 'text-main bg-gray-700/50' 
+                : 'text-secondary hover:text-main'
+            }`}
+            onClick={() => onViewAllClick(query)}
+          >
+            <span className="icon text-sm mr-2">search</span>
+            View all results for "{query}"
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 

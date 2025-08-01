@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import HomePage from '@/pages/HomePage';
 import DashboardPage from '@/pages/DashboardPage';
-
 import MarketPage from '@/pages/MarketPage';
 import PortfolioPage from '@/pages/PortfolioPage';
 import OptionsPage from '@/pages/OptionsPage';
@@ -12,6 +11,7 @@ import TradingPage from '@/pages/TradingPage';
 import AuthPage from '@/pages/AuthPage';
 import AnalyticsPage from '@/pages/AnalyticsPage';
 import SearchPage from '@/pages/SearchPage';
+import SectorPage from '@/pages/SectorPage';
 import { AuthProvider } from '@/context/AuthContext';
 import { PortfolioProvider } from '@/context/PortfolioContext';
 import ImprovedStockDetailPage from '@/pages/ImprovedStockDetailPage';
@@ -35,6 +35,7 @@ const AppContent: React.FC = () => {
             <MarketPage />
           </Layout>
         } />
+        <Route path="/market/sector/:sectorName" element={<SectorPage />} />
         <Route path="/portfolio" element={
           <Layout>
             <PortfolioPage />

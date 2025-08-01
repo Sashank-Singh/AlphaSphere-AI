@@ -114,7 +114,7 @@ class StockDataService {
       } catch (error) {
         console.error(`Error updating real-time data for ${symbol}:`, error);
       }
-    }, REAL_TIME_INTERVAL);
+    }, REAL_TIME_INTERVAL) as unknown as NodeJS.Timeout;
 
     this.updateIntervals.set(symbol, updateInterval);
   }

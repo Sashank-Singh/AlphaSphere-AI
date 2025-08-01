@@ -1,91 +1,61 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Home, Search, BarChart2, Settings, Brain } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 
 const BottomNavBar: React.FC = () => {
-  const navigate = useNavigate();
   const location = useLocation();
-  
+
   const navItems = [
     {
-      path: '/',
-      label: 'Home',
-      icon: Home,
+      name: 'Home',
+      icon: 'home',
+      path: '/dashboard'
     },
     {
-      path: '/search',
-      label: 'Search',
-      icon: Search,
+      name: 'Search',
+      icon: 'search',
+      path: '/search'
+    }, {
+      name: 'Market',
+      icon: 'bar_chart',
+      path: '/market'
     },
     {
-      path: '/analytics',
-      label: 'AI',
-      icon: Brain,
-      badge: 'New'
+      name: 'Alerts',
+      icon: 'notifications',
+      path: '/dashboard'
     },
     {
-      path: '/portfolio',
-      label: 'Portfolio',
-      icon: BarChart2,
+      name: 'Community',
+      icon: 'people',
+      path: '/community'
     },
+   
     {
-      path: '/settings',
-      label: 'Settings',
-      icon: Settings,
-    },
+      name: 'Settings',
+      icon: 'settings',
+      path: '/settings'
+    }
   ];
-  
+
   return (
-    <div
-      className="fixed left-4 right-4 bg-background/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-xl z-50 safe-bottom"
-      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}
-    >
-      <div className="max-w-md mx-auto flex justify-around items-center h-16">
-        {navItems.map(item => {
-          const isActive = location.pathname === item.path;
-          
-          return (
-            <button
-              key={item.path}
-              className={cn(
-                "relative flex flex-col items-center justify-center w-16 h-full rounded-xl transition-all duration-300",
-                isActive ? "bg-primary/10" : "hover:bg-primary/5"
-              )}
-              onClick={() => navigate(item.path)}
-            >
-              <div className={cn(
-                "absolute inset-0 rounded-xl transition-opacity duration-300",
-                isActive ? "opacity-100" : "opacity-0"
-              )}>
-                <div className="absolute inset-0 bg-primary/5 rounded-xl" />
-              </div>
-              
-              <div className="relative">
-                <item.icon className={cn(
-                  "h-5 w-5 mb-1 transition-all duration-300",
-                  isActive ? "text-primary scale-110" : "text-muted-foreground"
-                )} />
-                {item.badge && (
-                  <Badge 
-                    variant="secondary" 
-                    className="absolute -top-2 -right-2 text-xs px-1 py-0 h-4 min-w-4 flex items-center justify-center"
-                  >
-                    {item.badge}
-                  </Badge>
-                )}
-              </div>
-              
-              <span className={cn(
-                "text-xs font-medium transition-all duration-300",
-                isActive ? "text-primary" : "text-muted-foreground"
-              )}>
-                {item.label}
-              </span>
-            </button>
-          );
-        })}
+    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-card flex justify-center p-2 lg:hidden">
+      <div className="flex justify-around items-center max-w-md w-full">
+        {navItems.map((item) => (
+          <Link
+            key={item.name}
+            to={item.path}
+            className={cn(
+              "flex flex-col items-center text-xs px-2",
+              location.pathname === item.path
+                ? "text-main"
+                : "text-secondary"
+            )}
+          >
+            <span className="icon text-lg mb-1">{item.icon}</span>
+            <span className="text-xs">{item.name}</span>
+          </Link>
+        ))}
       </div>
     </div>
   );

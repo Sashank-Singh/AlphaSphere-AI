@@ -1,66 +1,89 @@
 
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import BottomNavBar from './BottomNavBar';
-
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { Toaster } from '@/components/ui/toaster';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const location = useLocation();
   const isMobile = useIsMobile();
-  
-  // Automatically collapse sidebar on mobile
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Set sidebar state based on current location
+  useEffect(() => {
+    const isDashboard = location.pathname === '/dashboard';
+    setSidebarCollapsed(!isDashboard);
+  }, [location.pathname]);
+
+  // Auto-collapse sidebar on mobile
   useEffect(() => {
     if (isMobile) {
       setSidebarCollapsed(true);
     }
   }, [isMobile]);
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    // Implement search functionality
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
   };
 
-  return (
-    <div className="flex h-screen bg-background">
-      {/* Show sidebar on desktop, hide on mobile */}
-      <div className={cn(
-        "transition-all duration-300",
-        isMobile ? "hidden" : "block"
-      )}>
-        <Sidebar
-          collapsed={sidebarCollapsed}
-          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-        />
-      </div>
-      
-      <div
-        className={cn(
-          "flex-1 flex flex-col overflow-hidden",
-          isMobile ? "pb-16 safe-bottom" : ""
-        )}
-      >
-        <TopBar onSearch={handleSearch} />
-        <main className="flex-1 overflow-auto">
+  const handleSidebarMouseEnter = () => {
+    if (sidebarCollapsed && !isMobile) {
+      setIsHovered(true);
+    }
+  };
+
+  const handleSidebarMouseLeave = () => {
+    setIsHovered(false);
+  };
+
+  // Mobile layout with sidebar overlay
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <TopBar onMenuClick={toggleSidebar} />
+        <main className="pb-20">
           {children}
         </main>
+        <BottomNavBar />
         
-        {/* Show bottom nav bar only on mobile */}
-        {isMobile && <BottomNavBar />}
-        
-        {/* Add Toaster component for notifications */}
-        <Toaster />
+        {/* Mobile Sidebar Overlay */}
+        {!sidebarCollapsed && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div className="absolute inset-0 bg-black/50" onClick={toggleSidebar}></div>
+            <div className="absolute left-0 top-0 h-full">
+              <Sidebar collapsed={false} onToggle={toggleSidebar} />
+            </div>
+          </div>
+        )}
       </div>
-      
+    );
+  }
 
+  return (
+    <div className="min-h-screen bg-background flex">
+      <div
+        onMouseEnter={handleSidebarMouseEnter}
+        onMouseLeave={handleSidebarMouseLeave}
+      >
+        <Sidebar collapsed={sidebarCollapsed && !isHovered} onToggle={toggleSidebar} />
+      </div>
+      <div className="flex-1 flex flex-col">
+        <TopBar />
+        <main className={cn(
+          "flex-1 transition-all duration-300 ease-in-out",
+          sidebarCollapsed && !isHovered ? "ml-0" : ""
+        )}>
+          {children}
+        </main>
+      </div>
     </div>
   );
 };

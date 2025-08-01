@@ -4,6 +4,8 @@ import requests
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from flask_cors import CORS
+import threading
+import time
 
 # Add the current directory to the Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -19,9 +21,23 @@ ALPACA_API_KEY_ID = os.getenv('ALPACA_API_KEY_ID')
 ALPACA_API_SECRET_KEY = os.getenv('ALPACA_API_SECRET_KEY')
 ALPACA_BASE_URL = 'https://data.alpaca.markets' # Alpaca's data API base URL
 
+# Make Alpaca optional - only warn if keys are missing
 if not ALPACA_API_KEY_ID or not ALPACA_API_SECRET_KEY:
-    print("CRITICAL: Alpaca API keys are not configured in .env file.")
-    # You might want to raise an exception or exit here in a real app
+    print("INFO: Alpaca API keys are not configured. Alpaca functionality will be disabled.")
+    print("You can still use Yahoo Finance endpoints.")
+
+def periodic_cache_cleanup():
+    """Background thread to periodically clean up expired cache entries."""
+    while True:
+        try:
+            time.sleep(300)  # Run every 5 minutes
+            yahoo_finance.periodic_cache_cleanup()
+        except Exception as e:
+            print(f"Error in cache cleanup: {e}")
+
+# Start cache cleanup thread
+cache_cleanup_thread = threading.Thread(target=periodic_cache_cleanup, daemon=True)
+cache_cleanup_thread.start()
 
 @app.route('/alpaca/api/<path:endpoint>', methods=['GET', 'POST', 'PUT', 'DELETE']) # Allow various methods
 def alpaca_proxy(endpoint):
@@ -160,7 +176,37 @@ def get_sector_performance():
     except Exception as e:
         return jsonify({'error': 'Failed to fetch sector performance', 'details': str(e)}), 500
 
+@app.route('/api/cache/status', methods=['GET'])
+def get_cache_status():
+    """
+    Endpoint to get cache status and statistics.
+    """
+    try:
+        import yahoo_finance
+        cache_info = {
+            'total_entries': len(yahoo_finance.cache_storage),
+            'cache_file_exists': os.path.exists(yahoo_finance.CACHE_FILE),
+            'cache_file_size': os.path.getsize(yahoo_finance.CACHE_FILE) if os.path.exists(yahoo_finance.CACHE_FILE) else 0
+        }
+        return jsonify(cache_info)
+    except Exception as e:
+        return jsonify({'error': 'Failed to get cache status', 'details': str(e)}), 500
+
+@app.route('/api/cache/clear', methods=['POST'])
+def clear_cache():
+    """
+    Endpoint to clear the cache.
+    """
+    try:
+        import yahoo_finance
+        yahoo_finance.cache_storage.clear()
+        if os.path.exists(yahoo_finance.CACHE_FILE):
+            os.remove(yahoo_finance.CACHE_FILE)
+        return jsonify({'message': 'Cache cleared successfully'})
+    except Exception as e:
+        return jsonify({'error': 'Failed to clear cache', 'details': str(e)}), 500
+
 if __name__ == '__main__':
     # Default port for Flask is 5000. You can change it if needed.
     # Ensure debug=False for production.
-    app.run(debug=True, port=5001) # Running on port 5001 to avoid conflict with Vite (often 5173 or 3000)
+    app.run(debug=True, port=5001) 

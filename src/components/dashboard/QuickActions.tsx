@@ -1,40 +1,51 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Zap, Brain, Target, BarChart3 } from 'lucide-react';
 
 const QuickActions: React.FC = () => {
   const navigate = useNavigate();
 
-  const quickActions = [
-    { label: 'Quick Trade', icon: Zap, action: () => navigate('/trading'), color: 'bg-blue-500' },
-    { label: 'AI Insights', icon: Brain, action: () => {}, color: 'bg-green-500' },
-    { label: 'Options', icon: Target, action: () => navigate('/options'), color: 'bg-amber-500' },
-    { label: 'Analytics', icon: BarChart3, action: () => navigate('/analytics'), color: 'bg-cyan-500' }
+  const actions = [
+    {
+      name: 'Quick Trade',
+      icon: 'speed',
+      color: 'bg-blue-500/20 text-blue-400',
+      action: () => navigate('/trading')
+    },
+    {
+      name: 'AI Insights',
+      icon: 'insights',
+      color: 'bg-green-500/20 text-green-400',
+      action: () => navigate('/analytics')
+    },
+    {
+      name: 'Options',
+      icon: 'attach_money',
+      color: 'bg-purple-500/20 text-purple-400',
+      action: () => navigate('/options')
+    },
+    {
+      name: 'Analytics',
+      icon: 'analytics',
+      color: 'bg-yellow-500/20 text-yellow-400',
+      action: () => navigate('/analytics')
+    }
   ];
 
   return (
-    <div className="w-full max-w-full text-left flex flex-col items-start px-2 sm:px-0">
-      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 justify-start">
-        <Zap className="h-5 w-5" />
-        Quick Actions
-      </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 w-full max-w-full overflow-hidden">
-        {quickActions.map((action, index) => (
-          <Button
-            key={index}
-            variant="outline"
-            className="h-16 sm:h-20 flex-col gap-2 sm:gap-3 hover:scale-105 transition-transform border-none w-full min-w-0 text-xs sm:text-sm"
-            onClick={action.action}
-          >
-            <div className={`p-3 rounded-full ${action.color}`}>
-              <action.icon className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-sm font-medium">{action.label}</span>
-          </Button>
-        ))}
-      </div>
+    <div className="flex items-center justify-center space-x-8 mb-6">
+      {actions.map((action) => (
+        <button 
+          key={action.name} 
+          className="flex flex-col items-center text-main hover:scale-105 transition-transform duration-200"
+          onClick={action.action}
+        >
+          <span className={`icon p-3 ${action.color} rounded-full mb-2 hover:scale-110 transition-transform duration-200`}>
+            {action.icon}
+          </span>
+          {action.name}
+        </button>
+      ))}
     </div>
   );
 };

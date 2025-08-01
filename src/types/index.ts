@@ -90,3 +90,48 @@ export interface AIRecommendation {
   optionContract: OptionContract;
   reasoning: string;
 }
+
+// Market data types for MarketPage
+export interface MarketOverview {
+  sp500: MarketMetric;
+  nasdaq: MarketMetric;
+  dow: MarketMetric;
+  vix: MarketMetric;
+  sentiment: 'bullish' | 'bearish' | 'neutral';
+  volume: string;
+  activeTraders: number;
+  lastUpdated: Date;
+}
+
+export interface MarketMetric {
+  value: number;
+  change: number;
+  changePercent: number;
+}
+
+export interface TopStock {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+  marketCap: string;
+}
+
+export interface MarketIndex {
+  symbol: string;
+  name: string;
+  value: number;
+  change: number;
+  changePercent: number;
+  volume: string;
+}
+
+export interface Sector {
+  name: string;
+  change: number;
+  price: number;
+  companies: number;
+  leader: string;
+}

@@ -168,7 +168,7 @@ const AITradeModal: React.FC<AITradeModalProps> = ({ stock, open, onClose, onTra
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-w-xs p-2 max-h-[80vh] overflow-y-auto rounded-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BrainCircuit className="h-5 w-5" />
@@ -179,7 +179,7 @@ const AITradeModal: React.FC<AITradeModalProps> = ({ stock, open, onClose, onTra
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-2">
+        <div className="py-1">
           {/* Real-time market data header */}
           {realTimeQuote && (
             <div className="bg-muted/30 rounded-lg p-3 mb-4">
