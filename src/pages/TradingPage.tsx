@@ -289,17 +289,37 @@ const TradingPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* Enhanced Chart */}
-      <div className="mb-6">
-        <RealTimeStockChart
-          symbol={stockData.symbol}
-          currentPrice={stockData.price}
-          change={stockData.change}
-          changePercent={stockData.changePercent}
-          isRealTime={stockFeedConnected}
-          chartType="area"
-          height={400}
-        />
+      {/* Enhanced Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Stock Chart */}
+        {stockData.price > 0 && (
+          <RealTimeStockChart
+            symbol={stockData.symbol}
+            currentPrice={stockData.price}
+            change={stockData.change}
+            changePercent={stockData.changePercent}
+            isRealTime={stockFeedConnected}
+            chartType="area"
+            height={400}
+          />
+        )}
+
+        {/* Trading Volume Chart */}
+        <div className="bg-black border border-gray-800 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Trading Volume</h3>
+            <div className="text-sm text-muted-foreground">24h Activity</div>
+          </div>
+          <div className="h-[350px] flex items-center justify-center">
+            <div className="text-center">
+              <BarChart2 className="h-16 w-16 text-primary/50 mx-auto mb-4" />
+              <p className="text-muted-foreground">Volume chart coming soon</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Real-time volume analysis and trading patterns
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Trading Panel and Company Info */}

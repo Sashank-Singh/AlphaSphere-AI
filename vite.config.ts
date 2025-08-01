@@ -9,8 +9,9 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     allowedHosts: [
-      '2011-104-249-165-77.ngrok-free.app', // Add your ngrok host here
-      'localhost', // You can keep localhost if needed
+      '21041c833f55.ngrok-free.app',
+      'localhost',
+      '.ngrok-free.app',
     ],
     proxy: {
       '/api': {

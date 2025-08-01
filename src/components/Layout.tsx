@@ -47,23 +47,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Mobile layout with sidebar overlay
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-background">
-        <TopBar onMenuClick={toggleSidebar} />
-        <main className="pb-20">
-          {children}
-        </main>
-        <BottomNavBar />
-        
-        {/* Mobile Sidebar Overlay */}
-        {!sidebarCollapsed && (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <div className="absolute inset-0 bg-black/50" onClick={toggleSidebar}></div>
-            <div className="absolute left-0 top-0 h-full">
-              <Sidebar collapsed={false} onToggle={toggleSidebar} />
+      <>
+        <div className="min-h-screen bg-background">
+          <TopBar onMenuClick={toggleSidebar} />
+          <main className="pb-20">
+            {children}
+          </main>
+          
+          {/* Mobile Sidebar Overlay */}
+          {!sidebarCollapsed && (
+            <div className="fixed inset-0 z-50 lg:hidden">
+              <div className="absolute inset-0 bg-black/50" onClick={toggleSidebar}></div>
+              <div className="absolute left-0 top-0 h-full">
+                <Sidebar collapsed={false} onToggle={toggleSidebar} />
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+        <BottomNavBar />
+      </>
     );
   }
 

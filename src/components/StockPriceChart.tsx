@@ -69,7 +69,7 @@ interface StockPriceChartProps {
 
 const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
   const [interval, setInterval] = useState('D');
-  const [showVolume, setShowVolume] = useState(true);
+  const [showVolume, setShowVolume] = useState(false);
   const [showIndicators, setShowIndicators] = useState(false);
   const [activeIndicators, setActiveIndicators] = useState<{[key: string]: boolean}>({
     // Trend Indicators
@@ -427,17 +427,17 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
   return (
     <div className="w-full h-full bg-[#0a0a0a] rounded-xl overflow-hidden">
       {/* Chart header and controls */}
-      <div className="flex flex-wrap gap-2 items-center p-4 border-b border-[#333333]">
-        <ToggleGroup type="single" value={interval} onValueChange={handleIntervalChange}>
-          <ToggleGroupItem value="5" size="sm" className="text-[#E0E0E0] bg-[#1E1E1E] border-[#333333] hover:bg-[#333333]">5m</ToggleGroupItem>
-          <ToggleGroupItem value="15" size="sm" className="text-[#E0E0E0] bg-[#1E1E1E] border-[#333333] hover:bg-[#333333]">15m</ToggleGroupItem>
-          <ToggleGroupItem value="60" size="sm" className="text-[#E0E0E0] bg-[#1E1E1E] border-[#333333] hover:bg-[#333333]">1H</ToggleGroupItem>
-          <ToggleGroupItem value="D" size="sm" className="text-[#E0E0E0] bg-[#1E1E1E] border-[#333333] hover:bg-[#333333]">1D</ToggleGroupItem>
-          <ToggleGroupItem value="W" size="sm" className="text-[#E0E0E0] bg-[#1E1E1E] border-[#333333] hover:bg-[#333333]">1W</ToggleGroupItem>
-          <ToggleGroupItem value="M" size="sm" className="text-[#E0E0E0] bg-[#1E1E1E] border-[#333333] hover:bg-[#333333]">1M</ToggleGroupItem>
+      <div className="flex flex-col sm:flex-row flex-wrap gap-2 items-start sm:items-center p-3 sm:p-4 border-b border-[#333333]">
+        <ToggleGroup type="single" value={interval} onValueChange={handleIntervalChange} className="flex-wrap">
+          <ToggleGroupItem value="5" size="sm" className="text-[#E0E0E0] bg-[#1E1E1E] border-[#333333] hover:bg-[#333333] text-xs sm:text-sm">5m</ToggleGroupItem>
+          <ToggleGroupItem value="15" size="sm" className="text-[#E0E0E0] bg-[#1E1E1E] border-[#333333] hover:bg-[#333333] text-xs sm:text-sm">15m</ToggleGroupItem>
+          <ToggleGroupItem value="60" size="sm" className="text-[#E0E0E0] bg-[#1E1E1E] border-[#333333] hover:bg-[#333333] text-xs sm:text-sm">1H</ToggleGroupItem>
+          <ToggleGroupItem value="D" size="sm" className="text-[#E0E0E0] bg-[#1E1E1E] border-[#333333] hover:bg-[#333333] text-xs sm:text-sm">1D</ToggleGroupItem>
+          <ToggleGroupItem value="W" size="sm" className="text-[#E0E0E0] bg-[#1E1E1E] border-[#333333] hover:bg-[#333333] text-xs sm:text-sm">1W</ToggleGroupItem>
+          <ToggleGroupItem value="M" size="sm" className="text-[#E0E0E0] bg-[#1E1E1E] border-[#333333] hover:bg-[#333333] text-xs sm:text-sm">1M</ToggleGroupItem>
         </ToggleGroup>
 
-        <div className="flex gap-2 ml-auto">
+        <div className="flex gap-2 ml-auto flex-wrap">
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -578,7 +578,7 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
       </div>
 
       {/* TradingView Chart - main content */}
-      <div className="w-full h-full" style={{ height: 'calc(100% - 80px)' }}>
+      <div className="w-full h-full" style={{ height: 'calc(100% - 70px)' }}>
         <div
           id="tradingview_chart"
           ref={chartContainerRef}

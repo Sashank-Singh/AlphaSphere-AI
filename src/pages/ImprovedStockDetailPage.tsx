@@ -12,11 +12,8 @@ import TradeModal from '@/components/TradeModal';
 import AITradeModal from '@/components/AITradeModal';
 import AISentimentAnalysis from '@/components/AISentimentAnalysis';
 import PredictivePriceForecasting from '@/components/PredictivePriceForecasting';
-import AIFinancialHealthAnalysis from '@/components/AIFinancialHealthAnalysis';
-import AINewsImpactAnalysis from '@/components/AINewsImpactAnalysis';
 import AIFundamentalScore from '@/components/AIFundamentalScore';
 import AIPatternRecognition from '@/components/AIPatternRecognition';
-import AIEarningsPrediction from '@/components/AIEarningsPrediction';
 import AIInsiderTradingAnalysis from '@/components/AIInsiderTradingAnalysis';
 import AIOptionsFlowAnalysis from '@/components/AIOptionsFlowAnalysis';
 
@@ -226,25 +223,25 @@ const ImprovedStockDetailPage: React.FC = () => {
         return (
           <>
             {/* Main Grid Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
               {/* Left Column - Stock Info and Chart */}
-              <div className="lg:col-span-2 bg-[#1E1E1E] p-6 rounded-2xl shadow-lg">
+              <div className="xl:col-span-2 bg-[#1E1E1E] p-3 sm:p-4 lg:p-6 rounded-2xl shadow-lg order-1">
                 {/* Stock Header */}
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 space-y-2 sm:space-y-0">
                   <div>
-                    <h2 className="text-3xl font-bold text-[#E0E0E0]">{stock.symbol}</h2>
-                    <p className="text-[#B0B0B0]">{stock.name}</p>
+                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#E0E0E0]">{stock.symbol}</h2>
+                    <p className="text-xs sm:text-sm lg:text-base text-[#B0B0B0]">{stock.name}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-4xl font-bold text-[#4CAF50]">{formatCurrency(stock.price)}</p>
-                    <p className={cn("text-lg", isPositive ? "text-[#4CAF50]" : "text-red-400")}>
+                  <div className="text-left sm:text-right">
+                    <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#4CAF50]">{formatCurrency(stock.price)}</p>
+                    <p className={cn("text-sm sm:text-base lg:text-lg", isPositive ? "text-[#4CAF50]" : "text-red-400")}>
                       {isPositive ? '+' : ''}{formatCurrency(stock.change)} ({formatPercentage(safeChangePercent)})
                     </p>
                   </div>
                 </div>
 
                 {/* Chart */}
-                <div className="h-[600px] bg-gray-900 rounded-xl mb-6">
+                <div className="h-[520px] sm:h-[500px] md:h-[600px] lg:h-[700px] xl:h-[800px] bg-gray-900 rounded-xl mb-6">
                   {stock && (
                     <StockPriceChart 
                       symbol={symbol!}
@@ -254,18 +251,18 @@ const ImprovedStockDetailPage: React.FC = () => {
 
                 {/* Portfolio Position */}
                 {portfolioData?.ownedQuantity > 0 && (
-                  <div className="flex justify-between items-center bg-gray-900/50 p-4 rounded-xl mb-6">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-gray-900/50 p-4 rounded-xl mb-6 space-y-3 sm:space-y-0">
                     <div>
-                      <h3 className="text-lg font-semibold text-[#E0E0E0]">Your Stock Position</h3>
-                      <p className="text-[#B0B0B0]">{portfolioData.ownedQuantity} shares</p>
+                      <h3 className="text-base sm:text-lg font-semibold text-[#E0E0E0]">Your Stock Position</h3>
+                      <p className="text-sm sm:text-base text-[#B0B0B0]">{portfolioData.ownedQuantity} shares</p>
                     </div>
                     <div>
-                      <p className="text-[#B0B0B0]">Market Value</p>
-                      <p className="text-lg font-semibold text-[#E0E0E0]">{formatCurrency(portfolioData.positionValue)}</p>
+                      <p className="text-sm sm:text-base text-[#B0B0B0]">Market Value</p>
+                      <p className="text-base sm:text-lg font-semibold text-[#E0E0E0]">{formatCurrency(portfolioData.positionValue)}</p>
                     </div>
                     <div>
-                      <p className="text-[#B0B0B0]">Total Gain/Loss</p>
-                      <p className={cn("text-lg font-semibold", portfolioData.profitLoss >= 0 ? "text-[#4CAF50]" : "text-red-400")}>
+                      <p className="text-sm sm:text-base text-[#B0B0B0]">Total Gain/Loss</p>
+                      <p className={cn("text-base sm:text-lg font-semibold", portfolioData.profitLoss >= 0 ? "text-[#4CAF50]" : "text-red-400")}>
                         {formatCurrency(portfolioData.profitLoss)} ({formatPercentage(portfolioData.profitLossPercent)})
                       </p>
                     </div>
@@ -273,7 +270,7 @@ const ImprovedStockDetailPage: React.FC = () => {
                 )}
 
                 {/* Trade Buttons */}
-                <div className="flex gap-4 mb-6">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
                   <button 
                     onClick={() => setIsTradeModalOpen(true)}
                     className="flex-1 bg-[#2196F3] hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 flex items-center justify-center space-x-2"
@@ -300,7 +297,7 @@ const ImprovedStockDetailPage: React.FC = () => {
               </div>
 
               {/* Right Column - AI Insights */}
-              <div className="bg-[#1E1E1E] p-6 rounded-2xl shadow-lg">
+              <div className="bg-[#1E1E1E] p-4 sm:p-6 rounded-2xl shadow-lg order-2">
                 <h3 className="text-2xl font-bold text-[#E0E0E0] mb-6">AI Insights</h3>
                 <div className="space-y-6">
                   <div className="flex items-start space-x-4">
@@ -369,9 +366,9 @@ const ImprovedStockDetailPage: React.FC = () => {
             </div>
 
             {/* Market Data */}
-            <div className="mt-8 bg-[#1E1E1E] p-6 rounded-2xl shadow-lg">
+            <div className="mt-6 sm:mt-8 bg-[#1E1E1E] p-4 sm:p-6 rounded-2xl shadow-lg">
               <h3 className="text-2xl font-bold text-[#E0E0E0] mb-4">Market Data</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-center">
                 <div>
                   <p className="text-sm text-[#B0B0B0]">Day High</p>
                   <p className="text-xl font-semibold text-[#E0E0E0]">{dailyData ? formatCurrency(dailyData.high) : '...'}</p>
@@ -544,11 +541,8 @@ const ImprovedStockDetailPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               <AISentimentAnalysis symbol={stock.symbol} stock={stock} className="w-full" />
               <PredictivePriceForecasting symbol={stock.symbol} stock={stock} className="w-full" />
-              <AIFinancialHealthAnalysis symbol={stock.symbol} stock={stock} className="w-full" />
-              <AINewsImpactAnalysis symbol={stock.symbol} stock={stock} className="w-full" />
               <AIFundamentalScore symbol={stock.symbol} stock={stock} className="w-full" />
               <AIPatternRecognition symbol={stock.symbol} stock={stock} className="w-full" />
-              <AIEarningsPrediction symbol={stock.symbol} stock={stock} className="w-full" />
               <AIInsiderTradingAnalysis symbol={stock.symbol} stock={stock} className="w-full" />
               <AIOptionsFlowAnalysis symbol={stock.symbol} stock={stock} className="w-full" />
             </div>
@@ -562,10 +556,10 @@ const ImprovedStockDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#121212] text-[#E0E0E0] font-sans">
-      <div className="container mx-auto p-8">
+      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
         {/* Navigation Tabs */}
-        <div className="mb-8">
-          <nav className="flex space-x-6 border-b-2 border-[#333333] pb-2">
+        <div className="mb-6 sm:mb-8">
+          <nav className="flex flex-wrap gap-2 sm:gap-6 border-b-2 border-[#333333] pb-2 overflow-x-auto">
             <button 
               onClick={() => setActiveTab('overview')}
               className={cn(
@@ -628,7 +622,7 @@ const ImprovedStockDetailPage: React.FC = () => {
         {renderTabContent()}
 
         {/* Watchlist Section */}
-        <div className="mt-8 bg-[#1E1E1E] p-6 rounded-2xl shadow-lg">
+        <div className="mt-6 sm:mt-8 bg-[#1E1E1E] p-4 sm:p-6 rounded-2xl shadow-lg">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-2xl font-bold text-[#E0E0E0]">Watchlist</h3>
             <button className="flex items-center text-[#2196F3] hover:text-blue-400 font-semibold transition">

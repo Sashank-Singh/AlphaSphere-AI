@@ -199,12 +199,12 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch, onMenuClick }) => {
   };
 
   return (
-    <header className="flex justify-between items-center p-4 bg-card border-b border-card">
+    <header className="flex justify-between items-center p-3 sm:p-4 bg-card border-b border-card sticky top-0 z-40">
       {/* Mobile Menu Button */}
       {onMenuClick && (
         <button
           onClick={onMenuClick}
-          className="lg:hidden text-main hover:text-gray-300 transition-colors p-2 rounded-lg hover:bg-gray-700 mr-3"
+          className="lg:hidden text-main hover:text-gray-300 transition-colors p-2 rounded-lg hover:bg-gray-700 mr-2 sm:mr-3"
           title="Menu"
         >
           <span className="icon">menu</span>
@@ -212,7 +212,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch, onMenuClick }) => {
       )}
       
       {/* Search Section */}
-      <div ref={searchRef} className="flex-1 max-w-md relative">
+      <div ref={searchRef} className="flex-1 max-w-xs sm:max-w-md relative">
         <form onSubmit={handleSearch} className="flex items-center">
           <button type="submit" className="text-secondary mr-4 hover:text-main transition-colors">
             <span className="icon">search</span>
@@ -246,10 +246,10 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch, onMenuClick }) => {
       </div>
 
       {/* User Section */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-1 sm:space-x-4 -mr-2 sm:mr-0">
         {/* Notifications */}
         <button 
-          className="text-secondary hover:text-main transition-colors p-2 rounded-lg hover:bg-gray-700"
+          className="text-secondary hover:text-main transition-colors p-1.5 sm:p-2 rounded-lg hover:bg-gray-700"
           onClick={handleNotificationsClick}
           title="Notifications"
         >
@@ -259,17 +259,17 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch, onMenuClick }) => {
         {/* User Menu */}
         <div ref={userMenuRef} className="relative">
           <button 
-            className="flex items-center text-main bg-gray-700 px-3 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+            className="flex items-center text-main bg-gray-700 px-1.5 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-gray-600 transition-colors"
             onClick={handleUserClick}
             title="User menu"
           >
             {/* User Avatar */}
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mr-3 text-white font-semibold text-sm">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded-full flex items-center justify-center mr-1.5 sm:mr-3 text-white font-semibold text-xs sm:text-sm">
               {getUserInitials()}
             </div>
             
             {/* User Name */}
-            <span className="font-medium">{getUserDisplayName()}</span>
+            <span className="font-medium text-sm sm:text-base hidden sm:block">{getUserDisplayName()}</span>
           </button>
 
           {/* User Dropdown Menu */}

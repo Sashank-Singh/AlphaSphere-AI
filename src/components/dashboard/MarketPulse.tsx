@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { stockDataService } from '@/lib/stockDataService';
 
 interface MarketData {
@@ -12,6 +13,7 @@ interface MarketData {
 }
 
 const MarketPulse: React.FC = () => {
+  const navigate = useNavigate();
   const [marketData, setMarketData] = useState<MarketData>({
     spy: { price: 0, change: 0, changePercent: 0, volume: 0 },
     vix: 18.2
@@ -88,7 +90,11 @@ const MarketPulse: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="flex justify-between items-center mb-2">
+          <div 
+            className="flex justify-between items-center mb-2 p-2 rounded-lg hover:bg-gray-700/20 transition-colors cursor-pointer"
+            onClick={() => navigate('/stocks/SPY')}
+            title="Click to view SPY details"
+          >
             <div>
               <p className="font-bold text-main">S&P 500 (SPY)</p>
               <p className="text-2xl font-bold text-white">
@@ -116,7 +122,10 @@ const MarketPulse: React.FC = () => {
         </>
       )}
       
-      <button className="mt-4 w-full text-center py-2 text-sm text-main bg-gray-700/50 hover:bg-gray-700 rounded-md transition-colors">
+      <button 
+        onClick={() => navigate('/market')}
+        className="mt-4 w-full text-center py-2 text-sm text-main bg-gray-700/50 hover:bg-gray-700 rounded-md transition-colors"
+      >
         View Full Market
       </button>
     </div>

@@ -39,7 +39,7 @@ const BottomNavBar: React.FC = () => {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-card flex justify-center p-2 lg:hidden">
+    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-card flex justify-center p-2 lg:hidden z-[9999] inset-x-0">
       <div className="flex justify-around items-center max-w-md w-full">
         {navItems.map((item) => (
           <Link
