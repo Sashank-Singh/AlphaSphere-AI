@@ -13,6 +13,9 @@ import {
 } from 'lucide-react';
 import { stockDataService, type StockQuote } from '@/lib/stockDataService';
 import { fetchStockSentiment, type SentimentData } from '@/lib/sentimentService';
+import AITradeModal from '@/components/ai/AITradeModal';
+import { usePortfolio } from '@/context/PortfolioContext';
+import type { OptionContract, Stock } from '@/types';
 
 interface AIInsightsPanelProps {
   symbol: string;
@@ -50,6 +53,23 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ symbol, isConnected, 
     updatedAt: number;
   } | null>(null);
   const lastAnalyzeRef = useRef<number>(0);
+  const [aiTradeOpen, setAiTradeOpen] = useState<boolean>(false);
+  const { executeOptionTrade } = usePortfolio();
+
+  const stockForModal: Stock = useMemo(() => ({
+    id: symbol,
+    symbol,
+    name: symbol,
+    price: quote?.price ?? 0,
+    change: quote?.change ?? 0,
+    changePercent: quote?.changePercent,
+    volume: quote?.volume ?? 0,
+    previousClose: quote?.previousClose,
+  }), [symbol, quote]);
+
+  const handleExecuteAITrade = useCallback(async (option: OptionContract, quantity: number, type: 'buy' | 'sell') => {
+    await executeOptionTrade(option, quantity, type);
+  }, [executeOptionTrade]);
 
   // Confidence gating
   const CONFIDENCE_TARGET = 90;
@@ -855,7 +875,7 @@ CRITICAL FORMATTING:
       {/* AI Trade Button */}
       <button 
         className="w-full bg-green-600 text-white font-semibold py-3 rounded-lg flex items-center justify-center space-x-2 hover:bg-green-500 transition-colors shadow-sm"
-        onClick={onAITrade}
+        onClick={() => setAiTradeOpen(true)}
       >
         <Sparkles className="h-4 w-4" />
         <span>Trade with AI</span>
@@ -865,6 +885,13 @@ CRITICAL FORMATTING:
       <p className="text-center text-xs text-gray-500 mt-2">
         Buying power will be charged at $3.99 per trade.
       </p>
+
+      <AITradeModal 
+        stock={stockForModal}
+        open={aiTradeOpen}
+        onClose={() => setAiTradeOpen(false)}
+        onTrade={handleExecuteAITrade}
+      />
     </div>
   );
 };

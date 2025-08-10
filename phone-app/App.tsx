@@ -12,6 +12,9 @@ import PortfolioScreen from './src/screens/PortfolioScreen';
 import TradingScreen from './src/screens/TradingScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import StockDetailScreen from './src/screens/StockDetailScreen';
+import ImprovedStockDetailScreen from './src/screens/ImprovedStockDetailScreen';
+import OptionsScreen from './src/screens/OptionsScreen';
+import SearchScreen from './src/screens/SearchScreen';
 
 // Import icon component
 import TabIcon from './src/components/TabIcon';
@@ -104,6 +107,33 @@ const App: React.FC = () => {
               headerStyle: { backgroundColor: '#1C1C1E' },
               headerTintColor: '#FFFFFF',
               headerTitle: '',
+            }} 
+          />
+          <Stack.Screen 
+            name="ImprovedStockDetail" 
+            component={ImprovedStockDetailScreen}
+            options={{ 
+              headerStyle: { backgroundColor: '#1C1C1E' },
+              headerTintColor: '#FFFFFF',
+              headerTitle: '',
+            }} 
+          />
+          <Stack.Screen 
+            name="Options" 
+            component={OptionsScreen}
+            options={{ 
+              headerStyle: { backgroundColor: '#1C1C1E' },
+              headerTintColor: '#FFFFFF',
+              headerTitle: 'Options',
+            }} 
+          />
+          <Stack.Screen 
+            name="Search" 
+            component={SearchScreen}
+            options={{ 
+              headerStyle: { backgroundColor: '#1C1C1E' },
+              headerTintColor: '#FFFFFF',
+              headerTitle: 'Search',
             }} 
           />
         </Stack.Navigator>

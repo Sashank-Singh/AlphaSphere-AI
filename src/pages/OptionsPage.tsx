@@ -11,6 +11,7 @@ import ChartSection from '@/components/trading/ChartSection';
 import AIInsightsPanel from '@/components/trading/AIInsightsPanel';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import OptionTradeModal, { OptionTradeDetails } from '@/components/options/OptionTradeModal';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 interface ChartDataPoint {
@@ -61,6 +62,8 @@ interface OptionContract {
   strike: number;
   bid: number;
   ask: number;
+  mark?: number;
+  last?: number;
   volume: number;
   openInterest: number;
   impliedVolatility?: number;
@@ -95,7 +98,10 @@ const OptionsPage: React.FC = () => {
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [optionChainData, setOptionChainData] = useState<OptionsChainData | null>(null);
   const [priceUpdated, setPriceUpdated] = useState<boolean>(false);
+  const [showBackgroundFlash, setShowBackgroundFlash] = useState<boolean>(false);
   const [optionsLoading, setOptionsLoading] = useState<boolean>(true);
+  const [expirationsLoading, setExpirationsLoading] = useState<boolean>(false);
+  const [optionSide, setOptionSide] = useState<'calls' | 'puts'>('calls');
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
   const [error, setError] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState<string>('Apple Inc.');
@@ -114,31 +120,43 @@ const OptionsPage: React.FC = () => {
 
     const calls: OptionContract[] = rawCalls.map((item) => {
       const c = (item || {}) as Record<string, unknown>;
+      const bid = Number(c.bid ?? c.bestBid ?? c.b ?? 0) || 0;
+      const ask = Number(c.ask ?? c.bestAsk ?? c.a ?? 0) || 0;
+      const last = Number(c.last ?? c.lastPrice ?? 0) || undefined;
+      const mid = bid > 0 && ask > 0 ? (bid + ask) / 2 : (last || 0);
       return {
         contractSymbol: (c.contractSymbol as string) || (c.symbol as string) || undefined,
         strike: Number(c.strike ?? 0) || 0,
-        bid: Number(c.bid ?? 0) || 0,
-        ask: Number(c.ask ?? 0) || 0,
+        bid,
+        ask,
+        mark: Number(mid.toFixed(2)),
+        last: last ? Number(Number(last).toFixed(2)) : undefined,
         volume: Number(c.volume ?? 0) || 0,
         openInterest: Number(c.openInterest ?? 0) || 0,
         impliedVolatility: typeof c.impliedVolatility === 'number' ? (c.impliedVolatility as number) : undefined,
         percentChange: typeof c.percentChange === 'number' ? (c.percentChange as number) : undefined,
-        expiry: (c.expiry as string) || undefined,
+        expiry: (c.expiry as string) || (c.expiration as string) || undefined,
       };
     });
 
     const puts: OptionContract[] = rawPuts.map((item) => {
       const p = (item || {}) as Record<string, unknown>;
+      const bid = Number(p.bid ?? p.bestBid ?? p.b ?? 0) || 0;
+      const ask = Number(p.ask ?? p.bestAsk ?? p.a ?? 0) || 0;
+      const last = Number(p.last ?? p.lastPrice ?? 0) || undefined;
+      const mid = bid > 0 && ask > 0 ? (bid + ask) / 2 : (last || 0);
       return {
         contractSymbol: (p.contractSymbol as string) || (p.symbol as string) || undefined,
         strike: Number(p.strike ?? 0) || 0,
-        bid: Number(p.bid ?? 0) || 0,
-        ask: Number(p.ask ?? 0) || 0,
+        bid,
+        ask,
+        mark: Number(mid.toFixed(2)),
+        last: last ? Number(Number(last).toFixed(2)) : undefined,
         volume: Number(p.volume ?? 0) || 0,
         openInterest: Number(p.openInterest ?? 0) || 0,
         impliedVolatility: typeof p.impliedVolatility === 'number' ? (p.impliedVolatility as number) : undefined,
         percentChange: typeof p.percentChange === 'number' ? (p.percentChange as number) : undefined,
-        expiry: (p.expiry as string) || undefined,
+        expiry: (p.expiry as string) || (p.expiration as string) || undefined,
       };
     });
 
@@ -180,7 +198,9 @@ const OptionsPage: React.FC = () => {
         });
         
         setPriceUpdated(true);
+        setShowBackgroundFlash(true);
         setTimeout(() => setPriceUpdated(false), 1000);
+        setTimeout(() => setShowBackgroundFlash(false), 3000);
       }
     }
   }, [wsStockData, currentSymbol, stockData.price]);
@@ -261,6 +281,31 @@ const OptionsPage: React.FC = () => {
     return companies[symbol] || `${symbol} Inc.`;
   };
 
+  // Format an expiry date (YYYY-MM-DD) as a local date without timezone shift
+  const formatExpiryLocal = (dateStr: string): string => {
+    if (!dateStr || typeof dateStr !== 'string') return dateStr as string;
+    const parts = dateStr.split('-').map((p) => Number(p));
+    const y = parts[0];
+    const m = (parts[1] || 1) - 1;
+    const d = parts[2] || 1;
+    const localNoon = new Date(y, m, d, 12, 0, 0, 0);
+    return localNoon.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  // Calculate days to expiry (DTE) using local dates to avoid timezone issues
+  const getDaysToExpiry = (dateStr: string | null): number | null => {
+    if (!dateStr) return null;
+    const parts = dateStr.split('-').map((p) => Number(p));
+    const y = parts[0];
+    const m = (parts[1] || 1) - 1;
+    const d = parts[2] || 1;
+    const today = new Date();
+    const todayLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0, 0);
+    const expiryLocal = new Date(y, m, d, 12, 0, 0, 0);
+    const msInDay = 24 * 60 * 60 * 1000;
+    return Math.max(0, Math.round((expiryLocal.getTime() - todayLocal.getTime()) / msInDay));
+  };
+
   const handleAITrade = () => {
     navigate(`/ai-trading/${currentSymbol}`);
   };
@@ -270,6 +315,7 @@ const OptionsPage: React.FC = () => {
     let isActive = true;
     const loadExpirations = async () => {
       if (!currentSymbol) return;
+      setExpirationsLoading(true);
       try {
         const expiries: Array<{ date: string; daysToExpiry: number; formatted: string }>
           = await stockDataService.getOptionsExpirations(currentSymbol);
@@ -280,6 +326,8 @@ const OptionsPage: React.FC = () => {
         console.error('Error loading expirations:', e);
         setExpirations([]);
         setSelectedExpiry(null);
+      } finally {
+        if (isActive) setExpirationsLoading(false);
       }
     };
     loadExpirations();
@@ -323,8 +371,15 @@ const OptionsPage: React.FC = () => {
     if (!currentSymbol || !selectedExpiry) return;
     const interval = setInterval(async () => {
       try {
-        const resp = await stockDataService.getOptionsChain(currentSymbol, selectedExpiry, 40);
-        setOptionChainData(normalizeOptions(resp));
+        const resp = await stockDataService.getOptionsChain(currentSymbol, selectedExpiry, 60);
+        const normalized = normalizeOptions(resp);
+        // Only update if data materially changed to reduce flicker
+        setOptionChainData((prev) => {
+          const prevKey = JSON.stringify(prev?.calls?.slice(0, 5)) + JSON.stringify(prev?.puts?.slice(0, 5));
+          const nextKey = JSON.stringify(normalized.calls.slice(0, 5)) + JSON.stringify(normalized.puts.slice(0, 5));
+          if (prevKey !== nextKey) return normalized;
+          return prev || normalized;
+        });
         setLastUpdateTime(Date.now());
       } catch (e) {
         console.warn('Polling options chain failed:', e);
@@ -385,6 +440,15 @@ const OptionsPage: React.FC = () => {
     return 'Deep OTM';
   };
 
+  const getMoneynessShort = (strike: number) => {
+    const label = getMoneyness(strike);
+    switch (label) {
+      case 'Deep ITM': return 'Deep';
+      case 'Near ATM': return 'ATM';
+      default: return label;
+    }
+  };
+
   const getMoneynessColor = (strike: number) => {
     const moneyness = getMoneyness(strike);
     switch (moneyness) {
@@ -428,7 +492,7 @@ const OptionsPage: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen text-gray-100 p-6" style={{ fontFamily: 'Inter, sans-serif', backgroundColor: '#0E1117' }}>
+      <div className="min-h-screen text-gray-100 p-6 transition-colors duration-300" style={{ fontFamily: 'Inter, sans-serif', backgroundColor: showBackgroundFlash ? (stockData.change >= 0 ? '#0a1a0a' : '#1a0a0a') : '#0E1117' }}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             {/* Stock Header Component */}
@@ -472,6 +536,22 @@ const OptionsPage: React.FC = () => {
                         {stockData.change.toFixed(2)} ({stockData.changePercent.toFixed(2)}%)
                     </span>
                   </div>
+                  <div className="ml-4 flex items-center gap-2 text-xs bg-[#1c2128] border border-[#30363d] rounded-md p-1">
+                    <button
+                      className={`px-2 py-1 rounded ${optionSide === 'calls' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:text-white'}`}
+                      aria-pressed={optionSide === 'calls'}
+                      onClick={() => setOptionSide('calls')}
+                    >
+                      Calls
+                    </button>
+                    <button
+                      className={`px-2 py-1 rounded ${optionSide === 'puts' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:text-white'}`}
+                      aria-pressed={optionSide === 'puts'}
+                      onClick={() => setOptionSide('puts')}
+                    >
+                      Puts
+                    </button>
+                  </div>
                 </div>
                 <div className="flex items-center space-x-4 text-sm">
                   {stockFeedConnected ? (
@@ -498,73 +578,85 @@ const OptionsPage: React.FC = () => {
               <div className="flex items-center space-x-4 mb-6">
                 <div className="flex items-center space-x-2">
                   <span className="font-medium">Expiration:</span>
-                  <select 
-                    className="bg-[#1c2128] border border-[#30363d] rounded-md px-3 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={selectedExpiry || ''}
-                    onChange={(e) => {
-                      setSelectedExpiry(e.target.value);
-                    }}
+                  <Select
+                    value={selectedExpiry || ''}
+                    onValueChange={(value) => setSelectedExpiry(value)}
+                    disabled={expirationsLoading || expirations.length === 0}
                   >
-                      {expirations.map((date) => {
-                        const label = new Date(date).toLocaleDateString('en-US', {
-                          month: 'short', 
-                          day: 'numeric',
-                          year: 'numeric',
-                        });
-                        return (
-                          <option key={date} value={date}>
-                            {label}
-                          </option>
-                        );
-                      })}
-                  </select>
-                  <span className="text-gray-400 text-sm">5d</span>
+                    <SelectTrigger className="w-56 h-9 bg-[#1c2128] border border-[#30363d] text-white">
+                      <SelectValue placeholder={expirationsLoading ? 'Loading…' : 'Select expiry'} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1c2128] text-white border border-[#30363d]">
+                      {expirations.map((date) => (
+                        <SelectItem key={date} value={date}>
+                          <div className="flex w-full items-center justify-between">
+                            <span>{formatExpiryLocal(date)}</span>
+                            <span className="ml-3 text-xs text-gray-400">DTE {getDaysToExpiry(date)}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedExpiry && (
+                    <span className="text-gray-400 text-sm">{getDaysToExpiry(selectedExpiry)}d</span>
+                  )}
                 </div>
                   {/* Additional expiry display removed to avoid duplication */}
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 {/* Call Options */}
+                {optionSide === 'calls' && (
                 <div>
                   <div className="flex justify-between items-center mb-3">
                     <h3 className="text-lg font-semibold">Call Options</h3>
-                    <div className="text-sm text-gray-400">{optionChainData?.calls.length || 0} contracts</div>
+                      <div className="text-sm text-gray-400">{optionChainData?.calls.length || 0} contracts</div>
                   </div>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-[#30363d]">
-                        <th className="py-2 font-medium text-gray-400 text-left">Strike</th>
-                        <th className="py-2 font-medium text-gray-400 text-center">Status</th>
-                        <th className="py-2 font-medium text-gray-400 text-right">Bid</th>
-                        <th className="py-2 font-medium text-gray-400 text-right">Ask</th>
-                          <th className="py-2 font-medium text-gray-400 text-right">Action</th>
+                        <th className="px-3 py-2.5 font-medium text-gray-400 text-left">Strike {optionSide === 'calls' ? '(C)' : ''}</th>
+                        <th className="px-3 py-2.5 font-medium text-gray-400 text-center">Stat</th>
+                        <th className="px-3 py-2.5 font-medium text-gray-400 text-right">Bid</th>
+                        <th className="px-3 py-2.5 font-medium text-gray-400 text-right">Ask</th>
+                        <th className="px-3 py-2.5 font-medium text-gray-400 text-right">Mark</th>
+                        <th className="px-3 py-2.5 font-medium text-gray-400 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody>
                       {optionChainData?.calls.map((option, index) => (
                         <tr key={index} className="border-b border-[#30363d] hover:bg-[#1c2128]">
-                          <td className="py-2.5 font-medium text-white">${option.strike}</td>
-                          <td className="py-2.5 text-center">
+                          <td className="px-3 py-2.5 font-medium text-white whitespace-nowrap">${option.strike}</td>
+                          <td className="px-3 py-2.5 text-center">
                               <span
                                 className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getMoneynessBg(
                                   option.strike
                                 )} ${getMoneynessColor(option.strike)}`}
                               >
-                              {getMoneyness(option.strike)}
+                              {getMoneynessShort(option.strike)}
                             </span>
                           </td>
-                          <td className="py-2.5 text-right">${option.bid.toFixed(2)}</td>
-                          <td className="py-2.5 text-right">${option.ask.toFixed(2)}</td>
-                            <td className="py-2.5 text-right space-x-2">
+                          <td className="px-3 py-2.5 text-right font-mono">${option.bid.toFixed(2)}</td>
+                          <td className="px-3 py-2.5 text-right font-mono">${option.ask.toFixed(2)}</td>
+                          <td className="px-3 py-2.5 text-right font-mono">${(option.mark ?? ((option.bid > 0 && option.ask > 0) ? (option.bid + option.ask) / 2 : (option.last ?? 0))).toFixed(2)}</td>
+                            <td className="px-3 py-2.5 text-right space-x-1">
                               <button
                                 className="px-2 py-1 text-xs rounded bg-green-700 hover:bg-green-600"
-                                onClick={() => handleOptionOrder('buy', option)}
+                                onClick={() => {
+                                  const datePart = (selectedExpiry || '').replace(/-/g, '').slice(2);
+                                  const contractSymbol = `${currentSymbol}${datePart}C${option.strike}`;
+                                  handleOptionOrder('buy', { ...option, contractSymbol });
+                                }}
                               >
                                 Buy
                               </button>
                               <button
                                 className="px-2 py-1 text-xs rounded bg-red-700 hover:bg-red-600"
-                                onClick={() => handleOptionOrder('sell', option)}
+                                onClick={() => {
+                                  const datePart = (selectedExpiry || '').replace(/-/g, '').slice(2);
+                                  const contractSymbol = `${currentSymbol}${datePart}C${option.strike}`;
+                                  handleOptionOrder('sell', { ...option, contractSymbol });
+                                }}
                               >
                                 Sell
                               </button>
@@ -574,48 +666,60 @@ const OptionsPage: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
+                )}
 
                 {/* Put Options */}
+                {optionSide === 'puts' && (
                 <div>
                   <div className="flex justify-between items-center mb-3">
                     <h3 className="text-lg font-semibold">Put Options</h3>
-                    <div className="text-sm text-gray-400">{optionChainData?.puts.length || 0} contracts</div>
+                      <div className="text-sm text-gray-400">{optionChainData?.puts.length || 0} contracts</div>
                   </div>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-[#30363d]">
-                        <th className="py-2 font-medium text-gray-400 text-left">Strike</th>
-                        <th className="py-2 font-medium text-gray-400 text-center">Status</th>
-                        <th className="py-2 font-medium text-gray-400 text-right">Bid</th>
-                        <th className="py-2 font-medium text-gray-400 text-right">Ask</th>
-                          <th className="py-2 font-medium text-gray-400 text-right">Action</th>
+                        <th className="px-3 py-2.5 font-medium text-gray-400 text-left">Strike {optionSide === 'puts' ? '(P)' : ''}</th>
+                        <th className="px-3 py-2.5 font-medium text-gray-400 text-center">Stat</th>
+                        <th className="px-3 py-2.5 font-medium text-gray-400 text-right">Bid</th>
+                        <th className="px-3 py-2.5 font-medium text-gray-400 text-right">Ask</th>
+                        <th className="px-3 py-2.5 font-medium text-gray-400 text-right">Mark</th>
+                        <th className="px-3 py-2.5 font-medium text-gray-400 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody>
                       {optionChainData?.puts.map((option, index) => (
                         <tr key={index} className="border-b border-[#30363d] hover:bg-[#1c2128]">
-                          <td className="py-2.5 font-medium text-white">${option.strike}</td>
-                          <td className="py-2.5 text-center">
+                          <td className="px-3 py-2.5 font-medium text-white whitespace-nowrap">${option.strike}</td>
+                          <td className="px-3 py-2.5 text-center">
                               <span
                                 className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getMoneynessBg(
                                   option.strike
                                 )} ${getMoneynessColor(option.strike)}`}
                               >
-                              {getMoneyness(option.strike)}
+                              {getMoneynessShort(option.strike)}
                             </span>
                           </td>
-                          <td className="py-2.5 text-right">${option.bid.toFixed(2)}</td>
-                          <td className="py-2.5 text-right">${option.ask.toFixed(2)}</td>
-                            <td className="py-2.5 text-right space-x-2">
+                          <td className="px-3 py-2.5 text-right font-mono">${option.bid.toFixed(2)}</td>
+                          <td className="px-3 py-2.5 text-right font-mono">${option.ask.toFixed(2)}</td>
+                          <td className="px-3 py-2.5 text-right font-mono">${(option.mark ?? ((option.bid > 0 && option.ask > 0) ? (option.bid + option.ask) / 2 : (option.last ?? 0))).toFixed(2)}</td>
+                            <td className="px-3 py-2.5 text-right space-x-1">
                               <button
                                 className="px-2 py-1 text-xs rounded bg-green-700 hover:bg-green-600"
-                                onClick={() => handleOptionOrder('buy', option)}
+                                onClick={() => {
+                                  const datePart = (selectedExpiry || '').replace(/-/g, '').slice(2);
+                                  const contractSymbol = `${currentSymbol}${datePart}P${option.strike}`;
+                                  handleOptionOrder('buy', { ...option, contractSymbol });
+                                }}
                               >
                                 Buy
                               </button>
                               <button
                                 className="px-2 py-1 text-xs rounded bg-red-700 hover:bg-red-600"
-                                onClick={() => handleOptionOrder('sell', option)}
+                                onClick={() => {
+                                  const datePart = (selectedExpiry || '').replace(/-/g, '').slice(2);
+                                  const contractSymbol = `${currentSymbol}${datePart}P${option.strike}`;
+                                  handleOptionOrder('sell', { ...option, contractSymbol });
+                                }}
                               >
                                 Sell
                               </button>
@@ -625,6 +729,7 @@ const OptionsPage: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
+                )}
               </div>
             </div>
           </div>

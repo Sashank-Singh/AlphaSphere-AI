@@ -33,7 +33,7 @@ const ChartSection: React.FC<ChartSectionProps> = ({
 
   if (isLoading) {
     return (
-      <div className="p-6 rounded-lg border border-slate-700" style={{ backgroundColor: '#0E1117' }}>
+      <div className="p-6 rounded-lg border border-slate-700 overflow-hidden" style={{ backgroundColor: '#0E1117' }}>
         <div className="flex justify-between items-center mb-4">
           <SkeletonLoader variant="text" className="h-6 w-32" />
           <div className="flex space-x-1">
@@ -48,7 +48,7 @@ const ChartSection: React.FC<ChartSectionProps> = ({
   }
 
   return (
-    <div className="p-6 rounded-lg border border-slate-700" style={{ backgroundColor: '#0E1117' }}>
+    <div className="p-6 rounded-lg border border-slate-700 overflow-hidden" style={{ backgroundColor: '#0E1117' }}>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-medium text-white">{symbol} Price Chart</h2>
         <div className="flex space-x-1">
@@ -69,7 +69,7 @@ const ChartSection: React.FC<ChartSectionProps> = ({
         </div>
       </div>
       
-      <div className="h-80 bg-slate-900 rounded border border-slate-700 relative">
+      <div className="h-80 bg-slate-900 relative">
         {price > 0 ? (
           <RealTimeStockChart
             symbol={symbol}
@@ -86,19 +86,6 @@ const ChartSection: React.FC<ChartSectionProps> = ({
             <SkeletonLoader variant="chart" className="h-80" />
           </div>
         )}
-      </div>
-      
-      {/* Chart Controls */}
-      <div className="flex items-center justify-between mt-4 text-xs text-gray-400">
-        <div className="flex items-center space-x-4">
-          <span>Data: {isRealTime ? 'Live' : 'Delayed'}</span>
-          <span>Interval: {selectedTimeframe}</span>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <button className="hover:text-white transition-colors">Full Screen</button>
-          <button className="hover:text-white transition-colors">Export</button>
-        </div>
       </div>
     </div>
   );

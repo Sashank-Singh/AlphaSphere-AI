@@ -45,6 +45,7 @@ const TradingPage: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [priceUpdated, setPriceUpdated] = useState<boolean>(false);
+  const [showBackgroundFlash, setShowBackgroundFlash] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [news, setNews] = useState<Array<{ title: string; url: string; publisher?: string; publishedAt?: string; summary?: string; imageUrl?: string }>>([]);
 
@@ -89,7 +90,9 @@ const TradingPage: React.FC = () => {
         });
         
         setPriceUpdated(true);
+        setShowBackgroundFlash(true);
         setTimeout(() => setPriceUpdated(false), 1000);
+        setTimeout(() => setShowBackgroundFlash(false), 3000);
       }
     }
   }, [wsStockData, currentSymbol, stockData.price]);
@@ -193,7 +196,7 @@ const TradingPage: React.FC = () => {
   // Derived UI state handled within child components
 
   return (
-    <div className="min-h-screen text-gray-100 p-6" style={{ fontFamily: 'Inter, sans-serif', backgroundColor: '#0E1117' }}>
+         <div className="min-h-screen text-gray-100 p-6 transition-colors duration-300" style={{ fontFamily: 'Inter, sans-serif', backgroundColor: showBackgroundFlash ? (stockData.change >= 0 ? '#0a1a0a' : '#1a0a0a') : '#0E1117' }}>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {/* Stock Header Component */}
@@ -256,12 +259,12 @@ const TradingPage: React.FC = () => {
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-white group-hover:text-blue-300 leading-relaxed">{item.title}</p>
                           <p className="text-xs text-slate-400 mt-1">{item.publisher || 'Source'} • {item.publishedAt ? new Date(item.publishedAt).toLocaleString() : ''}</p>
-            </div>
-          </div>
+                        </div>
+                      </div>
                     </a>
                   ))
-                  )}
-                </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

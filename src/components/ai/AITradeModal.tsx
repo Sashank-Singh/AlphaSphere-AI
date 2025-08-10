@@ -38,100 +38,201 @@ const AITradeModal: React.FC<AITradeModalProps> = ({ stock, open, onClose, onTra
 
   // Generate AI recommendation based on real-time data
   const generateAIRecommendation = async (symbol: string, riskTolerance: string, quote: any): Promise<AIRecommendation> => {
-    const optionsData = await stockDataService.getOptionsData(symbol);
     const historicalData = await stockDataService.getHistoricalPrices(symbol, 30);
-    
-    // Calculate volatility from historical data
-    const volatility = historicalData.length > 1 ? 
-      Math.abs(historicalData[historicalData.length - 1].close - historicalData[0].close) / historicalData[0].close * 100 : 5;
-    
-    // Determine market sentiment based on price action
-    const sentiment = quote.changePercent > 2 ? 'bullish' : 
-                     quote.changePercent < -2 ? 'bearish' : 'neutral';
+
+    // Compute average volume and simple volatility from historical data
+    let avgVolume = 0;
+    let volPercent = 5; // fallback percent
+    if (Array.isArray(historicalData) && historicalData.length > 1) {
+      avgVolume = historicalData.reduce((sum, d) => sum + (Number(d.volume) || 0), 0) / historicalData.length;
+      const returns: number[] = [];
+      for (let i = 1; i < historicalData.length; i++) {
+        const prev = Number(historicalData[i - 1].close) || 0;
+        const curr = Number(historicalData[i].close) || 0;
+        if (prev > 0 && curr > 0) {
+          const r = Math.log(curr / prev);
+          if (Number.isFinite(r)) returns.push(r);
+        }
+      }
+      if (returns.length > 1) {
+        const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+        const variance = returns.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (returns.length - 1);
+        const stdev = Math.sqrt(variance);
+        volPercent = Math.max(2, Math.min(100, stdev * Math.sqrt(252) * 100)); // annualized %
+      }
+    }
+
+    // Determine market sentiment based on price action and volume spike
+    const changePct = Number(quote?.changePercent ?? 0);
+    const isVolumeSpike = avgVolume > 0 ? Number(quote?.volume || 0) > avgVolume * 1.2 : false;
+    const sentiment = changePct > 1.5 ? 'bullish' : changePct < -1.5 ? 'bearish' : 'neutral';
     setMarketSentiment(sentiment);
-    
+
     // Generate expiry date (next Friday)
     const nextFriday = new Date();
-    const daysUntilFriday = (5 - nextFriday.getDay() + 7) % 7 || 7;
+    const daysUntilFriday = ((5 - nextFriday.getDay() + 7) % 7) || 7;
     nextFriday.setDate(nextFriday.getDate() + daysUntilFriday);
-    
+
     // Calculate strike price based on current price and sentiment
-    const currentPrice = quote.price;
+    const currentPrice = Number(quote?.price ?? 0);
     let strikePrice: number;
     let optionType: 'call' | 'put';
     let confidence: 'low' | 'medium' | 'high';
     let reasoning: string;
-    
-    if (sentiment === 'bullish' && quote.volume > quote.volume * 0.8) {
+
+    if (sentiment === 'bullish' && isVolumeSpike) {
       optionType = 'call';
-      strikePrice = currentPrice * (riskTolerance === 'high' ? 1.05 : riskTolerance === 'medium' ? 1.03 : 1.02);
-      confidence = volatility > 10 ? 'high' : 'medium';
-      reasoning = `Strong bullish momentum detected with ${quote.changePercent.toFixed(2)}% gain and high volume (${(quote.volume / 1000000).toFixed(1)}M). Recommending call option to capitalize on upward trend.`;
-    } else if (sentiment === 'bearish' && quote.volume > quote.volume * 0.8) {
+      strikePrice = currentPrice * (riskTolerance === 'high' ? 1.06 : riskTolerance === 'medium' ? 1.03 : 1.01);
+      confidence = volPercent > 25 ? 'high' : 'medium';
+      reasoning = `Bullish momentum ${changePct.toFixed(2)}% with volume spike ${(quote.volume / 1_000_000).toFixed(1)}M vs avg ${(avgVolume / 1_000_000).toFixed(1)}M.`;
+    } else if (sentiment === 'bearish' && isVolumeSpike) {
       optionType = 'put';
-      strikePrice = currentPrice * (riskTolerance === 'high' ? 0.95 : riskTolerance === 'medium' ? 0.97 : 0.98);
-      confidence = volatility > 10 ? 'high' : 'medium';
-      reasoning = `Bearish pressure evident with ${Math.abs(quote.changePercent).toFixed(2)}% decline and elevated volume. Put option recommended to profit from potential further downside.`;
+      strikePrice = currentPrice * (riskTolerance === 'high' ? 0.94 : riskTolerance === 'medium' ? 0.97 : 0.99);
+      confidence = volPercent > 25 ? 'high' : 'medium';
+      reasoning = `Bearish pressure ${Math.abs(changePct).toFixed(2)}% with elevated volume ${(quote.volume / 1_000_000).toFixed(1)}M vs avg ${(avgVolume / 1_000_000).toFixed(1)}M.`;
     } else {
-      // Neutral/conservative approach
-      optionType = currentPrice > quote.previousClose ? 'call' : 'put';
-      strikePrice = currentPrice * (optionType === 'call' ? 1.02 : 0.98);
+      // Neutral/conservative approach using previous close as bias
+      optionType = currentPrice >= Number(quote?.previousClose ?? currentPrice) ? 'call' : 'put';
+      strikePrice = currentPrice * (optionType === 'call' ? 1.01 : 0.99);
       confidence = 'low';
-      reasoning = `Mixed signals in current market conditions. Conservative ${optionType} option suggested based on slight ${optionType === 'call' ? 'upward' : 'downward'} bias.`;
+      reasoning = `Mixed signals, leaning ${optionType} with modest moneyness given ${changePct.toFixed(2)}% move.`;
     }
-    
-    // Calculate premium based on volatility and time to expiry
-    const timeValue = Math.max(1, daysUntilFriday / 7);
-    const intrinsicValue = optionType === 'call' ? 
-      Math.max(0, currentPrice - strikePrice) : 
-      Math.max(0, strikePrice - currentPrice);
-    const premium = intrinsicValue + (volatility / 100 * currentPrice * timeValue * 0.1);
-    
+
+    // Round strike to whole dollar
+    strikePrice = Math.max(1, Math.round(strikePrice));
+
+    // Helper: basic ETF detector (common liquid ETFs)
+    const isEtfSymbol = (s: string): boolean => {
+      const upper = s.toUpperCase();
+      const known = new Set(['SPY','QQQ','DIA','IWM','VTI','VOO','GLD','SLV','XLF','XLK','XLE','XLY','XLI','XLP','XLU','XLV','XLB','XLC','SMH','SOXL','TQQQ','SQQQ','UVXY','VXX']);
+      return stock?.isEtf === true || known.has(upper);
+    };
+
+    // Try to fetch real option prices for nearest strike/type with correct expiry policy
+    let selectedPremium = 0;
+    let selectedStrike = strikePrice;
+    let selectedExpiry = nextFriday;
+    let selectedSymbolLabel = `${symbol} ${nextFriday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${strikePrice}${optionType.charAt(0).toUpperCase()}`;
+    try {
+      const expirations = await stockDataService.getOptionsExpirations(symbol);
+      let targetExpiry: string | undefined = undefined;
+      if (Array.isArray(expirations) && expirations.length > 0) {
+        if (isEtfSymbol(symbol)) {
+          // ETFs: pick earliest available (daily expiries preferred)
+          targetExpiry = expirations[0].date;
+        } else {
+          // Stocks: pick nearest Friday; fallback to earliest
+          const friday = expirations.find(e => new Date(e.date).getDay() === 5);
+          targetExpiry = (friday?.date) || expirations[0].date;
+        }
+      }
+
+      if (targetExpiry) {
+        const chain = await stockDataService.getOptionsChain(symbol, targetExpiry, 60);
+        const list = optionType === 'call' ? (chain?.calls || []) : (chain?.puts || []);
+        if (Array.isArray(list) && list.length > 0) {
+          // Pick contract nearest to desired strike; break ties by higher volume
+          const sorted = [...list].sort((a: any, b: any) => {
+            const da = Math.abs(Number(a.strike) - strikePrice);
+            const db = Math.abs(Number(b.strike) - strikePrice);
+            if (da === db) return (Number(b.volume) || 0) - (Number(a.volume) || 0);
+            return da - db;
+          });
+          const best = sorted[0];
+          if (best) {
+            const bid = Number(best.bid ?? 0);
+            const ask = Number(best.ask ?? 0);
+            const mid = (bid > 0 && ask > 0) ? (bid + ask) / 2 : Math.max(bid, ask);
+            if (mid > 0) selectedPremium = Number(mid.toFixed(2));
+            selectedStrike = Number(best.strike ?? strikePrice) || strikePrice;
+            // Parse YYYY-MM-DD as local noon to avoid timezone shifting to previous day
+            const expStr = String(best.expiration || targetExpiry);
+            const [yy, mm, dd] = expStr.split('-').map((v) => Number(v));
+            selectedExpiry = new Date(yy, (mm || 1) - 1, dd || 1, 12, 0, 0, 0);
+            selectedSymbolLabel = String(best.contractSymbol || selectedSymbolLabel);
+          }
+        }
+      }
+    } catch (e) {
+      // Fallback to model-based premium if live chain lookup fails
+    }
+
+    if (selectedPremium <= 0) {
+      // Calculate premium based on volatility and time to expiry as fallback
+      const timeValue = Math.max(0.2, daysUntilFriday / 7);
+      const intrinsicValue = optionType === 'call' ?
+        Math.max(0, currentPrice - strikePrice) :
+        Math.max(0, strikePrice - currentPrice);
+      selectedPremium = Number((intrinsicValue + (volPercent / 100) * currentPrice * timeValue * 0.08).toFixed(2));
+    }
+
     return {
       symbol,
       confidence,
       optionContract: {
         id: `${symbol}_${Date.now()}`,
         stockId: symbol,
-        symbol: `${symbol} ${nextFriday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${strikePrice.toFixed(0)}${optionType.charAt(0).toUpperCase()}`,
+        symbol: selectedSymbolLabel,
         type: optionType,
-        strikePrice,
-        expiryDate: nextFriday,
-        premium: Math.max(0.05, premium)
+        strikePrice: selectedStrike,
+        expiryDate: selectedExpiry,
+        premium: Math.max(0.05, selectedPremium)
       },
       reasoning
     };
   };
 
   useEffect(() => {
-    if (open && user) {
-      setIsLoading(true);
-      
-      const fetchRealTimeData = async () => {
+    if (!open) return;
+    setIsLoading(true);
+
+    let unsub: null | (() => void) = null;
+    let cancelled = false;
+
+    const init = async () => {
+      try {
+        // Initial fetch to warm state
+        const quote = await stockDataService.getStockQuote(stock.symbol);
+        if (cancelled) return;
+        setRealTimeQuote(quote);
+        setLastUpdated(new Date());
+        const risk = user?.riskTolerance ?? 'medium';
+        const rec = await generateAIRecommendation(stock.symbol, risk, quote);
+        if (cancelled) return;
+        setRecommendation(rec);
+      } catch (error) {
+        console.error('Error initializing AI trade modal data:', error);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    init();
+
+    // Subscribe to real-time quotes
+    try {
+      unsub = stockDataService.subscribe(stock.symbol, async (q) => {
+        setRealTimeQuote(q);
+        setLastUpdated(new Date());
         try {
-          // Get real-time quote
-          const quote = await stockDataService.getStockQuote(stock.symbol);
-          setRealTimeQuote(quote);
-          setLastUpdated(new Date());
-          
-          // Generate AI recommendation based on real-time data
-          const rec = await generateAIRecommendation(stock.symbol, user.riskTolerance, quote);
+          const risk = user?.riskTolerance ?? 'medium';
+          const rec = await generateAIRecommendation(stock.symbol, risk, q);
           setRecommendation(rec);
-        } catch (error) {
-          console.error('Error fetching real-time data:', error);
-        } finally {
-          setIsLoading(false);
+        } catch (e) {
+          console.error('Error updating AI recommendation from live quote:', e);
         }
-      };
-      
-      fetchRealTimeData();
-      
-      // Set up real-time updates every 10 seconds
-      const interval = setInterval(fetchRealTimeData, 10000);
-      
-      return () => clearInterval(interval);
+      });
+    } catch (e) {
+      console.error('Failed to subscribe to live quotes for AITradeModal:', e);
     }
-  }, [open, stock.symbol, user]);
+
+    return () => {
+      cancelled = true;
+      if (unsub) {
+        try { unsub(); } catch {}
+      }
+    };
+  }, [open, stock.symbol, user?.riskTolerance]);
 
   const handleTrade = async () => {
     if (!recommendation) return;
@@ -162,7 +263,7 @@ const AITradeModal: React.FC<AITradeModalProps> = ({ stock, open, onClose, onTra
   
   // Calculate maximum contracts user can afford
   const contractCost = recommendation ? recommendation.optionContract.premium * 100 : 0;
-  const maxContracts = Math.floor(portfolio.cash / contractCost);
+  const maxContracts = contractCost > 0 ? Math.floor(portfolio.cash / contractCost) : 0;
   const estimatedCost = parseInt(quantity || '0') * contractCost;
   const canAfford = estimatedCost <= portfolio.cash;
 
