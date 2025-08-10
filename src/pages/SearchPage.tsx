@@ -207,7 +207,11 @@ const SearchPage: React.FC = () => {
               ) : results.length > 0 ? (
                 <div className="space-y-4">
                   {results.map((stock) => (
-                    <div key={stock.symbol} className="bg-card p-4 rounded-lg border border-card hover:border-gray-600 transition-colors">
+                    <div
+                      key={stock.symbol}
+                      className="bg-card p-4 rounded-lg border border-card hover:border-gray-600 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/stocks/${stock.symbol}`)}
+                    >
                       <div className="flex justify-between items-center">
                         <div className="flex items-center space-x-4">
                           <div>
@@ -231,13 +235,19 @@ const SearchPage: React.FC = () => {
                           
                           <div className="flex space-x-2">
                             <button
-                              onClick={() => handleQuickTrade(stock.symbol, 'buy')}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuickTrade(stock.symbol, 'buy');
+                              }}
                               className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
                             >
                               Buy
                             </button>
                             <button
-                              onClick={() => handleQuickTrade(stock.symbol, 'sell')}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuickTrade(stock.symbol, 'sell');
+                              }}
                               className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
                             >
                               Sell

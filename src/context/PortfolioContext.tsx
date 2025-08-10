@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Portfolio, Transaction, Position, OptionContract, Stock } from '@/types';
 import { mockPortfolio, getStockBySymbol } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 interface PortfolioContextType {
   portfolio: Portfolio;
@@ -17,6 +18,12 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [portfolio, setPortfolio] = useState<Portfolio>(mockPortfolio);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Check if user is in paper money mode or live mode
+  const isPaperMoney = user?.tradingMode === 'paper';
+  const isLiveMode = user?.tradingMode === 'live';
+  const isYCDemo = user?.email === 'YCdemo@gmail.com';
 
   useEffect(() => {
     const loadPortfolio = async () => {
@@ -25,10 +32,60 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (savedPortfolio) {
           const parsedPortfolio = JSON.parse(savedPortfolio);
           // Ensure all fields are present, falling back to mock data if not
-          setPortfolio({
+          let portfolioToSet = {
             ...mockPortfolio,
             ...parsedPortfolio,
-          });
+          };
+          
+          // YC demo rules:
+          // - Live mode: show $0
+          // - Paper mode: show $100,000
+          if (isYCDemo) {
+            if (isLiveMode) {
+              portfolioToSet = {
+                ...portfolioToSet,
+                cash: 0,
+                totalValue: 0,
+                positions: [],
+                optionPositions: [],
+                transactions: []
+              };
+            } else if (isPaperMoney) {
+              portfolioToSet = {
+                ...portfolioToSet,
+                cash: 100000,
+                totalValue: 100000,
+                positions: [],
+                optionPositions: [],
+                transactions: []
+              };
+            }
+          }
+          
+          setPortfolio(portfolioToSet);
+        } else if (isYCDemo) {
+          // If no saved portfolio and YC demo user
+          if (isLiveMode) {
+            const zeroPortfolio = {
+              ...mockPortfolio,
+              cash: 0,
+              totalValue: 0,
+              positions: [],
+              optionPositions: [],
+              transactions: []
+            };
+            setPortfolio(zeroPortfolio);
+          } else if (isPaperMoney) {
+            const paperPortfolio = {
+              ...mockPortfolio,
+              cash: 100000,
+              totalValue: 100000,
+              positions: [],
+              optionPositions: [],
+              transactions: []
+            };
+            setPortfolio(paperPortfolio);
+          }
         }
       } catch (error) {
         console.error('Error loading portfolio from storage:', error);
@@ -38,7 +95,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
 
     loadPortfolio();
-  }, []);
+  }, [isPaperMoney, isLiveMode, isYCDemo]);
 
   const executeStockTrade = async (symbol: string, quantity: number, price: number, type: 'buy' | 'sell'): Promise<boolean> => {
     try {
@@ -57,8 +114,11 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       const total = quantity * price;
       
-      // Check if user can afford the trade (for buys)
-      if (type === 'buy' && total > portfolio.cash) {
+      // For YC demo user, allow all trades without restrictions
+      const isYCDemo = user?.email === 'YCdemo@gmail.com';
+      
+      // Check if user can afford the trade (for buys) - only check for non-YC demo users
+      if (type === 'buy' && !isYCDemo && !isPaperMoney && !isLiveMode && total > portfolio.cash) {
         toast({
           title: "Insufficient Funds",
           description: "You don't have enough cash for this trade.",
@@ -67,8 +127,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return false;
       }
       
-      // Check if user has enough shares (for sells)
-      if (type === 'sell') {
+      // Check if user has enough shares (for sells) - only for non-YC demo users
+      if (type === 'sell' && !isYCDemo) {
         const position = portfolio.positions.find(p => p.symbol === symbol);
         if (!position || position.quantity < quantity) {
           toast({
@@ -92,7 +152,29 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         total: type === 'buy' ? total : -total,
       };
       
-      // Update positions
+      // For YC demo user in LIVE mode, keep portfolio at $0
+      if (isYCDemo && isLiveMode) {
+        const demoPortfolio = {
+          ...portfolio,
+          cash: 0,
+          totalValue: 0,
+          positions: [],
+          optionPositions: [],
+          transactions: [transaction, ...portfolio.transactions]
+        };
+        
+        setPortfolio(demoPortfolio);
+        localStorage.setItem('tradingAppPortfolio', JSON.stringify(demoPortfolio));
+        
+        toast({
+          title: "Demo Trade Executed",
+          description: `Demo: ${type === 'buy' ? 'Bought' : 'Sold'} ${quantity} shares of ${symbol}`,
+        });
+        
+        return true;
+      }
+      
+      // Update positions for non-YC demo users
       let updatedPositions: Position[] = [...portfolio.positions];
       const existingPosition = updatedPositions.find(p => p.symbol === symbol);
       
@@ -136,9 +218,11 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
       
       // Update cash
-      const newCash = type === 'buy' 
-        ? portfolio.cash - total 
-        : portfolio.cash + total;
+      const newCash = isLiveMode
+        ? 0
+        : (type === 'buy'
+          ? portfolio.cash - total
+          : portfolio.cash + total);
       
       // Calculate new total value (cash + positions value)
       const positionsValue = updatedPositions.reduce(
@@ -237,8 +321,11 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return false;
       }
       
-      // Check if user can afford the trade (for buys)
-      if (type === 'buy' && total > portfolio.cash) {
+      // For YC demo user, allow all trades without restrictions
+      const isYCDemo = user?.email === 'YCdemo@gmail.com';
+      
+      // Check if user can afford the trade (for buys) - only check for non-YC demo users
+      if (type === 'buy' && !isYCDemo && !isPaperMoney && !isLiveMode && total > portfolio.cash) {
         console.warn('[PortfolioContext] Insufficient funds. Needed:', total, 'Available:', portfolio.cash);
         toast({
           title: "Insufficient Funds",
@@ -267,12 +354,36 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         },
       };
       
-      // Update cash
-      const newCash = type === 'buy' 
-        ? portfolio.cash - total 
-        : portfolio.cash + total;
+      // For YC demo user in LIVE mode, keep portfolio at $0
+      if (isYCDemo && isLiveMode) {
+        const demoPortfolio = {
+          ...portfolio,
+          cash: 0,
+          totalValue: 0,
+          positions: [],
+          optionPositions: [],
+          transactions: [transaction, ...portfolio.transactions]
+        };
+        
+        setPortfolio(demoPortfolio);
+        localStorage.setItem('tradingAppPortfolio', JSON.stringify(demoPortfolio));
+        
+        toast({
+          title: "Demo Option Trade Executed",
+          description: `Demo: ${type === 'buy' ? 'Bought' : 'Sold'} ${quantity} ${processedOption.type} option(s) for ${processedOption.symbol}`,
+        });
+        
+        return true;
+      }
       
-      // Update option positions
+      // Update cash
+      const newCash = isLiveMode
+        ? 0 
+        : (type === 'buy' 
+          ? portfolio.cash - total 
+          : portfolio.cash + total);
+      
+      // Update option positions for non-YC demo users
       let updatedOptionPositions = [...portfolio.optionPositions];
       
       // Helper function to compare dates by converting to ISO strings and comparing just the date part

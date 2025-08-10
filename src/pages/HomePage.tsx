@@ -230,7 +230,6 @@ const HomePage: React.FC = () => {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/icon-removebg.png" alt="AlphaSphere" className="w-8 h-8" />
             <span className="text-xl font-bold text-gray-900">AlphaSphere</span>
           </Link>
           
@@ -773,7 +772,7 @@ const HomePage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
             <div>
               <Link to="/" className="flex items-center gap-2 mb-4">
-                <img src="/icon.png" alt="AlphaSphere" className="w-6 h-6" />
+                <BarChart3 className="w-6 h-6 text-gray-900" />
                 <span className="text-lg font-bold text-gray-900">AlphaSphere</span>
               </Link>
               <p className="text-gray-600 text-sm leading-relaxed">

@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import BottomNavBar from './BottomNavBar';
+import { SphereAI } from './SphereAI';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
@@ -65,6 +66,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           )}
         </div>
         <BottomNavBar />
+        <SphereAI isFloating={true} />
       </>
     );
   }
@@ -86,6 +88,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {children}
         </main>
       </div>
+      <SphereAI isFloating={true} />
     </div>
   );
 };

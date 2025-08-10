@@ -1,5 +1,5 @@
 // Sentiment Analysis Service
-import { fetchRealTimeStockPrice } from './polygonApi';
+import { stockDataService } from './stockDataService';
 
 export interface SentimentData {
   overall: number;
@@ -108,14 +108,10 @@ export const fetchInsiderSentiment = async (symbol: string): Promise<number> => 
  */
 export const calculateTechnicalSentiment = async (symbol: string): Promise<number> => {
   try {
-    const stockData = await fetchRealTimeStockPrice(symbol);
-    
-    // Simple technical sentiment based on price vs previous close
-    if (stockData && typeof stockData === 'object' && 'changePercent' in stockData) {
-      const priceChange = stockData.changePercent as number;
-      // Normalize to 0-1 scale (assuming normal daily range is -5% to +5%)
-      return Math.min(Math.max((priceChange + 5) / 10, 0), 1);
-    }
+    const quote = await stockDataService.getStockQuote(symbol);
+    const priceChange = quote?.changePercent ?? 0;
+    // Normalize to 0-1 scale (assuming normal daily range is -5% to +5%)
+    return Math.min(Math.max((priceChange + 5) / 10, 0), 1);
     
     return generateMockSentiment(symbol, 0.5, 0.1);
   } catch (error) {

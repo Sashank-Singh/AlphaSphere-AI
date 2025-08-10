@@ -10,6 +10,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name: string) => Promise<void>;
   signOut: () => void;
   updateUser: (userData: Partial<User>) => void;
+  toggleTradingMode: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,12 +44,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // In a real app, we would validate credentials
-      // For demo purposes, just use the mock user
-      setUser(mockUser);
-      
-      // Save to localStorage (for web)
-      localStorage.setItem('tradingAppUser', JSON.stringify(mockUser));
+      // Validate YC demo credentials
+      if (email === 'YCdemo@gmail.com' && password === 'YCdemo') {
+        setUser(mockUser);
+        
+        // Save to localStorage (for web)
+        localStorage.setItem('tradingAppUser', JSON.stringify(mockUser));
+      } else {
+        throw new Error('Invalid credentials. Please use YCdemo@gmail.com / YCdemo');
+      }
     } catch (error) {
       console.error('Sign in error:', error);
       throw error;
@@ -70,6 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name,
         riskTolerance: 'medium',
         aiBudget: 1000,
+        tradingMode: 'paper',
       };
       
       setUser(newUser);
@@ -97,8 +102,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const toggleTradingMode = () => {
+    if (user) {
+      const updatedUser = {
+        ...user,
+        tradingMode: user.tradingMode === 'paper' ? 'live' as const : 'paper' as const,
+      };
+      setUser(updatedUser);
+      localStorage.setItem('tradingAppUser', JSON.stringify(updatedUser));
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, signIn, signUp, signOut, updateUser }}>
+    <AuthContext.Provider value={{ user, isLoading, signIn, signUp, signOut, updateUser, toggleTradingMode }}>
       {children}
     </AuthContext.Provider>
   );

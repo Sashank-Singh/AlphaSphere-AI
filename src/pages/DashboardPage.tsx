@@ -12,6 +12,7 @@ import QuickActions from '@/components/dashboard/QuickActions';
 import TopMovers from '@/components/dashboard/TopMovers';
 import AIPortfolioOptimizer from '@/components/dashboard/AIPortfolioOptimizer';
 
+
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const { portfolio } = usePortfolio();
@@ -55,6 +56,7 @@ const DashboardPage: React.FC = () => {
               <MarketPulse />
               <SmartAlerts />
               <AIPortfolioOptimizer />
+              
             </div>
           </div>
 

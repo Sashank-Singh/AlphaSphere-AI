@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { CandlestickChart, ChevronsDown, ChevronsUp, Volume2, VolumeX, BarChart2, Sparkles, LineChart } from 'lucide-react';
 import StockInfoCard from './StockInfoCard';
 import StockAnalysisPanel from './StockAnalysisPanel';
-import AITradeModal from './AITradeModal';
+import AITradeModal from './ai/AITradeModal';
 import TradeModal from './TradeModal';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { stockDataService } from '@/lib/stockDataService';
 import type { CompanyInfo } from '@/lib/stockDataService';
-import { usePolygonWebSocketData } from '@/hooks/usePolygonWebSocket';
+import { useYahooFinanceData } from '@/hooks/useYahooFinanceData';
 
 // Price data structure from TradingView
 interface TVPriceData {
@@ -130,7 +130,7 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
   const tvWidgetRef = useRef<TVWidget | null>(null);
   const priceUpdateIntervalRef = useRef<number | null>(null);
 
-  const { stockData } = usePolygonWebSocketData([symbol]);
+  const { stockData } = useYahooFinanceData([symbol]);
   const real = stockData[symbol];
 
   // Effect to load the TradingView script
@@ -192,17 +192,61 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
   }, [symbol]);
 
   // Function to determine the correct exchange for a symbol
-  const getSymbolWithExchange = (symbol: string) => {
+  const getSymbolWithExchange = (rawSymbol: string) => {
+    if (!rawSymbol) return '';
+
+    // Normalize
+    let symbol = rawSymbol.trim();
+    // Handle URL-encoded caret from routes like %5EVIX
+    symbol = symbol.replace(/^%5E/i, '^');
+    const upper = symbol.toUpperCase();
+
     // If symbol already includes exchange, return as is
-    if (symbol.includes(':')) {
-      return symbol;
+    if (upper.includes(':')) {
+      return upper;
     }
 
-    // Common ETFs and their exchanges
-    const etfExchanges: { [key: string]: string } = {
-      // SPDR ETFs - try different exchange formats
+    // Map common indices, futures, and special symbols
+    const indexMap: Record<string, string> = {
+      // Volatility index
+      'VIX': 'CBOE:VIX',
+      '^VIX': 'CBOE:VIX',
+      // US broad indices
+      'GSPC': 'SP:SPX',
+      '^GSPC': 'SP:SPX',
+      'SPX': 'SP:SPX',
+      'DJI': 'DJ:DJI',
+      '^DJI': 'DJ:DJI',
+      'IXIC': 'NASDAQ:IXIC',
+      '^IXIC': 'NASDAQ:IXIC',
+      'NDX': 'NASDAQ:NDX',
+      '^NDX': 'NASDAQ:NDX',
+      'RUT': 'TVC:RUT',
+      '^RUT': 'TVC:RUT',
+      // Dollar index and yields
+      'DXY': 'TVC:DXY',
+      'US10Y': 'TVC:US10Y',
+      'US02Y': 'TVC:US02Y',
+      'US30Y': 'TVC:US30Y',
+      // Front contracts / popular futures
+      'ES1!': 'CME_MINI:ES1!',
+      'NQ1!': 'CME_MINI:NQ1!',
+      'YM1!': 'CBOT_MINI:YM1!',
+      'RTY1!': 'CME_MINI:RTY1!',
+      'CL1!': 'NYMEX:CL1!',
+      'GC1!': 'COMEX:GC1!',
+      'SI1!': 'COMEX:SI1!'
+    };
+
+    if (indexMap[upper]) {
+      return indexMap[upper];
+    }
+
+    // ETFs and common exchange routing
+    const etfExchanges: Record<string, string> = {
+      // SPDR ETFs
       'SPY': 'AMEX',
-      'XLF': 'NYSEARCA', 
+      'XLF': 'NYSEARCA',
       'XLK': 'NYSEARCA',
       'XLE': 'NYSEARCA',
       'XLI': 'NYSEARCA',
@@ -213,7 +257,6 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
       'XLB': 'NYSEARCA',
       'XLRE': 'NYSEARCA',
       'XLC': 'NYSEARCA',
-      
       // Vanguard ETFs
       'VTI': 'NYSEARCA',
       'VOO': 'NYSEARCA',
@@ -224,7 +267,6 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
       'VB': 'NYSEARCA',
       'VO': 'NYSEARCA',
       'VV': 'NYSEARCA',
-      
       // iShares ETFs
       'IWM': 'NYSEARCA',
       'EFA': 'NYSEARCA',
@@ -234,7 +276,6 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
       'IYR': 'NYSEARCA',
       'GLD': 'NYSEARCA',
       'SLV': 'NYSEARCA',
-      
       // Other popular ETFs
       'QQQ': 'NASDAQ',
       'DIA': 'NYSEARCA',
@@ -245,13 +286,43 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ symbol }) => {
       'VXUS': 'NASDAQ'
     };
 
-    // Check if it's a known ETF
-    if (etfExchanges[symbol]) {
-      return `${etfExchanges[symbol]}:${symbol}`;
+    if (etfExchanges[upper]) {
+      return `${etfExchanges[upper]}:${upper}`;
     }
 
-    // Default to NASDAQ for stocks and unknown symbols
-    return `NASDAQ:${symbol}`;
+    // Yahoo-style caret indices without explicit map
+    if (upper.startsWith('^')) {
+      const withoutCaret = upper.slice(1);
+      if (indexMap[withoutCaret]) return indexMap[withoutCaret];
+      // Fallback to pass-through without exchange (TV may resolve)
+      return withoutCaret;
+    }
+
+    // Yahoo-style dash tickers like BRK-B -> TradingView uses dot
+    const normalizedTicker = upper.includes('-') ? upper.replace('-', '.') : upper;
+
+    // Forex pairs like EURUSD, USDJPY
+    if (/^[A-Z]{6}$/.test(normalizedTicker)) {
+      return `FX:${normalizedTicker}`;
+    }
+
+    // Crypto pairs
+    if (/^[A-Z]{2,10}USDT$/.test(normalizedTicker)) {
+      return `BINANCE:${normalizedTicker}`;
+    }
+    if (/^[A-Z]{2,10}USD$/.test(normalizedTicker)) {
+      // Prefer COINBASE for USD pairs when available
+      return `COINBASE:${normalizedTicker}`;
+    }
+
+    // Futures generic pattern (if user passed without exchange)
+    if (/^[A-Z]{1,4}\d!$/.test(normalizedTicker)) {
+      // Let TV attempt to resolve without forcing a possibly wrong exchange
+      return normalizedTicker;
+    }
+
+    // Default: pass raw normalized ticker and let TradingView resolve
+    return normalizedTicker;
   };
 
   // Create/recreate the TradingView widget when all conditions are met

@@ -157,7 +157,7 @@ const AIPortfolioOptimizer: React.FC = () => {
       <div className="flex justify-between items-baseline mb-4">
         <h2 className="text-lg font-semibold text-main flex items-center">
           <span className="icon mr-2">psychology</span> 
-          AI Portfolio Optimizer
+           Portfolio Optimizer
         </h2>
         <span className="text-xs text-secondary flex items-center">
           <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>Live

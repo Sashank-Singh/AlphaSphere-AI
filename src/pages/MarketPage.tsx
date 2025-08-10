@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { usePolygonWebSocketData } from '@/hooks/usePolygonWebSocket';
+import { useYahooFinanceData } from '@/hooks/useYahooFinanceData';
 import { stockDataService, StockQuote } from '@/lib/stockDataService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { MarketOverview, TopStock, MarketIndex, Sector } from '@/types';
@@ -86,8 +86,8 @@ const REALTIME_SYMBOLS = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'META
 
 const MarketPage: React.FC = () => {
   const navigate = useNavigate();
-  // Use Polygon WebSocket for real-time stock data
-  const { stockData, isConnected } = usePolygonWebSocketData(REALTIME_SYMBOLS);
+  // Use Yahoo Finance for real-time stock data
+  const { stockData, isConnected } = useYahooFinanceData(REALTIME_SYMBOLS);
 
   const [marketOverview, setMarketOverview] = useState<MarketOverview>(initialMarketOverview);
   const [indices, setIndices] = useState<MarketIndex[]>([]);

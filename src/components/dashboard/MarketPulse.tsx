@@ -9,14 +9,19 @@ interface MarketData {
     changePercent: number;
     volume: number;
   };
-  vix: number;
+  vix: {
+    price: number;
+    change?: number;
+    changePercent?: number;
+    // You can add more fields if your VIX API returns them
+  };
 }
 
 const MarketPulse: React.FC = () => {
   const navigate = useNavigate();
   const [marketData, setMarketData] = useState<MarketData>({
     spy: { price: 0, change: 0, changePercent: 0, volume: 0 },
-    vix: 18.2
+    vix: { price: 0 }
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -24,13 +29,12 @@ const MarketPulse: React.FC = () => {
     const fetchMarketData = async () => {
       try {
         setIsLoading(true);
-        
+
         // Fetch SPY data
         const spyQuote = await stockDataService.getStockQuote('SPY');
-        
-        // Calculate VIX (simplified - in real app this would come from a VIX API)
-        const vix = Math.max(10, Math.min(30, 18.2 + (Math.random() - 0.5) * 2));
-        
+        // Fetch VIX real-time data
+        const vixQuote = await stockDataService.getStockQuote('^VIX');
+
         setMarketData({
           spy: {
             price: spyQuote.price,
@@ -38,7 +42,11 @@ const MarketPulse: React.FC = () => {
             changePercent: spyQuote.changePercent,
             volume: spyQuote.volume
           },
-          vix: vix
+          vix: {
+            price: vixQuote.price,
+            change: vixQuote.change,
+            changePercent: vixQuote.changePercent
+          }
         });
       } catch (error) {
         console.error('Error fetching market data:', error);
@@ -48,7 +56,7 @@ const MarketPulse: React.FC = () => {
     };
 
     fetchMarketData();
-    
+
     // Update every 10 seconds
     const interval = setInterval(fetchMarketData, 10000);
     return () => clearInterval(interval);
@@ -113,7 +121,7 @@ const MarketPulse: React.FC = () => {
           
           <div className="flex justify-between items-center text-sm mt-4">
             <span className="text-secondary">VIX</span>
-            <span className="text-main">{marketData.vix.toFixed(1)}</span>
+            <span className="text-main">{marketData.vix.price !== undefined ? marketData.vix.price.toFixed(2) : '--'}</span>
           </div>
           <div className="flex justify-between items-center text-sm mt-2">
             <span className="text-secondary">SPY Trading Volume</span>

@@ -21,10 +21,11 @@ export interface Sector {
 // Mock User
 export const mockUser: User = {
   id: '1',
-  email: 'user@example.com',
-  name: 'John Doe',
+  email: 'YCdemo@gmail.com',
+  name: 'YC Demo User',
   riskTolerance: 'medium',
   aiBudget: 1000,
+  tradingMode: 'paper',
 };
 
 // Mock Stocks

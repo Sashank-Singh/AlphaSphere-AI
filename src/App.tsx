@@ -8,6 +8,8 @@ import OptionsPage from '@/pages/OptionsPage';
 import SettingsPage from '@/pages/SettingsPage';
 import CommunityPage from '@/pages/CommunityPage';
 import TradingPage from '@/pages/TradingPage';
+import AITradingPage from '@/pages/AITradingPage';
+import TestPage from '@/pages/TestPage';
 import AuthPage from '@/pages/AuthPage';
 import AnalyticsPage from '@/pages/AnalyticsPage';
 import SearchPage from '@/pages/SearchPage';
@@ -46,11 +48,6 @@ const AppContent: React.FC = () => {
             <ImprovedStockDetailPage />
           </Layout>
         } />
-        <Route path="/stocks/:ticker" element={
-          <Layout>
-            <ImprovedStockDetailPage />
-          </Layout>
-        } />
         <Route path="/trading" element={
           <Layout>
             <TradingPage />
@@ -59,6 +56,16 @@ const AppContent: React.FC = () => {
         <Route path="/trading/:symbol" element={
           <Layout>
             <TradingPage />
+          </Layout>
+        } />
+        <Route path="/ai-trading" element={
+          <Layout>
+            <AITradingPage />
+          </Layout>
+        } />
+        <Route path="/test" element={
+          <Layout>
+            <TestPage />
           </Layout>
         } />
         <Route path="/options" element={

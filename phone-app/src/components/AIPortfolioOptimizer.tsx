@@ -82,7 +82,7 @@ const AIPortfolioOptimizer: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Feather name="pie-chart" size={20} color="#3B82F6" />
-        <Text style={styles.title}>AI Portfolio Optimizer</Text>
+        <Text style={styles.title}>Portfolio Optimizer</Text>
         <View style={styles.liveBadge}>
           <Feather name="zap" size={12} color="#FBBF24" />
           <Text style={styles.liveText}>Live</Text>

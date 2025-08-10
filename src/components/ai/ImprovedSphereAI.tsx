@@ -135,7 +135,7 @@ const ImprovedSphereAI: React.FC<ImprovedSphereAIProps> = ({ isFloating = false 
             return `${stock.symbol} ${strategy} - Strike $${strike} (IV: ${(Math.abs(stock.changePercent) * 2 + 20).toFixed(1)}%)`;
           });
 
-        case 'market-analysis':
+        case 'market-analysis': {
           const marketSentiment = spyData.data ? 
             (spyData.data.changePercent > 0.5 ? 'Bullish' : 
              spyData.data.changePercent < -0.5 ? 'Bearish' : 'Neutral') : 'Mixed';
@@ -147,8 +147,9 @@ const ImprovedSphereAI: React.FC<ImprovedSphereAIProps> = ({ isFloating = false 
             `Options Flow: ${(vixData.data?.price || 20) > 25 ? 'High put activity' : 'Balanced call/put ratio'}`,
             `Risk Assessment: ${marketSentiment === 'Bullish' ? 'Moderate risk-on' : 'Risk-off environment'}`
           ];
+        }
 
-        case 'portfolio-review':
+        case 'portfolio-review': {
           const avgChange = validStocks.reduce((sum, stock) => sum + stock.changePercent, 0) / validStocks.length;
           return [
             `Portfolio Performance: ${avgChange > 0 ? 'Outperforming' : 'Underperforming'} market (${avgChange.toFixed(2)}%)`,
@@ -157,6 +158,7 @@ const ImprovedSphereAI: React.FC<ImprovedSphereAIProps> = ({ isFloating = false 
             `Rebalancing Signal: ${Math.abs(avgChange) > 3 ? 'Immediate action recommended' : 'Monitor closely'}`,
             `Next Review: ${avgChange > 2 ? 'Weekly' : 'Monthly'} monitoring suggested`
           ];
+        }
 
         default:
           return ['Real-time analysis complete'];

@@ -82,7 +82,7 @@ const AIMarketSentiment: React.FC = () => {
     <div>
       <h3 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2 mb-6">
         <PieChart className="h-5 w-5 text-primary" />
-        AI Portfolio Optimizer
+         Portfolio Optimizer
         <Badge variant="secondary" className="ml-auto">
           <Zap className="h-3 w-3 mr-1" />
           Live

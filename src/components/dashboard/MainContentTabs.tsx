@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { PieChart, MessageSquare } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
-import ImprovedSphereAI from '@/components/ImprovedSphereAI';
 import CommunityPage from '@/pages/CommunityPage';
 
 const MainContentTabs: React.FC = () => {
@@ -88,7 +87,12 @@ const MainContentTabs: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="ai-insights" className="mt-6">
-          <ImprovedSphereAI />
+          <div className="text-center p-8">
+            <h3 className="text-lg font-semibold mb-2">AI Insights</h3>
+            <p className="text-muted-foreground">
+              Use the floating SphereAI button for real-time AI insights and analysis.
+            </p>
+          </div>
         </TabsContent>
 
         <TabsContent value="community" className="mt-6">
@@ -102,7 +106,12 @@ const MainContentTabs: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="alerts" className="mt-6">
-          <ImprovedSphereAI />
+          <div className="text-center p-8">
+            <h3 className="text-lg font-semibold mb-2">Smart Alerts</h3>
+            <p className="text-muted-foreground">
+              Use the floating SphereAI button to set up smart trading alerts and notifications.
+            </p>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

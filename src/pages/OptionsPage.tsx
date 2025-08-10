@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Search, ArrowLeft, BrainCircuit, Percent, Wifi, WifiOff, Calculator, BarChart2, Building2 } from 'lucide-react';
-import OptionChain from '@/components/OptionChain';
-import RealTimeStockChart from '@/components/RealTimeStockChart';
-import OptionsChart from '@/components/OptionsChart';
-import { usePolygonWebSocketData } from '@/hooks/usePolygonWebSocket';
+import { WifiOff, RefreshCw, Layers, AlertCircle } from 'lucide-react';
+import { useYahooFinanceData } from '@/hooks/useYahooFinanceData';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { stockDataService } from '@/lib/stockDataService';
-import { yahooFinanceService, OptionChainData } from '@/lib/yahooFinanceService';
+import { toast } from '@/components/ui/use-toast';
+import StockHeader from '@/components/trading/StockHeader';
+import PriceDisplay from '@/components/trading/PriceDisplay';
+import ChartSection from '@/components/trading/ChartSection';
+import AIInsightsPanel from '@/components/trading/AIInsightsPanel';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import OptionTradeModal, { OptionTradeDetails } from '@/components/options/OptionTradeModal';
+
 
 interface ChartDataPoint {
   date: string;
@@ -56,73 +57,124 @@ interface PolygonWsData {
   [symbol: string]: WsSymbolData;
 }
 
+interface OptionContract {
+  strike: number;
+  bid: number;
+  ask: number;
+  volume: number;
+  openInterest: number;
+  impliedVolatility?: number;
+  percentChange?: number;
+  contractSymbol?: string;
+  expiry?: string;
+}
+
+interface OptionsChainData {
+  calls: OptionContract[];
+  puts: OptionContract[];
+}
+
 const OptionsPage: React.FC = () => {
   const { symbol: routeSymbol } = useParams<{ symbol: string }>();
   const navigate = useNavigate();
   
   const [currentSymbol, setCurrentSymbol] = useState<string>(routeSymbol || 'AAPL');
   const [searchQuery, setSearchQuery] = useState<string>(currentSymbol);
-  const [selectedExpiry, setSelectedExpiry] = useState('2024-03-15');
+  const [expirations, setExpirations] = useState<string[]>([]);
+  const [selectedExpiry, setSelectedExpiry] = useState<string | null>(null);
   
   const [stockData, setStockData] = useState<DisplayStockData>({
     symbol: currentSymbol,
-    price: 0,
-    change: 0,
-    changePercent: 0,
+    price: 202.38,
+    change: -5.19,
+    changePercent: -2.50,
     lastUpdated: Date.now(),
     isMockData: false
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
-  const [optionChainData, setOptionChainData] = useState<OptionChainData | null>(null);
+  const [optionChainData, setOptionChainData] = useState<OptionsChainData | null>(null);
   const [priceUpdated, setPriceUpdated] = useState<boolean>(false);
   const [optionsLoading, setOptionsLoading] = useState<boolean>(true);
+  const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
+  const [error, setError] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState<string>('Apple Inc.');
+  const [tradeModalOpen, setTradeModalOpen] = useState(false);
+  const [pendingTrade, setPendingTrade] = useState<OptionTradeDetails | null>(null);
 
   const prevPriceRef = useRef<number>(0);
   const accountId = 'demo-account-id';
 
-  // Use expiration dates from option chain data, fallback to default dates
-  const expirationDates = optionChainData?.expirationDates || [
-    '2024-03-15',
-    '2024-03-22',
-    '2024-03-29',
-    '2024-04-05',
-    '2024-04-19',
-    '2024-05-17',
-    '2024-06-21',
-  ];
+  // Normalize backend response to OptionContract[]
+  const normalizeOptions = (data: unknown): OptionsChainData => {
+    if (!data || typeof data !== 'object') return { calls: [], puts: [] };
+    const record = data as Record<string, unknown>;
+    const rawCalls = Array.isArray(record.calls) ? (record.calls as unknown[]) : [];
+    const rawPuts = Array.isArray(record.puts) ? (record.puts as unknown[]) : [];
+
+    const calls: OptionContract[] = rawCalls.map((item) => {
+      const c = (item || {}) as Record<string, unknown>;
+      return {
+        contractSymbol: (c.contractSymbol as string) || (c.symbol as string) || undefined,
+        strike: Number(c.strike ?? 0) || 0,
+        bid: Number(c.bid ?? 0) || 0,
+        ask: Number(c.ask ?? 0) || 0,
+        volume: Number(c.volume ?? 0) || 0,
+        openInterest: Number(c.openInterest ?? 0) || 0,
+        impliedVolatility: typeof c.impliedVolatility === 'number' ? (c.impliedVolatility as number) : undefined,
+        percentChange: typeof c.percentChange === 'number' ? (c.percentChange as number) : undefined,
+        expiry: (c.expiry as string) || undefined,
+      };
+    });
+
+    const puts: OptionContract[] = rawPuts.map((item) => {
+      const p = (item || {}) as Record<string, unknown>;
+      return {
+        contractSymbol: (p.contractSymbol as string) || (p.symbol as string) || undefined,
+        strike: Number(p.strike ?? 0) || 0,
+        bid: Number(p.bid ?? 0) || 0,
+        ask: Number(p.ask ?? 0) || 0,
+        volume: Number(p.volume ?? 0) || 0,
+        openInterest: Number(p.openInterest ?? 0) || 0,
+        impliedVolatility: typeof p.impliedVolatility === 'number' ? (p.impliedVolatility as number) : undefined,
+        percentChange: typeof p.percentChange === 'number' ? (p.percentChange as number) : undefined,
+        expiry: (p.expiry as string) || undefined,
+      };
+    });
+
+    return { calls, puts };
+  };
 
   const { 
     stockData: wsStockData,
     newsData,
     latestNews,
     isConnected 
-  } = usePolygonWebSocketData([currentSymbol], [], [currentSymbol]);
+  } = useYahooFinanceData([currentSymbol], [currentSymbol]);
+
+  // Update symbol when route changes to keep state in sync with URL
+  useEffect(() => {
+    if (routeSymbol && routeSymbol !== currentSymbol) {
+      setCurrentSymbol(routeSymbol);
+      setSearchQuery(routeSymbol);
+      setError(null);
+    }
+  }, [routeSymbol, currentSymbol]);
 
   useEffect(() => {
-    const currentWsData: WsSymbolData | undefined = (wsStockData as PolygonWsData)?.[currentSymbol];
+    const currentWsData = wsStockData[currentSymbol];
     
     if (currentWsData) {
-      const actualSymbol = currentWsData.symbol ?? currentWsData.sym ?? currentSymbol;
-      const priceValue = currentWsData.p ?? currentWsData.price ?? currentWsData.ap ?? currentWsData.bp ?? 0;
+      const priceValue = currentWsData.price;
       
       if (priceValue > 0 && priceValue !== prevPriceRef.current) {
-        let changeValue = currentWsData.c ?? currentWsData.change ?? 0;
-        let changePercentValue = currentWsData.pc ?? currentWsData.changePercent ?? 0;
-        const pcpForCalc = currentWsData.pcp;
-
-        if (priceValue !== 0 && (changeValue === 0 && changePercentValue === 0) && pcpForCalc) {
-          changeValue = priceValue - pcpForCalc;
-          changePercentValue = pcpForCalc !== 0 ? (changeValue / pcpForCalc) * 100 : 0;
-        }
-
         prevPriceRef.current = stockData.price;
         
         setStockData({
-          symbol: actualSymbol,
+          symbol: currentWsData.symbol,
           price: priceValue,
-          change: changeValue,
-          changePercent: changePercentValue,
+          change: currentWsData.change,
+          changePercent: currentWsData.changePercent,
           lastUpdated: Date.now(),
           isMockData: false
         });
@@ -131,14 +183,14 @@ const OptionsPage: React.FC = () => {
         setTimeout(() => setPriceUpdated(false), 1000);
       }
     }
-  }, [wsStockData, currentSymbol]);
+  }, [wsStockData, currentSymbol, stockData.price]);
 
   useEffect(() => {
     const fetchDataForCurrentSymbol = async () => {
       setIsLoading(true);
 
-      const currentWsData: WsSymbolData | undefined = (wsStockData as PolygonWsData)?.[currentSymbol];
-      if (currentWsData && ((currentWsData.p ?? currentWsData.price ?? currentWsData.ap ?? currentWsData.bp) ?? 0) > 0) {
+      const currentWsData = wsStockData[currentSymbol];
+      if (currentWsData && currentWsData.price > 0) {
         setIsLoading(false);
         return;
       }
@@ -158,15 +210,6 @@ const OptionsPage: React.FC = () => {
             lastUpdated: Date.now(),
             isMockData: false
           });
-        } else {
-          setStockData({
-            symbol: currentSymbol,
-            price: 0,
-            change: 0,
-            changePercent: 0,
-            lastUpdated: Date.now(),
-            isMockData: true
-          });
         }
 
         if (info) {
@@ -179,18 +222,18 @@ const OptionsPage: React.FC = () => {
             volume: (quote?.volume || 0).toLocaleString(),
             avgVolume: (info.avgVolume || 0).toLocaleString()
           });
+          setCompanyName(info.name || getCompanyName(currentSymbol));
+        } else {
+          setCompanyName(getCompanyName(currentSymbol));
         }
-      } catch (error) {
-        console.error(`Error fetching stock data for ${currentSymbol}:`, error);
-        setStockData({
-          symbol: currentSymbol,
-          price: 0,
-          change: 0,
-          changePercent: 0,
-          lastUpdated: Date.now(),
-          isMockData: true
+      } catch (err) {
+        console.error(`Error fetching stock data for ${currentSymbol}:`, err);
+        setError(`Failed to load data for ${currentSymbol}`);
+        toast({
+          title: 'Error',
+          description: `Failed to load data for ${currentSymbol}`,
+          variant: 'destructive',
         });
-        setCompanyData(null);
       } finally {
         setIsLoading(false);
       }
@@ -199,31 +242,95 @@ const OptionsPage: React.FC = () => {
     if (currentSymbol) {
       fetchDataForCurrentSymbol();
     }
-  }, [currentSymbol]);
+  }, [currentSymbol, wsStockData]);
 
-  // Fetch option chain data
+  // Helper function to get company name for common stocks
+  const getCompanyName = (symbol: string): string => {
+    const companies: { [key: string]: string } = {
+      AAPL: 'Apple Inc.',
+      TSLA: 'Tesla, Inc.',
+      MSFT: 'Microsoft Corporation',
+      GOOGL: 'Alphabet Inc.',
+      AMZN: 'Amazon.com, Inc.',
+      META: 'Meta Platforms, Inc.',
+      NVDA: 'NVIDIA Corporation',
+      NFLX: 'Netflix, Inc.',
+      SPY: 'SPDR S&P 500 ETF Trust',
+      QQQ: 'Invesco QQQ Trust',
+    };
+    return companies[symbol] || `${symbol} Inc.`;
+  };
+
+  const handleAITrade = () => {
+    navigate(`/ai-trading/${currentSymbol}`);
+  };
+
+  // Load expirations when symbol changes
   useEffect(() => {
-    const fetchOptionChain = async () => {
-      setOptionsLoading(true);
+    let isActive = true;
+    const loadExpirations = async () => {
+      if (!currentSymbol) return;
       try {
-        const optionData = await yahooFinanceService.getOptionChain(currentSymbol);
-        setOptionChainData(optionData);
-        
-        // Update expiration dates based on available data
-        if (optionData.expirationDates.length > 0 && !optionData.expirationDates.includes(selectedExpiry)) {
-          setSelectedExpiry(optionData.expirationDates[0]);
-        }
-      } catch (error) {
-        console.error('Error fetching option chain:', error);
-        setOptionChainData(null);
-      } finally {
-        setOptionsLoading(false);
+        const expiries: Array<{ date: string; daysToExpiry: number; formatted: string }>
+          = await stockDataService.getOptionsExpirations(currentSymbol);
+        if (!isActive) return;
+        const dates = expiries.map((e) => e.date);
+        setExpirations(dates);
+      } catch (e) {
+        console.error('Error loading expirations:', e);
+        setExpirations([]);
+        setSelectedExpiry(null);
       }
     };
+    loadExpirations();
+    return () => {
+      isActive = false;
+    };
+  }, [currentSymbol]);
 
-    if (currentSymbol) {
-      fetchOptionChain();
+  // When expirations change, set default selected expiry if not set
+  useEffect(() => {
+    if (!selectedExpiry && expirations.length > 0) {
+      setSelectedExpiry(expirations[0]);
     }
+  }, [expirations, selectedExpiry]);
+
+  // Load options data for selected expiry, limited to ±20 strikes (total ~40)
+  useEffect(() => {
+    let isActive = true;
+    const loadOptionsData = async () => {
+      if (!currentSymbol || !selectedExpiry) return;
+      setOptionsLoading(true);
+      try {
+        const resp = await stockDataService.getOptionsChain(currentSymbol, selectedExpiry, 40);
+        if (!isActive) return;
+        setOptionChainData(normalizeOptions(resp));
+        setLastUpdateTime(Date.now());
+      } catch (error) {
+        console.error('Error loading options data:', error);
+      } finally {
+        if (isActive) setOptionsLoading(false);
+      }
+    };
+      loadOptionsData();
+    return () => {
+      isActive = false;
+    };
+  }, [currentSymbol, selectedExpiry]);
+
+  // Poll options chain periodically for real-time-ish updates
+  useEffect(() => {
+    if (!currentSymbol || !selectedExpiry) return;
+    const interval = setInterval(async () => {
+      try {
+        const resp = await stockDataService.getOptionsChain(currentSymbol, selectedExpiry, 40);
+        setOptionChainData(normalizeOptions(resp));
+        setLastUpdateTime(Date.now());
+      } catch (e) {
+        console.warn('Polling options chain failed:', e);
+      }
+    }, 30000); // 30s
+    return () => clearInterval(interval);
   }, [currentSymbol, selectedExpiry]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -232,6 +339,75 @@ const OptionsPage: React.FC = () => {
     if (trimmedQuery && trimmedQuery !== currentSymbol) {
       navigate(`/options/${trimmedQuery}`);
       setCurrentSymbol(trimmedQuery); 
+    }
+  };
+
+  const handleRefresh = async () => {
+    if (!currentSymbol || !selectedExpiry) return;
+      setOptionsLoading(true);
+      try {
+      const resp = await stockDataService.getOptionsChain(currentSymbol, selectedExpiry, 40);
+      setOptionChainData(normalizeOptions(resp));
+        setLastUpdateTime(Date.now());
+      } catch (error) {
+        console.error('Error refreshing options data:', error);
+      } finally {
+        setOptionsLoading(false);
+      }
+    };
+
+  const handleOptionOrder = (side: 'buy' | 'sell', option: OptionContract) => {
+    setPendingTrade({
+      symbol: currentSymbol,
+      side,
+      contractSymbol: option.contractSymbol,
+      strike: option.strike,
+      expiry: option.expiry,
+      bid: option.bid,
+      ask: option.ask,
+    });
+    setTradeModalOpen(true);
+  };
+
+  const confirmOptionOrder = async (
+    params: { side: 'buy' | 'sell'; quantity: number; price: number; orderType: 'market' | 'limit' }
+  ) => {
+    // For now, simulate locally. Later, integrate with backend broker route.
+    console.log('Simulated option order', { ...params, details: pendingTrade });
+  };
+
+  const getMoneyness = (strike: number) => {
+    const currentPrice = stockData.price;
+    if (strike < currentPrice * 0.9) return 'Deep ITM';
+    if (strike < currentPrice * 0.98) return 'ITM';
+    if (strike < currentPrice * 1.02) return 'Near ATM';
+    if (strike < currentPrice * 1.1) return 'OTM';
+    return 'Deep OTM';
+  };
+
+  const getMoneynessColor = (strike: number) => {
+    const moneyness = getMoneyness(strike);
+    switch (moneyness) {
+      case 'Deep ITM':
+      case 'ITM':
+        return 'text-green-400';
+      case 'Near ATM':
+        return 'text-yellow-400';
+      default:
+        return 'text-gray-400';
+    }
+  };
+
+  const getMoneynessBg = (strike: number) => {
+    const moneyness = getMoneyness(strike);
+    switch (moneyness) {
+      case 'Deep ITM':
+      case 'ITM':
+        return 'bg-green-900';
+      case 'Near ATM':
+        return 'bg-yellow-900';
+      default:
+        return 'bg-gray-700';
     }
   };
 
@@ -248,418 +424,236 @@ const OptionsPage: React.FC = () => {
   const timeSinceUpdate = Math.floor((Date.now() - stockData.lastUpdated) / 1000);
   const isRecentUpdate = timeSinceUpdate < 5;
 
+  const timeSinceOptionsUpdate = Math.floor((Date.now() - lastUpdateTime) / 1000);
+
   return (
     <TooltipProvider>
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/dashboard')}
-              className="mr-2"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-2xl font-bold">Options Trading</h1>
-          </div>
-
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/trading/${currentSymbol || 'AAPL'}`)}
-            className="flex items-center"
-          >
-            <BrainCircuit className="h-4 w-4 mr-2" />
-            Stock Trading
-          </Button>
-        </div>
-
-        {/* Stock Header */}
-        <div className="mb-6">
-          <Card className="bg-black border border-gray-800">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-xl flex items-center">
-                <Percent className="h-5 w-5 mr-2 text-primary" />
-                {stockData.symbol}
-                <span className={`ml-4 text-lg ${priceUpdated ? 'animate-pulse' : ''} ${stockData.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  ${stockData.price.toFixed(2)}
-                  <span className="ml-2">
-                    {stockData.change >= 0 ? '+' : ''}{stockData.change.toFixed(2)} ({stockData.changePercent.toFixed(2)}%)
-                  </span>
-                </span>
-                <div className="ml-auto flex items-center gap-2">
-                  {isRecentUpdate && (
-                    <div className="text-xs text-blue-400">
-                      Updated {timeSinceUpdate}s ago
-                    </div>
-                  )}
-                  {stockFeedConnected ? (
-                    <div className="flex items-center text-xs text-green-500">
-                      <Wifi className="h-3 w-3 mr-1" />
-                      <span>Live</span>
-                    </div>
-                  ) : stockData.isMockData ? (
-                    <div className="flex items-center text-xs text-blue-400">
-                      <span>Simulated</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center text-xs text-yellow-500">
-                      <WifiOff className="h-3 w-3 mr-1" />
-                      <span>Delayed</span>
-                    </div>
-                  )}
-                </div>
-              </CardTitle>
-              <CardDescription>
-                Options trading with real-time Greeks and advanced strategies
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSearch} className="flex gap-2 mb-6">
-                <div className="flex-1">
-                  <Input
-                    type="text"
-                    placeholder="Search for a symbol (e.g., AAPL, MSFT, TSLA)"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1"
-                  />
-                </div>
-                <Button type="submit">
-                  <Search className="h-4 w-4 mr-2" />
-                  Search
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Enhanced Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Stock Chart */}
-          {stockData.price > 0 && (
-            <RealTimeStockChart
+      <div className="min-h-screen text-gray-100 p-6" style={{ fontFamily: 'Inter, sans-serif', backgroundColor: '#0E1117' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            {/* Stock Header Component */}
+            <StockHeader
               symbol={stockData.symbol}
-              currentPrice={stockData.price}
+              companyName={companyName}
+              onSymbolChange={(newSymbol) => navigate(`/options/${newSymbol}`)}
+              isLoading={isLoading}
+            />
+
+            {/* Price Display Component */}
+            <PriceDisplay
+              price={stockData.price}
+              change={stockData.change}
+              changePercent={stockData.changePercent}
+              priceUpdated={priceUpdated}
+              isConnected={stockFeedConnected}
+              lastUpdated={stockData.lastUpdated}
+            />
+
+            {/* Chart Section Component */}
+            <ChartSection
+              symbol={stockData.symbol}
+              price={stockData.price}
               change={stockData.change}
               changePercent={stockData.changePercent}
               isRealTime={stockFeedConnected}
-              chartType="area"
-              height={400}
+              isLoading={isLoading}
             />
-          )}
 
-          {/* Options Chart */}
-          <OptionsChart
-            symbol={stockData.symbol}
-            underlyingPrice={stockData.price}
-            expiryDate={selectedExpiry}
-            chartType="payoff"
-          />
-        </div>
-
-        {/* Options Chain and Sphere AI Advisor */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          {/* Options Chain - 2/3 width */}
-          <div className="lg:col-span-2">
-            <Card className="bg-black border border-gray-800">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Options Chain</CardTitle>
-                  <div className="flex items-center space-x-2">
-                    <label htmlFor="expiry-select">Expiry:</label>
-                    <select 
-                      id="expiry-select"
-                      value={selectedExpiry} 
-                      onChange={(e) => setSelectedExpiry(e.target.value)}
-                      className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm"
-                    >
-                      {expirationDates.map((date) => (
-                        <option key={date} value={date}>
-                          {new Date(date).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
-                        </option>
-                      ))}
-                    </select>
+            {/* Options Chain */}
+            <div className="pt-8 space-y-6">
+            <div className="bg-[#161b22] p-6 rounded-lg">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-end space-x-4">
+                  <h1 className="text-2xl font-bold text-white">Options Chain: {stockData.symbol}</h1>
+                  <div className="flex items-center space-x-2 text-sm pb-0.5">
+                    <span className="text-white">${stockData.price.toFixed(2)}</span>
+                    <span className={stockData.change >= 0 ? 'text-green-400' : 'text-red-400'}>
+                        {stockData.change >= 0 ? '+' : ''}
+                        {stockData.change.toFixed(2)} ({stockData.changePercent.toFixed(2)}%)
+                    </span>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <OptionChain
-                  symbol={currentSymbol}
-                  stockPrice={stockData.price}
-                  expiryDate={selectedExpiry}
-                  accountId={accountId}
-                />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sphere AI Advisor - 1/3 width */}
-          <div>
-            <Card className="bg-black border border-gray-800 h-full">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <BrainCircuit className="h-5 w-5 mr-2 text-primary" />
-                  Sphere AI Options Advisor
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <BrainCircuit className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="font-semibold mb-2">AI Options Analysis</h3>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                    <div className="font-medium text-blue-400 mb-1">Contract Suggestion</div>
-                    <div className="text-sm">
-                      Call ${(stockData.price + 5).toFixed(0)} exp {selectedExpiry}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Bullish momentum detected
-                    </div>
-                  </div>
-
-                  <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                    <div className="font-medium text-green-400 mb-1">IV Rank</div>
-                    <div className="text-sm">
-                      Medium (45th percentile)
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Good time for credit spreads
-                    </div>
-                  </div>
-
-                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                    <div className="font-medium text-yellow-400 mb-1">Risk Assessment</div>
-                    <div className="text-sm">
-                      Moderate volatility expected
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Consider protective puts
-                    </div>
-                  </div>
-
-                  <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-                    <div className="font-medium text-purple-400 mb-1">Strategy Idea</div>
-                    <div className="text-sm">
-                      Iron Condor ${(stockData.price - 10).toFixed(0)}-${(stockData.price + 10).toFixed(0)}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Neutral strategy for range-bound market
-                    </div>
-                  </div>
-                </div>
-
-                <Button className="w-full" variant="outline">
-                  <Calculator className="h-4 w-4 mr-2" />
-                  Get Full Analysis
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Market Insights */}
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
-            <BrainCircuit className="h-5 w-5 mr-2 text-primary" />
-            Options Market Insights
-          </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="bg-black border border-gray-800">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Volatility Surface</CardTitle>
-                <CardDescription>Implied volatility across strikes</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span>ATM IV</span>
-                    <span className="text-blue-400">24.3%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>ITM Calls</span>
-                    <span className="text-green-400">22.1%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>OTM Calls</span>
-                    <span className="text-yellow-400">26.8%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>ITM Puts</span>
-                    <span className="text-red-400">25.5%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>OTM Puts</span>
-                    <span className="text-orange-400">27.2%</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-black border border-gray-800">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Options Flow</CardTitle>
-                <CardDescription>Unusual options activity</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="space-y-1">
-                    <div className="flex justify-between items-center text-sm">
-                      <span>Large Call Sweeps</span>
-                      <span className="text-green-500">+15</span>
-                    </div>
-                    <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div className="absolute top-0 left-0 h-full bg-green-500" style={{ width: '60%' }} />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between items-center text-sm">
-                      <span>Put Volume</span>
-                      <span className="text-red-500">+8</span>
-                    </div>
-                    <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div className="absolute top-0 left-0 h-full bg-red-500" style={{ width: '32%' }} />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between items-center text-sm">
-                      <span>Dark Pool</span>
-                      <span className="text-purple-500">+3</span>
-                    </div>
-                    <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div className="absolute top-0 left-0 h-full bg-purple-500" style={{ width: '12%' }} />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-black border border-gray-800">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">News & Events</CardTitle>
-                <CardDescription>Latest updates for {currentSymbol}</CardDescription>
-              </CardHeader>
-              <CardContent className="max-h-[200px] overflow-y-auto">
-                <div className="space-y-3">
-                  {latestNews && latestNews.length > 0 ? (
-                    latestNews.map((newsItem, index) => (
-                      <div key={newsItem.id} className="border-b border-gray-800 pb-2">
-                        <a 
-                          href={newsItem.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="hover:underline font-medium text-sm"
-                        >
-                          {newsItem.headline}
-                        </a>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {newsItem.source} • {new Date(newsItem.created_at).toLocaleTimeString()}
-                        </div>
-                      </div>
-                    ))
+                <div className="flex items-center space-x-4 text-sm">
+                  {stockFeedConnected ? (
+                    <button className="text-green-400 font-medium flex items-center space-x-1">
+                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                      <span>Live Data</span>
+                    </button>
                   ) : (
-                    <>
-                      <div className="border-b border-gray-800 pb-2">
-                        <a href="#" className="hover:underline font-medium text-sm">Options volume surges ahead of earnings</a>
-                        <div className="text-xs text-muted-foreground mt-1">Options Flow • 2h ago</div>
-                      </div>
-                      <div className="border-b border-gray-800 pb-2">
-                        <a href="#" className="hover:underline font-medium text-sm">Unusual call activity detected in tech sector</a>
-                        <div className="text-xs text-muted-foreground mt-1">Market Watch • 4h ago</div>
-                      </div>
-                      <div className="border-b border-gray-800 pb-2">
-                        <a href="#" className="hover:underline font-medium text-sm">Volatility compression signals potential breakout</a>
-                        <div className="text-xs text-muted-foreground mt-1">Trading View • 5h ago</div>
-                      </div>
-                    </>
+                    <button className="text-gray-400 font-medium flex items-center space-x-1">
+                      <WifiOff className="text-sm" />
+                      <span>Delayed</span>
+                    </button>
                   )}
+                  <button 
+                    className="text-gray-400 hover:text-white flex items-center space-x-1"
+                    onClick={handleRefresh}
+                  >
+                    <RefreshCw className="text-sm" />
+                    <span>Refresh</span>
+                  </button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium">Expiration:</span>
+                  <select 
+                    className="bg-[#1c2128] border border-[#30363d] rounded-md px-3 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={selectedExpiry || ''}
+                    onChange={(e) => {
+                      setSelectedExpiry(e.target.value);
+                    }}
+                  >
+                      {expirations.map((date) => {
+                        const label = new Date(date).toLocaleDateString('en-US', {
+                          month: 'short', 
+                          day: 'numeric',
+                          year: 'numeric',
+                        });
+                        return (
+                          <option key={date} value={date}>
+                            {label}
+                          </option>
+                        );
+                      })}
+                  </select>
+                  <span className="text-gray-400 text-sm">5d</span>
+                </div>
+                  {/* Additional expiry display removed to avoid duplication */}
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                {/* Call Options */}
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-lg font-semibold">Call Options</h3>
+                    <div className="text-sm text-gray-400">{optionChainData?.calls.length || 0} contracts</div>
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[#30363d]">
+                        <th className="py-2 font-medium text-gray-400 text-left">Strike</th>
+                        <th className="py-2 font-medium text-gray-400 text-center">Status</th>
+                        <th className="py-2 font-medium text-gray-400 text-right">Bid</th>
+                        <th className="py-2 font-medium text-gray-400 text-right">Ask</th>
+                          <th className="py-2 font-medium text-gray-400 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {optionChainData?.calls.map((option, index) => (
+                        <tr key={index} className="border-b border-[#30363d] hover:bg-[#1c2128]">
+                          <td className="py-2.5 font-medium text-white">${option.strike}</td>
+                          <td className="py-2.5 text-center">
+                              <span
+                                className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getMoneynessBg(
+                                  option.strike
+                                )} ${getMoneynessColor(option.strike)}`}
+                              >
+                              {getMoneyness(option.strike)}
+                            </span>
+                          </td>
+                          <td className="py-2.5 text-right">${option.bid.toFixed(2)}</td>
+                          <td className="py-2.5 text-right">${option.ask.toFixed(2)}</td>
+                            <td className="py-2.5 text-right space-x-2">
+                              <button
+                                className="px-2 py-1 text-xs rounded bg-green-700 hover:bg-green-600"
+                                onClick={() => handleOptionOrder('buy', option)}
+                              >
+                                Buy
+                              </button>
+                              <button
+                                className="px-2 py-1 text-xs rounded bg-red-700 hover:bg-red-600"
+                                onClick={() => handleOptionOrder('sell', option)}
+                              >
+                                Sell
+                              </button>
+                            </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Put Options */}
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-lg font-semibold">Put Options</h3>
+                    <div className="text-sm text-gray-400">{optionChainData?.puts.length || 0} contracts</div>
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[#30363d]">
+                        <th className="py-2 font-medium text-gray-400 text-left">Strike</th>
+                        <th className="py-2 font-medium text-gray-400 text-center">Status</th>
+                        <th className="py-2 font-medium text-gray-400 text-right">Bid</th>
+                        <th className="py-2 font-medium text-gray-400 text-right">Ask</th>
+                          <th className="py-2 font-medium text-gray-400 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {optionChainData?.puts.map((option, index) => (
+                        <tr key={index} className="border-b border-[#30363d] hover:bg-[#1c2128]">
+                          <td className="py-2.5 font-medium text-white">${option.strike}</td>
+                          <td className="py-2.5 text-center">
+                              <span
+                                className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getMoneynessBg(
+                                  option.strike
+                                )} ${getMoneynessColor(option.strike)}`}
+                              >
+                              {getMoneyness(option.strike)}
+                            </span>
+                          </td>
+                          <td className="py-2.5 text-right">${option.bid.toFixed(2)}</td>
+                          <td className="py-2.5 text-right">${option.ask.toFixed(2)}</td>
+                            <td className="py-2.5 text-right space-x-2">
+                              <button
+                                className="px-2 py-1 text-xs rounded bg-green-700 hover:bg-green-600"
+                                onClick={() => handleOptionOrder('buy', option)}
+                              >
+                                Buy
+                              </button>
+                              <button
+                                className="px-2 py-1 text-xs rounded bg-red-700 hover:bg-red-600"
+                                onClick={() => handleOptionOrder('sell', option)}
+                              >
+                                Sell
+                              </button>
+                            </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
+          </div>
+
+          {/* Sidebar */}
+          <aside className="space-y-4">
+            <AIInsightsPanel
+              symbol={stockData.symbol}
+              isConnected={stockFeedConnected}
+              onAITrade={handleAITrade}
+            />
+          </aside>
         </div>
 
-        {/* Company Information */}
-        {companyData && (
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <Building2 className="h-5 w-5 mr-2 text-primary" />
-              Company Information
-            </h2>
-            <Card className="bg-black border border-gray-800">
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div>
-                    <h3 className="font-semibold mb-2">Overview</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Market Cap:</span>
-                        <span>{companyData.marketCap ? `$${(companyData.marketCap / 1e9).toFixed(2)}B` : 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">P/E Ratio:</span>
-                        <span>{companyData.peRatio || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Dividend Yield:</span>
-                        <span>{companyData.dividendYield ? `${companyData.dividendYield}%` : 'N/A'}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">Trading</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">52W High:</span>
-                        <span>${companyData.fiftyTwoWeekHigh || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">52W Low:</span>
-                        <span>${companyData.fiftyTwoWeekLow || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Volume:</span>
-                        <span>{companyData.volume ? companyData.volume.toLocaleString() : 'N/A'}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">Financials</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Revenue:</span>
-                        <span>{companyData.revenue ? `$${(companyData.revenue / 1e9).toFixed(2)}B` : 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">EPS:</span>
-                        <span>${companyData.eps || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Beta:</span>
-                        <span>{companyData.beta || 'N/A'}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">About</h3>
-                    <div className="text-sm text-muted-foreground">
-                      <p className="line-clamp-4">
-                        {companyData.description || 'Company description not available.'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+        {error && (
+          <Alert variant="destructive" className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
+
+        <OptionTradeModal
+          open={tradeModalOpen}
+          onClose={() => setTradeModalOpen(false)}
+          details={pendingTrade}
+          onConfirm={confirmOptionOrder}
+        />
       </div>
     </TooltipProvider>
   );

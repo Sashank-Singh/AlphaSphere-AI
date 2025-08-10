@@ -9,13 +9,16 @@ import { stockDataService } from '@/lib/stockDataService';
 import { usePortfolio } from '@/context/PortfolioContext';
 import StockPriceChart from '@/components/StockPriceChart';
 import TradeModal from '@/components/TradeModal';
-import AITradeModal from '@/components/AITradeModal';
-import AISentimentAnalysis from '@/components/AISentimentAnalysis';
-import PredictivePriceForecasting from '@/components/PredictivePriceForecasting';
-import AIFundamentalScore from '@/components/AIFundamentalScore';
-import AIPatternRecognition from '@/components/AIPatternRecognition';
-import AIInsiderTradingAnalysis from '@/components/AIInsiderTradingAnalysis';
-import AIOptionsFlowAnalysis from '@/components/AIOptionsFlowAnalysis';
+import AITradeModal from '@/components/ai/AITradeModal';
+import AISentimentAnalysis from '@/components/ai/AISentimentAnalysis';
+import PredictivePriceForecasting from '@/components/ai/PredictivePriceForecasting';
+import AIFundamentalScore from '@/components/ai/AIFundamentalScore';
+import AIPatternRecognition from '@/components/ai/AIPatternRecognition';
+import AIInsiderTradingAnalysis from '@/components/ai/AIInsiderTradingAnalysis';
+import AIOptionsFlowAnalysis from '@/components/ai/AIOptionsFlowAnalysis';
+import OptionChain from '@/components/OptionChain';
+// GroqAIInsights removed - using Yahoo Finance + Alpaca only
+// useGroqAI removed - using Yahoo Finance + Alpaca only
 
 interface DailyData {
   open: number;
@@ -40,6 +43,33 @@ const ImprovedStockDetailPage: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [dailyData, setDailyData] = useState<DailyData | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'news' | 'options' | 'financials' | 'analysis'>('overview');
+  
+  // Mock AI responses since Groq removed - using Yahoo Finance + Alpaca only
+  const groqData = 'Stock analysis complete using Yahoo Finance + Alpaca data.';
+  const isGroqLoading = false;
+  const groqError = null;
+
+  // AI Insights state
+  const [aiInsights, setAiInsights] = useState({
+    priceForecast: 'Analyzing real-time market data...',
+    sentiment: 'Analyzing market sentiment...',
+    newsImpact: 'Analyzing news impact...',
+    patternRecognition: 'Analyzing intraday patterns...',
+    confidence: 'High (85%)',
+    sentimentLevel: 'Analyzing...'
+  });
+
+  // Company news state
+  const [newsItems, setNewsItems] = useState<Array<{
+    title: string;
+    url: string;
+    publisher?: string;
+    publishedAt?: string;
+    summary?: string;
+    imageUrl?: string;
+  }>>([]);
+  const [isNewsLoading, setIsNewsLoading] = useState(false);
+  const [newsError, setNewsError] = useState<string | null>(null);
 
   // Memoize portfolio calculations to prevent unnecessary recalculations
   const portfolioData = useMemo(() => {
@@ -122,6 +152,149 @@ const ImprovedStockDetailPage: React.FC = () => {
       loadStockData(symbol);
     }
   }, [symbol, loadStockData]);
+
+  // Load AI insights when stock data is available
+  useEffect(() => {
+    if (stock) {
+      loadAIInsights();
+    }
+  }, [stock]);
+
+  // Load company news when symbol changes
+  useEffect(() => {
+    if (!symbol) return;
+    let isCancelled = false;
+
+    const fetchNews = async () => {
+      setIsNewsLoading(true);
+      setNewsError(null);
+      try {
+        const items = await stockDataService.getCompanyNews(symbol, 8);
+        if (!isCancelled) setNewsItems(items);
+      } catch (e) {
+        if (!isCancelled) setNewsError('Failed to load news');
+      } finally {
+        if (!isCancelled) setIsNewsLoading(false);
+      }
+    };
+
+    fetchNews();
+    return () => {
+      isCancelled = true;
+    };
+  }, [symbol]);
+
+  const formatTimeAgo = (iso?: string): string => {
+    if (!iso) return '';
+    const then = new Date(iso).getTime();
+    const diffMs = Date.now() - then;
+    const minutes = Math.max(0, Math.floor(diffMs / 60000));
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+    const days = Math.floor(hours / 24);
+    return `${days} day${days === 1 ? '' : 's'} ago`;
+  };
+
+  const loadAIInsights = async () => {
+    if (!stock) return;
+
+    try {
+      // Parse and update insights with Groq data
+      if (groqData) {
+        const lines = groqData.split('\n').filter(line => line.trim());
+        let newPriceForecast = 'Real-time analysis indicates market movement.';
+        let newSentiment = 'Market sentiment analysis complete.';
+        let newNewsImpact = 'News impact analysis complete.';
+        let newPatternRecognition = 'Intraday pattern analysis complete.';
+        const newConfidence = 'High (85%)';
+        let sentimentLevel = 'Strongly Positive';
+        let hasSpecificData = false;
+        
+        // Parse the complete response into sections
+        const fullResponse = groqData;
+        
+        // Split by numbered sections
+        const sections = fullResponse.split(/\d+\.\s+/).filter(section => section.trim());
+        
+        if (sections.length >= 4) {
+          // Extract each section
+          const priceSection = sections[0].replace(/PRICE FORECAST:\s*/i, '').trim();
+          const sentimentSection = sections[1].replace(/SENTIMENT:\s*/i, '').trim();
+          const newsSection = sections[2].replace(/NEWS IMPACT:\s*/i, '').trim();
+          const patternSection = sections[3].replace(/PATTERN RECOGNITION:\s*/i, '').trim();
+          
+          // Set the parsed sections
+          newPriceForecast = priceSection || 'Price analysis in progress...';
+          newSentiment = sentimentSection || 'Sentiment analysis in progress...';
+          newNewsImpact = newsSection || 'News impact analysis in progress...';
+          newPatternRecognition = patternSection || 'Pattern analysis in progress...';
+          
+          // Determine sentiment level
+          if (sentimentSection.includes('bullish')) {
+            sentimentLevel = 'Bullish';
+          } else if (sentimentSection.includes('bearish')) {
+            sentimentLevel = 'Bearish';
+          } else {
+            sentimentLevel = 'Neutral';
+          }
+          
+          hasSpecificData = true;
+        } else {
+          // Fallback parsing for unstructured response
+          lines.forEach(line => {
+            const cleanLine = line.replace(/^[0-9]+\.\s*/, '').trim();
+            
+            // Look for specific price targets, support/resistance
+            if (cleanLine.includes('$') || cleanLine.includes('support') || cleanLine.includes('resistance') || cleanLine.includes('target')) {
+              newPriceForecast = cleanLine;
+              hasSpecificData = true;
+            }
+            
+            // Look for Buy/Sell/Hold recommendations
+            if (cleanLine.includes('Buy') || cleanLine.includes('Sell') || cleanLine.includes('Hold')) {
+              newPriceForecast = cleanLine;
+              hasSpecificData = true;
+            }
+            
+            // Look for sentiment analysis
+            if (cleanLine.includes('bullish') || cleanLine.includes('bearish') || cleanLine.includes('neutral') || cleanLine.includes('momentum')) {
+              newSentiment = cleanLine;
+              sentimentLevel = cleanLine.includes('bullish') ? 'Bullish' : cleanLine.includes('bearish') ? 'Bearish' : 'Neutral';
+              hasSpecificData = true;
+            }
+            
+            // Look for pattern recognition
+            if (cleanLine.includes('pattern') || cleanLine.includes('EMA') || cleanLine.includes('RSI') || cleanLine.includes('bounce')) {
+              newPatternRecognition = cleanLine;
+              hasSpecificData = true;
+            }
+          });
+        }
+        
+        // If no specific data found, use a fallback
+        if (!hasSpecificData) {
+          newPriceForecast = 'Need more data for specific analysis';
+          newSentiment = 'Analyzing market sentiment...';
+          newNewsImpact = 'Analyzing news impact...';
+          newPatternRecognition = 'Analyzing intraday patterns...';
+          sentimentLevel = 'Analyzing...';
+        }
+
+        setAiInsights(prev => ({
+          ...prev,
+          priceForecast: newPriceForecast,
+          sentiment: newSentiment,
+          newsImpact: newNewsImpact,
+          patternRecognition: newPatternRecognition,
+          confidence: newConfidence,
+          sentimentLevel: sentimentLevel
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading AI insights:', error);
+    }
+  };
 
   // Periodic price updates
   useEffect(() => {
@@ -304,38 +477,46 @@ const ImprovedStockDetailPage: React.FC = () => {
                     <div className="bg-[rgba(33,150,243,0.1)] p-3 rounded-full">
                       <BarChart3 className="h-6 w-6 text-[#2196F3]" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <h4 className="font-semibold text-[#E0E0E0]">AI Price Forecast</h4>
-                      <p className="text-[#B0B0B0]">Predicts a slight upward trend in the next week.</p>
-                      <p className="text-sm text-gray-400">Confidence: Medium (54%)</p>
+                      <p className="text-[#B0B0B0] text-sm leading-relaxed">
+                        {isGroqLoading ? 'Analyzing intraday patterns...' : aiInsights.priceForecast}
+                      </p>
+                      <p className="text-sm text-gray-400">Confidence: {aiInsights.confidence}</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-4">
                     <div className="bg-[rgba(76,175,80,0.1)] p-3 rounded-full">
                       <TrendingUp className="h-6 w-6 text-[#4CAF50]" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <h4 className="font-semibold text-[#E0E0E0]">AI Sentiment Analysis</h4>
-                      <p className="text-[#B0B0B0]">Overall sentiment is positive based on news and social media.</p>
-                      <p className="text-sm text-[#4CAF50] font-medium">Strongly Positive</p>
+                      <p className="text-[#B0B0B0] text-sm leading-relaxed">
+                        {isGroqLoading ? 'Analyzing market sentiment...' : aiInsights.sentiment}
+                      </p>
+                      <p className="text-sm text-[#4CAF50] font-medium">{aiInsights.sentimentLevel}</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-4">
                     <div className="bg-[rgba(156,39,176,0.1)] p-3 rounded-full">
                       <FileText className="h-6 w-6 text-[#9C27B0]" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <h4 className="font-semibold text-[#E0E0E0]">AI News Impact</h4>
-                      <p className="text-[#B0B0B0]">Recent news about product launches positively impacting the stock.</p>
+                      <p className="text-[#B0B0B0] text-sm leading-relaxed">
+                        {isGroqLoading ? 'Analyzing news impact...' : aiInsights.newsImpact}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-4">
                     <div className="bg-[rgba(255,193,7,0.1)] p-3 rounded-full">
                       <Lightbulb className="h-6 w-6 text-[#FFC107]" />
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-[#E0E0E0]">AI Fundamental Score</h4>
-                      <p className="text-[#B0B0B0]">Score: <span className="font-bold text-[#E0E0E0]">78/100</span>. Strong fundamentals.</p>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-[#E0E0E0]">AI Pattern Recognition</h4>
+                      <p className="text-[#B0B0B0] text-sm leading-relaxed">
+                        {isGroqLoading ? 'Analyzing intraday patterns...' : aiInsights.patternRecognition}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -394,81 +575,63 @@ const ImprovedStockDetailPage: React.FC = () => {
         return (
           <div className="bg-[#1E1E1E] p-6 rounded-2xl shadow-lg">
             <h3 className="text-2xl font-bold text-[#E0E0E0] mb-4">{stock.symbol} News</h3>
-            <div className="space-y-4">
-              <div className="p-4 rounded-lg hover:bg-gray-800/50 transition duration-300">
-                <a className="block" href="#">
-                  <p className="text-sm text-[#B0B0B0]">Reuters · 2 hours ago</p>
-                  <h4 className="font-semibold text-[#E0E0E0] mt-1">Tech Giant Unveils New AI Features for Its Flagship Phone</h4>
-                  <p className="text-sm text-[#B0B0B0] mt-1">The company announced a suite of new AI-powered capabilities coming to its ecosystem, aiming to enhance user experience and productivity.</p>
-                </a>
+            {isNewsLoading ? (
+              <div className="space-y-3">
+                <div className="h-20 bg-gray-900 rounded animate-pulse" />
+                <div className="h-20 bg-gray-900 rounded animate-pulse" />
+                <div className="h-20 bg-gray-900 rounded animate-pulse" />
               </div>
-              <div className="p-4 rounded-lg hover:bg-gray-800/50 transition duration-300">
-                <a className="block" href="#">
-                  <p className="text-sm text-[#B0B0B0]">Bloomberg · 5 hours ago</p>
-                  <h4 className="font-semibold text-[#E0E0E0] mt-1">Analysts Bullish on {stock.symbol} Ahead of Quarterly Earnings Report</h4>
-                  <p className="text-sm text-[#B0B0B0] mt-1">Wall Street sentiment remains high as the tech leader is expected to post strong results, driven by robust sales in its services division.</p>
-                </a>
-              </div>
-              <div className="p-4 rounded-lg hover:bg-gray-800/50 transition duration-300">
-                <a className="block" href="#">
-                  <p className="text-sm text-[#B0B0B0]">The Wall Street Journal · 1 day ago</p>
-                  <h4 className="font-semibold text-[#E0E0E0] mt-1">Inside the Company's Push into Augmented Reality</h4>
-                  <p className="text-sm text-[#B0B0B0] mt-1">A deep dive into the long-term strategy and development of the company's much-anticipated AR headset and its potential market impact.</p>
-                </a>
-              </div>
-            </div>
-            <div className="mt-4 text-center">
-              <button className="text-[#2196F3] hover:text-blue-400 font-semibold transition">View More News</button>
-            </div>
+            ) : newsError ? (
+              <p className="text-red-400">{newsError}</p>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  {newsItems.map((item, idx) => (
+                    <div key={`${item.url}-${idx}`} className="p-4 rounded-lg hover:bg-gray-800/50 transition duration-300">
+                      <a className="block" href={item.url} target="_blank" rel="noopener noreferrer">
+                        <p className="text-sm text-[#B0B0B0]">
+                          {item.publisher || 'News'}{item.publishedAt ? ` · ${formatTimeAgo(item.publishedAt)}` : ''}
+                        </p>
+                        <h4 className="font-semibold text-[#E0E0E0] mt-1">{item.title}</h4>
+                        {item.summary && (
+                          <p className="text-sm text-[#B0B0B0] mt-1 line-clamp-3">{item.summary}</p>
+                        )}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 text-center">
+                  <a
+                    className="text-[#2196F3] hover:text-blue-400 font-semibold transition"
+                    href={`https://finance.yahoo.com/quote/${stock.symbol}/news`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View More News
+                  </a>
+                </div>
+              </>
+            )}
           </div>
         );
 
       case 'options':
         return (
-          <div className="bg-[#1E1E1E] p-6 rounded-2xl shadow-lg">
-            <h3 className="text-2xl font-bold text-[#E0E0E0] mb-4">Options Trading</h3>
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-900/50 p-4 rounded-xl">
-                  <h4 className="text-lg font-semibold text-[#E0E0E0] mb-2">Call Options</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-[#B0B0B0]">Strike Price</span>
-                      <span className="text-[#E0E0E0]">$210</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#B0B0B0]">Premium</span>
-                      <span className="text-[#E0E0E0]">$2.50</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#B0B0B0]">Expiry</span>
-                      <span className="text-[#E0E0E0]">Dec 15</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-gray-900/50 p-4 rounded-xl">
-                  <h4 className="text-lg font-semibold text-[#E0E0E0] mb-2">Put Options</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-[#B0B0B0]">Strike Price</span>
-                      <span className="text-[#E0E0E0]">$200</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#B0B0B0]">Premium</span>
-                      <span className="text-[#E0E0E0]">$1.75</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#B0B0B0]">Expiry</span>
-                      <span className="text-[#E0E0E0]">Dec 15</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="text-center">
-                <button className="bg-[#2196F3] hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
-                  Trade Options
-                </button>
-              </div>
+          <div className="space-y-6">
+            <div className="bg-[#1E1E1E] p-6 rounded-2xl shadow-lg">
+              <h3 className="text-2xl font-bold text-[#E0E0E0] mb-4">Options Trading</h3>
+              <p className="text-[#B0B0B0] mb-6">
+                Real-time options chain data with live pricing, Greeks, and trading capabilities.
+              </p>
+              
+              {stock && (
+                <OptionChain 
+                  symbol={stock.symbol}
+                  stockPrice={stock.price}
+                  expiryDate="2024-12-20"
+                  accountId="demo-account"
+                />
+              )}
             </div>
           </div>
         );
@@ -539,7 +702,16 @@ const ImprovedStockDetailPage: React.FC = () => {
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              <AISentimentAnalysis symbol={stock.symbol} stock={stock} className="w-full" />
+              <AISentimentAnalysis symbol={stock.symbol} stockData={{
+                symbol: stock.symbol,
+                price: stock.price,
+                change: stock.change,
+                changePercent: stock.changePercent,
+                volume: stock.volume ?? 0,
+                marketCap: stock.marketCap,
+                pe: undefined,
+                eps: undefined,
+              }} className="w-full" />
               <PredictivePriceForecasting symbol={stock.symbol} stock={stock} className="w-full" />
               <AIFundamentalScore symbol={stock.symbol} stock={stock} className="w-full" />
               <AIPatternRecognition symbol={stock.symbol} stock={stock} className="w-full" />

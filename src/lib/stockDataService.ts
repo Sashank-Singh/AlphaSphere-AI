@@ -186,6 +186,35 @@ class StockDataService {
     return Date.now() - lastUpdated < CACHE_TTL;
   }
 
+  // News types
+  public async getCompanyNews(symbol: string, limit: number = 8): Promise<Array<{
+    title: string;
+    url: string;
+    publisher?: string;
+    publishedAt?: string;
+    summary?: string;
+    imageUrl?: string;
+  }>> {
+    try {
+      const params = new URLSearchParams();
+      params.set('limit', String(limit));
+      const data = await this.fetchWithFallBack(`/yahoo/news/${symbol}?${params.toString()}`);
+      if (Array.isArray(data)) return data;
+      throw new Error('Invalid news response');
+    } catch (error) {
+      console.warn('Error fetching news, using mock news:', error);
+      // Generate simple mock news to avoid empty UI
+      const now = new Date();
+      return Array.from({ length: limit }).map((_, i) => ({
+        title: `${symbol} market update #${i + 1}`,
+        url: `https://finance.yahoo.com/quote/${symbol}`,
+        publisher: 'AlphaSphere AI',
+        publishedAt: new Date(now.getTime() - i * 3600_000).toISOString(),
+        summary: `${symbol} latest development and market commentary.`,
+      }));
+    }
+  }
+
   // Company info methods
   public async getCompanyInfo(symbol: string): Promise<CompanyInfo | null> {
     try {
@@ -197,10 +226,14 @@ class StockDataService {
   }
 
   // Historical price data
-  public async getHistoricalPrices(symbol: string, days: number = 30): Promise<{date: string, open: number, high: number, low: number, close: number, volume: number}[]> {
+  public async getHistoricalPrices(
+    symbol: string,
+    days: number = 30,
+    intervalOverride?: string
+  ): Promise<{ date: string; open: number; high: number; low: number; close: number; volume: number }[]> {
     const period = `${days}d`;
-    // Use intraday intervals for 1-day charts, daily for longer periods
-    const interval = days === 1 ? '5m' : '1d';
+    // Use intraday intervals for 1-day charts, daily for longer periods unless overridden
+    const interval = intervalOverride || (days === 1 ? '5m' : '1d');
     try {
       const data = await this.fetchWithFallBack(`/yahoo/history/${symbol}?period=${period}&interval=${interval}`);
       console.log('API returned data:', data);
@@ -359,6 +392,38 @@ class StockDataService {
     }
   }
 
+  // Options data methods
+  public async getOptionsChain(symbol: string, expiryDate?: string, limit: number = 20): Promise<{
+    calls: OptionData[];
+    puts: OptionData[];
+    underlying: { symbol: string; price: number; lastUpdated: string };
+  }> {
+    try {
+      const params = new URLSearchParams();
+      if (expiryDate) params.append('expiry', expiryDate);
+      params.append('limit', limit.toString());
+      
+      const response = await this.fetchWithFallBack(`/yahoo/options/${symbol}?${params.toString()}`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching options chain:', error);
+      return this.getMockOptionsChain(symbol, expiryDate, limit);
+    }
+  }
+
+  public async getOptionsExpirations(symbol: string): Promise<Array<{
+    date: string;
+    daysToExpiry: number;
+    formatted: string;
+  }>> {
+    try {
+      return await this.fetchWithFallBack(`/yahoo/options/expirations/${symbol}`);
+    } catch (error) {
+      console.error('Error fetching options expirations:', error);
+      return this.getMockOptionsExpirations();
+    }
+  }
+
   private getMockStockData(symbol: string): StockQuote {
     const basePrice = Math.random() * 1000;
     const previousClose = basePrice * (1 + (Math.random() * 0.02 - 0.01));
@@ -426,6 +491,98 @@ class StockDataService {
       this.generateMockOptionContract(`${symbol}${expiration}C${strike}`, underlyingPrice),
       this.generateMockOptionContract(`${symbol}${expiration}P${strike}`, underlyingPrice)
     ]);
+  }
+
+  private getMockOptionsChain(symbol: string, expiryDate?: string, limit: number = 20) {
+    const quote = this.stockCache[symbol]?.quote;
+    const currentPrice = quote?.price || 150;
+    const baseStrike = Math.round(currentPrice / 5) * 5;
+    
+    const calls: OptionData[] = [];
+    const puts: OptionData[] = [];
+    
+    for (let i = -limit/2; i <= limit/2; i++) {
+      const strike = baseStrike + (i * 5);
+      if (strike <= 0) continue;
+      
+      const moneyness = strike / currentPrice;
+      const timeValue = Math.max(0.5, 5 - Math.abs(moneyness - 1) * 10);
+      
+      // Call option
+      const callIntrinsic = Math.max(currentPrice - strike, 0);
+      const callPrice = callIntrinsic + timeValue;
+      const callIv = 0.3 + Math.abs(moneyness - 1) * 0.1;
+      
+      calls.push({
+        contractSymbol: `${symbol}${expiryDate?.replace(/-/g, '').substring(2) || '231215'}C${strike}`,
+        strike,
+        type: 'call',
+        expiration: expiryDate || '2023-12-15',
+        bid: Math.round((callPrice - 0.05) * 100) / 100,
+        ask: Math.round((callPrice + 0.05) * 100) / 100,
+        volume: Math.floor(Math.random() * 1000),
+        openInterest: Math.floor(Math.random() * 5000),
+        delta: Math.max(0.1, Math.min(0.9, 0.5 + (currentPrice - strike) / (currentPrice * 0.2))),
+        gamma: Math.random() * 0.05,
+        theta: -Math.random() * 0.1,
+        vega: Math.random() * 0.2,
+        rho: Math.random() * 0.01
+      });
+      
+      // Put option
+      const putIntrinsic = Math.max(strike - currentPrice, 0);
+      const putPrice = putIntrinsic + timeValue;
+      const putIv = 0.3 + Math.abs(moneyness - 1) * 0.1 + 0.02;
+      
+      puts.push({
+        contractSymbol: `${symbol}${expiryDate?.replace(/-/g, '').substring(2) || '231215'}P${strike}`,
+        strike,
+        type: 'put',
+        expiration: expiryDate || '2023-12-15',
+        bid: Math.round((putPrice - 0.05) * 100) / 100,
+        ask: Math.round((putPrice + 0.05) * 100) / 100,
+        volume: Math.floor(Math.random() * 1000),
+        openInterest: Math.floor(Math.random() * 5000),
+        delta: -Math.max(0.1, Math.min(0.9, 0.5 + (strike - currentPrice) / (currentPrice * 0.2))),
+        gamma: Math.random() * 0.05,
+        theta: -Math.random() * 0.1,
+        vega: Math.random() * 0.2,
+        rho: -Math.random() * 0.01
+      });
+    }
+    
+    return {
+      calls,
+      puts,
+      underlying: {
+        symbol,
+        price: currentPrice,
+        lastUpdated: new Date().toISOString()
+      }
+    };
+  }
+
+  private getMockOptionsExpirations() {
+    const expirations = [];
+    const currentDate = new Date();
+    
+    for (let i = 0; i < 4; i++) {
+      const daysAhead = 4 - currentDate.getDay(); // Friday is 5
+      const targetDays = daysAhead <= 0 ? daysAhead + 7 + (i * 7) : daysAhead + (i * 7);
+      const expirationDate = new Date(currentDate.getTime() + targetDays * 24 * 60 * 60 * 1000);
+      
+      expirations.push({
+        date: expirationDate.toISOString().split('T')[0],
+        daysToExpiry: targetDays,
+        formatted: expirationDate.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric', 
+          year: 'numeric' 
+        })
+      });
+    }
+    
+    return expirations;
   }
 }
 

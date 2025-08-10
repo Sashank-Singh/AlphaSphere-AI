@@ -59,6 +59,13 @@ const AuthPage: React.FC = () => {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">Welcome to AlphaSphere</CardTitle>
             <p className="text-muted-foreground">Sign in to your account or create a new one</p>
+            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+              <p className="text-sm text-blue-600 dark:text-blue-400">
+                <strong>YC Demo Credentials:</strong><br />
+                Email: YCdemo@gmail.com<br />
+                Password: YCdemo
+              </p>
+            </div>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin">

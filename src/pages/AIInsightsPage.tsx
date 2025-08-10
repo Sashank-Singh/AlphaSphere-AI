@@ -1,16 +1,15 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import AIMarketSentiment from '@/components/AIMarketSentiment';
-import AIMarketInsights from '@/components/AIMarketInsights';
-import { SphereAI } from '@/components/SphereAI';
-import AIEarningsPrediction from '@/components/AIEarningsPrediction';
-import AIFundamentalScore from '@/components/AIFundamentalScore';
-import AIInsiderTradingAnalysis from '@/components/AIInsiderTradingAnalysis';
-import AINewsImpactAnalysis from '@/components/AINewsImpactAnalysis';
-import AIOptionsFlowAnalysis from '@/components/AIOptionsFlowAnalysis';
-import AIPatternRecognition from '@/components/AIPatternRecognition';
-import AITradeAdvisor from '@/components/AITradeAdvisor';
-import PredictivePriceForecasting from '@/components/PredictivePriceForecasting';
+import AIMarketSentiment from '@/components/ai/AIMarketSentiment';
+import AIMarketInsights from '@/components/ai/AIMarketInsights';
+import AIEarningsPrediction from '@/components/ai/AIEarningsPrediction';
+import AIFundamentalScore from '@/components/ai/AIFundamentalScore';
+import AIInsiderTradingAnalysis from '@/components/ai/AIInsiderTradingAnalysis';
+import AINewsImpactAnalysis from '@/components/ai/AINewsImpactAnalysis';
+import AIOptionsFlowAnalysis from '@/components/ai/AIOptionsFlowAnalysis';
+import AIPatternRecognition from '@/components/ai/AIPatternRecognition';
+import AITradeAdvisor from '@/components/ai/AITradeAdvisor';
+import PredictivePriceForecasting from '@/components/ai/PredictivePriceForecasting';
 
 const AIInsightsPage: React.FC = () => {
   return (
@@ -33,14 +32,7 @@ const AIInsightsPage: React.FC = () => {
             <AIMarketInsights stock={{}} watchlist={[]} onAlertCreate={() => {}} />
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Sphere AI</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SphereAI />
-          </CardContent>
-        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Earnings Prediction</CardTitle>

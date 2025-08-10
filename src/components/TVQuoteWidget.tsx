@@ -35,17 +35,45 @@ const TVQuoteWidget: React.FC<TVQuoteWidgetProps> = ({
     script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js';
     
     // Function to determine the correct exchange for a symbol
-    const getSymbolWithExchange = (symbol: string) => {
-      // If symbol already includes exchange, return as is
-      if (symbol.includes(':')) {
-        return symbol;
-      }
+    const getSymbolWithExchange = (rawSymbol: string) => {
+      if (!rawSymbol) return '';
+      let symbol = rawSymbol.trim();
+      symbol = symbol.replace(/^%5E/i, '^');
+      const upper = symbol.toUpperCase();
 
-      // Common ETFs and their exchanges
-      const etfExchanges: { [key: string]: string } = {
-        // SPDR ETFs - try different exchange formats
-       'SPY': 'AMEX',
-        'XLF': 'NYSEARCA', 
+      if (upper.includes(':')) return upper;
+
+      const indexMap: Record<string, string> = {
+        'VIX': 'CBOE:VIX',
+        '^VIX': 'CBOE:VIX',
+        'GSPC': 'SP:SPX',
+        '^GSPC': 'SP:SPX',
+        'SPX': 'SP:SPX',
+        'DJI': 'DJ:DJI',
+        '^DJI': 'DJ:DJI',
+        'IXIC': 'NASDAQ:IXIC',
+        '^IXIC': 'NASDAQ:IXIC',
+        'NDX': 'NASDAQ:NDX',
+        '^NDX': 'NASDAQ:NDX',
+        'RUT': 'TVC:RUT',
+        '^RUT': 'TVC:RUT',
+        'DXY': 'TVC:DXY',
+        'US10Y': 'TVC:US10Y',
+        'US02Y': 'TVC:US02Y',
+        'US30Y': 'TVC:US30Y',
+        'ES1!': 'CME_MINI:ES1!',
+        'NQ1!': 'CME_MINI:NQ1!',
+        'YM1!': 'CBOT_MINI:YM1!',
+        'RTY1!': 'CME_MINI:RTY1!',
+        'CL1!': 'NYMEX:CL1!',
+        'GC1!': 'COMEX:GC1!',
+        'SI1!': 'COMEX:SI1!'
+      };
+      if (indexMap[upper]) return indexMap[upper];
+
+      const etfExchanges: Record<string, string> = {
+        'SPY': 'AMEX',
+        'XLF': 'NYSEARCA',
         'XLK': 'NYSEARCA',
         'XLE': 'NYSEARCA',
         'XLI': 'NYSEARCA',
@@ -56,8 +84,6 @@ const TVQuoteWidget: React.FC<TVQuoteWidgetProps> = ({
         'XLB': 'NYSEARCA',
         'XLRE': 'NYSEARCA',
         'XLC': 'NYSEARCA',
-        
-        // Vanguard ETFs
         'VTI': 'NYSEARCA',
         'VOO': 'NYSEARCA',
         'VEA': 'NYSEARCA',
@@ -67,8 +93,6 @@ const TVQuoteWidget: React.FC<TVQuoteWidgetProps> = ({
         'VB': 'NYSEARCA',
         'VO': 'NYSEARCA',
         'VV': 'NYSEARCA',
-        
-        // iShares ETFs
         'IWM': 'NYSEARCA',
         'EFA': 'NYSEARCA',
         'EEM': 'NYSEARCA',
@@ -77,8 +101,6 @@ const TVQuoteWidget: React.FC<TVQuoteWidgetProps> = ({
         'IYR': 'NYSEARCA',
         'GLD': 'NYSEARCA',
         'SLV': 'NYSEARCA',
-        
-        // Other popular ETFs
         'QQQ': 'NASDAQ',
         'DIA': 'NYSEARCA',
         'IVV': 'NYSEARCA',
@@ -87,14 +109,20 @@ const TVQuoteWidget: React.FC<TVQuoteWidgetProps> = ({
         'VTEB': 'NASDAQ',
         'VXUS': 'NASDAQ'
       };
+      if (etfExchanges[upper]) return `${etfExchanges[upper]}:${upper}`;
 
-      // Check if it's a known ETF
-      if (etfExchanges[symbol]) {
-        return `${etfExchanges[symbol]}:${symbol}`;
+      if (upper.startsWith('^')) {
+        const withoutCaret = upper.slice(1);
+        if (indexMap[withoutCaret]) return indexMap[withoutCaret];
+        return withoutCaret;
       }
 
-      // Default to NASDAQ for stocks and unknown symbols
-      return `NASDAQ:${symbol}`;
+      const normalizedTicker = upper.includes('-') ? upper.replace('-', '.') : upper;
+      if (/^[A-Z]{6}$/.test(normalizedTicker)) return `FX:${normalizedTicker}`;
+      if (/^[A-Z]{2,10}USDT$/.test(normalizedTicker)) return `BINANCE:${normalizedTicker}`;
+      if (/^[A-Z]{2,10}USD$/.test(normalizedTicker)) return `COINBASE:${normalizedTicker}`;
+      if (/^[A-Z]{1,4}\d!$/.test(normalizedTicker)) return normalizedTicker;
+      return normalizedTicker;
     };
 
     // Format symbol correctly

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { stockDataService } from '@/lib/stockDataService';
 import SearchSuggestions from './SearchSuggestions';
+import TradingModeToggle from './TradingModeToggle';
 import { cn } from '@/lib/utils';
 
 interface SearchSuggestion {
@@ -244,6 +245,9 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch, onMenuClick }) => {
           />
         )}
       </div>
+
+      {/* Trading Mode Toggle */}
+      <TradingModeToggle />
 
       {/* User Section */}
       <div className="flex items-center space-x-1 sm:space-x-4 -mr-2 sm:mr-0">

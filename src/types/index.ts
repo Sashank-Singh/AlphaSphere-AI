@@ -4,6 +4,7 @@ export interface User {
   name: string;
   riskTolerance: 'low' | 'medium' | 'high';
   aiBudget: number;
+  tradingMode: 'paper' | 'live';
 }
 
 export interface Stock {
