@@ -28,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
 
   return (
     <div className={cn(
-      "bg-black flex flex-col justify-between transition-all duration-300 ease-in-out",
+      "bg-black flex flex-col justify-between transition-all duration-300 ease-in-out h-screen sticky top-0",
       collapsed ? "w-16" : "w-64"
     )}>
       {/* Top Section with Chevron */}
