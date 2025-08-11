@@ -17,6 +17,7 @@ import AIPatternRecognition from '@/components/ai/AIPatternRecognition';
 import AIInsiderTradingAnalysis from '@/components/ai/AIInsiderTradingAnalysis';
 import AIOptionsFlowAnalysis from '@/components/ai/AIOptionsFlowAnalysis';
 import OptionChain from '@/components/OptionChain';
+import DeepseekAIInsights from '@/components/ai/DeepseekAIInsights';
 // GroqAIInsights removed - using Yahoo Finance + Alpaca only
 // useGroqAI removed - using Yahoo Finance + Alpaca only
 
@@ -296,13 +297,12 @@ const ImprovedStockDetailPage: React.FC = () => {
     }
   };
 
-  // Periodic price updates
+  // Real-time stock data subscription
   useEffect(() => {
-    if (!stock || isLoading) return;
+    if (!symbol || isLoading) return;
     
-    const updatePrice = async () => {
+    const unsubscribe = stockDataService.subscribe(symbol, (quote) => {
       try {
-        const quote = await stockDataService.getStockQuote(stock.symbol);
         setStock(prev => prev ? {
           ...prev,
           price: quote.price,
@@ -315,15 +315,30 @@ const ImprovedStockDetailPage: React.FC = () => {
           lastUpdated: new Date()
         } : null);
         setLastUpdated(new Date());
-        setError(null); 
+        setError(null);
+        
+        // Update daily data with real-time info
+        setDailyData(prev => prev ? {
+          ...prev,
+          high: Math.max(prev.high, quote.high),
+          low: Math.min(prev.low, quote.low),
+          volume: quote.volume
+        } : {
+          open: quote.open,
+          high: quote.high,
+          low: quote.low,
+          volume: quote.volume,
+          previousClose: quote.previousClose
+        });
       } catch (error) {
-        console.error('Error updating stock price:', error);
+        console.error('Error processing real-time stock data:', error);
       }
-    };
+    });
 
-    const intervalId = setInterval(updatePrice, 15000);
-    return () => clearInterval(intervalId);
-  }, [stock, isLoading]);
+    return () => {
+      unsubscribe();
+    };
+  }, [symbol, isLoading]);
 
   // Manual refresh function
   const handleRefresh = useCallback(async () => {
@@ -471,55 +486,19 @@ const ImprovedStockDetailPage: React.FC = () => {
 
               {/* Right Column - AI Insights */}
               <div className="bg-[#1E1E1E] p-4 sm:p-6 rounded-2xl shadow-lg order-2">
-                <h3 className="text-2xl font-bold text-[#E0E0E0] mb-6">Sphere AI Insights</h3>
-                <div className="space-y-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="bg-[rgba(33,150,243,0.1)] p-3 rounded-full">
-                      <BarChart3 className="h-6 w-6 text-[#2196F3]" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-[#E0E0E0]">AI Price Forecast</h4>
-                      <p className="text-[#B0B0B0] text-sm leading-relaxed">
-                        {isGroqLoading ? 'Analyzing intraday patterns...' : aiInsights.priceForecast}
-                      </p>
-                      <p className="text-sm text-gray-400">Confidence: {aiInsights.confidence}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-4">
-                    <div className="bg-[rgba(76,175,80,0.1)] p-3 rounded-full">
-                      <TrendingUp className="h-6 w-6 text-[#4CAF50]" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-[#E0E0E0]">AI Sentiment Analysis</h4>
-                      <p className="text-[#B0B0B0] text-sm leading-relaxed">
-                        {isGroqLoading ? 'Analyzing market sentiment...' : aiInsights.sentiment}
-                      </p>
-                      <p className="text-sm text-[#4CAF50] font-medium">{aiInsights.sentimentLevel}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-4">
-                    <div className="bg-[rgba(156,39,176,0.1)] p-3 rounded-full">
-                      <FileText className="h-6 w-6 text-[#9C27B0]" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-[#E0E0E0]">AI News Impact</h4>
-                      <p className="text-[#B0B0B0] text-sm leading-relaxed">
-                        {isGroqLoading ? 'Analyzing news impact...' : aiInsights.newsImpact}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-4">
-                    <div className="bg-[rgba(255,193,7,0.1)] p-3 rounded-full">
-                      <Lightbulb className="h-6 w-6 text-[#FFC107]" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-[#E0E0E0]">AI Pattern Recognition</h4>
-                      <p className="text-[#B0B0B0] text-sm leading-relaxed">
-                        {isGroqLoading ? 'Analyzing intraday patterns...' : aiInsights.patternRecognition}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <DeepseekAIInsights 
+                  symbol={stock.symbol} 
+                  stockData={{
+                    price: stock.price,
+                    change: stock.change,
+                    changePercent: stock.changePercent,
+                    volume: stock.volume,
+                    high: stock.high,
+                    low: stock.low,
+                    open: stock.open,
+                    lastUpdated: lastUpdated
+                  }}
+                />
                 
                 {/* Financial Health Section */}
                 <div className="mt-8 pt-6 border-t border-[#333333]">
@@ -702,21 +681,7 @@ const ImprovedStockDetailPage: React.FC = () => {
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              <AISentimentAnalysis symbol={stock.symbol} stockData={{
-                symbol: stock.symbol,
-                price: stock.price,
-                change: stock.change,
-                changePercent: stock.changePercent,
-                volume: stock.volume ?? 0,
-                marketCap: stock.marketCap,
-                pe: undefined,
-                eps: undefined,
-              }} className="w-full" />
-              <PredictivePriceForecasting symbol={stock.symbol} stock={stock} className="w-full" />
-              <AIFundamentalScore symbol={stock.symbol} stock={stock} className="w-full" />
-              <AIPatternRecognition symbol={stock.symbol} stock={stock} className="w-full" />
-              <AIInsiderTradingAnalysis symbol={stock.symbol} stock={stock} className="w-full" />
-              <AIOptionsFlowAnalysis symbol={stock.symbol} stock={stock} className="w-full" />
+              <DeepseekStockAnalysis symbol={symbol!} />
             </div>
           </div>
         );

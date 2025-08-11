@@ -29,10 +29,10 @@ const Typewriter: React.FC<TypewriterProps> = ({ text, speed = 40, className }) 
 
   return (
     <>
-      <h1 className={className}>
+      <span className={className}>
         {displayed}
         <span className="animate-blink">|</span>
-      </h1>
+      </span>
       <style>{`
         @keyframes blink {
           0%, 100% { opacity: 1; }

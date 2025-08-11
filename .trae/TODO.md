@@ -1,0 +1,17 @@
+# TODO:
+
+- [x] 1: Create optimized DeepseekAIInsights component with caching and streaming (priority: High)
+- [x] 2: Restore original AI insights UI with four sections (Price Forecast, Sentiment, News Impact, Pattern Recognition) (priority: High)
+- [x] 3: Integrate DeepseekAIInsights to populate the four sections with real data (priority: High)
+- [x] 6: Examine current ImprovedStockDetailPage.tsx implementation to understand data flow (priority: High)
+- [x] 7: Implement real-time stock data subscription using stockDataService.subscribe() (priority: High)
+- [x] 8: Replace static/mock data with real-time data for price, change, volume, and market data (priority: High)
+- [x] 11: Enhance AI prompts with specific technical indicators, support/resistance levels, volume analysis, and comprehensive market context (priority: High)
+- [x] 12: Optimize DeepseekAIInsights for speed: reduce max_tokens to 60-80, implement aggressive caching, add timeout handling (priority: High)
+- [x] 15: Fix DeepseekAIInsights component issues: missing setIsLoading state, logic errors, and add proper debugging (priority: High)
+- [x] 4: Add performance optimizations: caching, streaming responses, and section-specific API calls (priority: Medium)
+- [x] 5: Test the updated UI for speed and functionality (priority: Medium)
+- [x] 9: Integrate real-time data into AI analysis sections for accurate insights (priority: Medium)
+- [x] 10: Test real-time data updates and ensure automatic component updates (priority: Medium)
+- [x] 13: Implement progressive loading where each section updates independently as responses arrive (priority: Medium)
+- [x] 14: Add request debouncing to prevent excessive API calls and lower temperature (0.1) for consistent results (priority: Medium)
