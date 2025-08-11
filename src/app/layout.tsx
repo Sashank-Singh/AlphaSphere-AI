@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 export const metadata = {
   title: 'Trade Simply',
-  description: 'Real-time stock analysis with AI insights',
+  description: 'Real-time stock analysis with Sphere AI Insights',
 };
 
 export default function RootLayout({

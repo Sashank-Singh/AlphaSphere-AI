@@ -20,7 +20,7 @@ const MainContentTabs: React.FC = () => {
       <Tabs defaultValue="positions" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-12">
           <TabsTrigger value="positions" className="text-sm">Positions</TabsTrigger>
-          <TabsTrigger value="ai-insights" className="text-sm">AI Insights</TabsTrigger>
+          <TabsTrigger value="ai-insights" className="text-sm">Sphere AI Insights</TabsTrigger>
           <TabsTrigger value="community" className="text-sm">Community</TabsTrigger>
           <TabsTrigger value="alerts" className="text-sm">Alerts</TabsTrigger>
         </TabsList>
@@ -88,9 +88,9 @@ const MainContentTabs: React.FC = () => {
 
         <TabsContent value="ai-insights" className="mt-6">
           <div className="text-center p-8">
-            <h3 className="text-lg font-semibold mb-2">AI Insights</h3>
+            <h3 className="text-lg font-semibold mb-2">Sphere AI Insights</h3>
             <p className="text-muted-foreground">
-              Use the floating SphereAI button for real-time AI insights and analysis.
+              Use the floating SphereAI button for real-time Sphere AI Insights and analysis.
             </p>
           </div>
         </TabsContent>

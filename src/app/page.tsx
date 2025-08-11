@@ -142,7 +142,7 @@ export default function Home() {
               <span className="text-white">Made Simple</span>
             </h1>
             <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              Real-time market data, AI insights, and advanced analytics. 
+              Real-time market data, Sphere AI Insights, and advanced analytics. 
               Trade smarter with institutional-grade tools.
             </p>
             

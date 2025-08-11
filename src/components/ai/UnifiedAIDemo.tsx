@@ -434,7 +434,7 @@ const UnifiedAIDemo: React.FC<UnifiedAIDemoProps> = ({ className = "" }) => {
               </div>
               <div>
                 <div className="text-muted-foreground">Data Points</div>
-                <div className="font-medium">14 AI Insights</div>
+                <div className="font-medium">14 Sphere AI Insights</div>
               </div>
               <div>
                 <div className="text-muted-foreground">Cache Duration</div>

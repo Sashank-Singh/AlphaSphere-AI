@@ -85,7 +85,7 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ symbol, className = "
 
   return (
     <div className={`bg-[#1E1E1E] p-6 rounded-2xl shadow-lg ${className}`}>
-      <h3 className="text-2xl font-bold text-[#E0E0E0] mb-6">AI Insights</h3>
+      <h3 className="text-2xl font-bold text-[#E0E0E0] mb-6">Sphere AI Insights</h3>
       
       <div className="space-y-6">
         {/* AI Price Forecast */}

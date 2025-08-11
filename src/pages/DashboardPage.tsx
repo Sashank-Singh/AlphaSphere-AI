@@ -68,7 +68,7 @@ const DashboardPage: React.FC = () => {
             </button>
             <button className="flex flex-col items-center text-secondary text-xs">
               <span className="icon">insights</span>
-              <span>AI Insights</span>
+              <span>Sphere AI Insights</span>
             </button>
             <button className="flex flex-col items-center text-secondary text-xs">
               <span className="icon">people</span>

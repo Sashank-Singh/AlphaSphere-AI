@@ -371,7 +371,7 @@ const ImprovedSphereAI: React.FC<ImprovedSphereAIProps> = ({ isFloating = false 
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Recent AI Insights</CardTitle>
+                 <CardTitle className="text-lg">Recent Sphere AI Insights</CardTitle>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -541,7 +541,7 @@ const ImprovedSphereAI: React.FC<ImprovedSphereAIProps> = ({ isFloating = false 
             {responses.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">AI Insights</h3>
+                  <h3 className="font-semibold">Sphere AI Insights</h3>
                   <Button
                     variant="ghost"
                     size="sm"

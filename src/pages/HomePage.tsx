@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BarChart3, Brain, CheckCircle, Menu, X, TrendingUp, Shield, Users, Zap } from 'lucide-react';
+import { ArrowRight, BarChart3, Brain, CheckCircle, Menu, X, Shield, Zap, Sparkles, Command } from 'lucide-react';
 import Typewriter from '../components/Typewriter';
 
 const features = [
@@ -65,7 +65,7 @@ const pricing = [
     price: 'Free',
     features: [
       'Basic market analysis',
-      'Limited AI insights',
+      'Limited Sphere AI Insights',
       'Community access',
       'Email support'
     ],
@@ -109,11 +109,9 @@ const realStats = [
 const HomePage: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedTool, setSelectedTool] = useState(0);
-  const [isInToolsSection, setIsInToolsSection] = useState(false);
-  const [scrollLocked, setScrollLocked] = useState(false);
-  const [scrollAccumulator, setScrollAccumulator] = useState(0);
-  const [lastScrollTime, setLastScrollTime] = useState(0);
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
+  const [currentHeadlineIndex, setCurrentHeadlineIndex] = useState(0);
+  const headlineTexts = ["with AI assistance", "with AI Automation"];
 
   const typewriterTexts = [
     "for Modern Investors",
@@ -132,100 +130,72 @@ const HomePage: React.FC = () => {
     return () => clearInterval(interval);
   }, [typewriterTexts.length]);
 
+  // Alternate headline between assistance and automation
   useEffect(() => {
-    const handleScroll = (e: Event) => {
-      // Only apply scroll logic on larger screens (desktop)
-      if (window.innerWidth < 1024) return;
-      
-      const toolsSection = document.getElementById('tools');
-      if (!toolsSection) return;
-
-      const rect = toolsSection.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      
-      // Check if tools section is in viewport
-      const isInView = rect.top <= 100 && rect.bottom >= viewportHeight - 100;
-      
-      if (isInView && !isInToolsSection) {
-        setIsInToolsSection(true);
-        setScrollLocked(true);
-        setScrollAccumulator(0);
-        // Prevent default scrolling when in tools section
-        e.preventDefault();
-      } else if (!isInView && isInToolsSection && selectedTool === 5) {
-        // Allow normal scrolling after viewing all tools
-        setIsInToolsSection(false);
-        setScrollLocked(false);
-        setScrollAccumulator(0);
-      }
-    };
-
-    const handleWheel = (e: WheelEvent) => {
-      // Only apply wheel logic on larger screens (desktop)
-      if (window.innerWidth < 1024) return;
-      if (!isInToolsSection || !scrollLocked) return;
-      
-      e.preventDefault();
-      
-      const now = Date.now();
-      const timeDiff = now - lastScrollTime;
-      
-      // Reset accumulator if too much time has passed (debounce)
-      if (timeDiff > 150) {
-        setScrollAccumulator(0);
-      }
-      
-      setLastScrollTime(now);
-      
-      // Accumulate scroll delta
-      const newAccumulator = scrollAccumulator + e.deltaY;
-      setScrollAccumulator(newAccumulator);
-      
-      // Only change tool when accumulator reaches threshold
-      const threshold = 120; // Increased threshold for slower switching
-      
-      if (Math.abs(newAccumulator) >= threshold) {
-        if (newAccumulator > 0) {
-          // Scrolling down - next tool
-          if (selectedTool < 5) {
-            setSelectedTool(prev => prev + 1);
-            setScrollAccumulator(0);
-          } else {
-            // Reached last tool, unlock scrolling
-            setScrollLocked(false);
-            setIsInToolsSection(false);
-            setScrollAccumulator(0);
-          }
-        } else {
-          // Scrolling up - previous tool
-          if (selectedTool > 0) {
-            setSelectedTool(prev => prev - 1);
-            setScrollAccumulator(0);
-          } else {
-            // At first tool, allow scrolling up to exit section
-            setScrollLocked(false);
-            setIsInToolsSection(false);
-            setScrollAccumulator(0);
-          }
-        }
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: false });
-    window.addEventListener('wheel', handleWheel, { passive: false });
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('wheel', handleWheel);
-    };
-  }, [isInToolsSection, selectedTool, scrollLocked, scrollAccumulator, lastScrollTime]);
+    const interval = setInterval(() => {
+      setCurrentHeadlineIndex(prev => (prev + 1) % headlineTexts.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [headlineTexts.length]);
 
   const supportedMarkets = [
     'NYSE', 'NASDAQ', 'Options', 'Forex', 'Crypto', 'Futures'
   ];
 
+  // Curated modules mapped to existing routes/pages
+  const aiModules: {
+    title: string;
+    description: string;
+    path: string;
+    icon: React.ReactNode;
+    tag?: string;
+  }[] = [
+    {
+      title: 'Sphere AI Insights Chat',
+      description: 'Ask anything about a symbol or market context. Get instant, cited answers.',
+      path: '/ai-trading',
+      icon: <Sparkles className="h-5 w-5" />, tag: 'AI'
+    },
+    {
+      title: 'Options Flow Analysis',
+      description: 'Track unusual flow, large sweeps, and institutional positioning.',
+      path: '/options',
+      icon: <BarChart3 className="h-5 w-5" />, tag: 'Options'
+    },
+    {
+      title: 'Predictive Forecasting',
+      description: 'Short-term price predictions and trend probabilities.',
+      path: '/analytics',
+      icon: <Zap className="h-5 w-5" />, tag: 'Alpha'
+    },
+    {
+      title: 'Market Sentiment',
+      description: 'News and social tone aggregated into actionable sentiment.',
+      path: '/dashboard',
+      icon: <Brain className="h-5 w-5" />, tag: 'Signal'
+    },
+    {
+      title: 'Pattern Recognition',
+      description: 'Spot breakouts, reversals, and momentum setups.',
+      path: '/analytics',
+      icon: <Brain className="h-5 w-5" />
+    },
+    {
+      title: 'Portfolio Optimizer',
+      description: 'Optimize allocations for risk-adjusted returns.',
+      path: '/portfolio',
+      icon: <Shield className="h-5 w-5" />
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div className="relative min-h-screen bg-white text-gray-900">
+      {/* Background visual accents */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-gradient-to-br from-blue-300/40 to-purple-300/40 blur-3xl" />
+        <div className="absolute top-1/3 -right-24 h-96 w-96 rounded-full bg-gradient-to-tr from-indigo-300/30 to-cyan-300/30 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-gradient-to-r from-emerald-200/30 to-sky-200/30 blur-3xl" />
+      </div>
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
@@ -276,64 +246,129 @@ const HomePage: React.FC = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-24 sm:pt-32 pb-16 sm:pb-20">
+      <section className="relative pt-28 sm:pt-36 pb-12 sm:pb-16">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              AI-Powered Trading
-              <Typewriter 
-                text={typewriterTexts[currentTextIndex]}
-                speed={50}
-                className="block text-gray-600"
-              />
-            </h1>
-            
-            <p className="text-lg sm:text-xl text-gray-600 mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed">
-              Advanced machine learning algorithms analyze market patterns and provide actionable insights to help you make better investment decisions.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12 sm:mb-16">
-              <Link 
-                to="/dashboard" 
-                className="inline-flex items-center gap-2 px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition"
-              >
-                Start Free Trial
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link 
-                to="/demo" 
-                className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition"
-              >
-                View Demo
-              </Link>
-            </div>
-            
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-12 sm:mb-16">
-              {realStats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">{stat.number}</div>
-                  <div className="text-sm text-gray-600">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-            
-            {/* Supported Markets */}
-            <div className="text-center">
-              <p className="text-sm text-gray-500 mb-6 font-medium">
-                Supporting all major markets
+          <div className="mx-auto grid max-w-6xl grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            {/* Headline */}
+            <div className="lg:col-span-7 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/60 px-3 py-1 text-xs text-gray-700 backdrop-blur">
+                <Sparkles className="h-3.5 w-3.5 text-yellow-500" />
+                Real-time Sphere AI Insights for traders
+              </div>
+              <h1 className="mt-4 text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-gray-900">
+                Trade smarter
+                <Typewriter
+                  text={headlineTexts[currentHeadlineIndex]}
+                  speed={50}
+                  className="block text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-gray-700 to-gray-500"
+                />
+              </h1>
+              <div className="mt-3 text-xl text-gray-600">
+                <Typewriter
+                  text={typewriterTexts[currentTextIndex]}
+                  speed={50}
+                  className="block"
+                />
+              </div>
+              <p className="mt-6 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto lg:mx-0">
+                Instantly understand market context, spot opportunities, and act with confidence.
+                Your on-call research analyst—built into every screen.
               </p>
-              <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
-                {supportedMarkets.map((market, index) => (
-                  <div key={index} className="text-gray-400 font-medium text-sm">
-                    {market}
+              <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center gap-2 rounded-lg bg-black px-6 py-3 font-medium text-white shadow-sm transition hover:bg-gray-800"
+                >
+                  Get Started
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  to="/demo"
+                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+                >
+                  View Demo
+                </Link>
+              </div>
+              {/* Stats */}
+              <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
+                {realStats.map((stat, index) => (
+                  <div key={index} className="rounded-xl border border-gray-200 bg-white/60 p-4 backdrop-blur text-center">
+                    <div className="text-2xl md:text-3xl font-bold text-gray-900">{stat.number}</div>
+                    <div className="text-xs sm:text-sm text-gray-600">{stat.label}</div>
                   </div>
                 ))}
+              </div>
+            </div>
+            {/* Visual / Glass cards */}
+            <div className="lg:col-span-5">
+              <div className="relative mx-auto max-w-md">
+                <div className="absolute -inset-1 rounded-3xl bg-gradient-to-br from-indigo-200 via-sky-200 to-emerald-200 opacity-60 blur-2xl" />
+                <div className="relative rounded-3xl border border-gray-200 bg-white/60 p-4 backdrop-blur shadow-xl">
+                  {/* Top bar */}
+                  <div className="flex items-center gap-2 border-b border-gray-200/70 pb-3">
+                    <div className="flex -space-x-1.5">
+                      <span className="h-2.5 w-2.5 rounded-full bg-red-400 inline-block" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-yellow-400 inline-block" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-green-400 inline-block" />
+                    </div>
+                    <div className="ml-auto inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white/60 px-2 py-1 text-[10px] text-gray-600">
+                      <Command className="h-3 w-3" />
+                      AI Assist
+                    </div>
+                  </div>
+                  {/* Main card content */}
+                  <div className="space-y-3 pt-4">
+                    <div className="rounded-xl border border-gray-200 bg-white/60 p-3">
+                      <div className="flex items-start gap-2">
+                        <div className="rounded-md bg-black p-1.5">
+                          <Sparkles className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="text-sm">
+                          <div className="font-semibold text-gray-900">Instant Answer</div>
+                          <p className="mt-1 text-gray-600">AAPL options flow is net-bullish today. Consider a call spread near $190 with defined risk.</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-gray-200 bg-white/60 p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">Live Sentiment</div>
+                          <div className="mt-1 text-xs text-gray-600">Bullish 72% • Neutral 18% • Bearish 10%</div>
+                        </div>
+                        <div className="flex items-end gap-1 self-end">
+                          <div className="h-12 w-2 rounded bg-green-400" />
+                          <div className="h-9 w-2 rounded bg-yellow-400" />
+                          <div className="h-5 w-2 rounded bg-red-400" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-gray-200 bg-white/60 p-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Next earnings insight ready</span>
+                        <Link to="/dashboard" className="text-gray-900 font-medium hover:underline">Open</Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Supported Markets */}
+              <div className="mt-10 text-center lg:text-left">
+                <p className="text-xs text-gray-500 mb-4 font-medium">Supporting all major markets</p>
+                <div className="flex flex-wrap justify-center lg:justify-start items-center gap-4 opacity-70">
+                  {supportedMarkets.map((market, index) => (
+                    <div key={index} className="rounded-full border border-gray-200 bg-white/70 px-3 py-1 text-xs text-gray-600 backdrop-blur">
+                      {market}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Assistant Highlights (Cluely-like quick tags) */}
+
 
       {/* Features Section */}
       <section id="features" className="py-16 sm:py-20 bg-gray-50">
@@ -349,12 +384,35 @@ const HomePage: React.FC = () => {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="bg-white rounded-lg p-6 hover:shadow-lg transition-shadow">
+              <div key={index} className="rounded-2xl border border-gray-200 bg-white/60 p-6 backdrop-blur hover:shadow-md transition-shadow">
                 <div className="mb-4">
                   {feature.icon}
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Use Cases (Cluely-like) */}
+      <section className="py-16 sm:py-20">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Built for every kind of trader</h2>
+            <p className="text-lg text-gray-600">Stocks. Options. Forex. Crypto. Futures. Really everything.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { title: 'Day Traders', desc: 'Ultra-fast insights, real-time sentiment, and risk cues.' },
+              { title: 'Swing Traders', desc: 'Pattern detection, earnings tone, and momentum signals.' },
+              { title: 'Options Traders', desc: 'Unusual flow, IV shifts, and spread suggestions.' },
+              { title: 'Long-term Investors', desc: 'Fundamentals, insider trends, and valuation context.' },
+            ].map((c) => (
+              <div key={c.title} className="rounded-2xl border border-gray-200 bg-white/70 p-6 backdrop-blur">
+                <div className="text-lg font-semibold text-gray-900">{c.title}</div>
+                <p className="mt-2 text-sm text-gray-600">{c.desc}</p>
               </div>
             ))}
           </div>
@@ -523,18 +581,13 @@ const HomePage: React.FC = () => {
           <div className="hidden lg:grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
             {/* Tool Cards - Left Side */}
             <div className="space-y-4">
-              {/* Desktop Scroll Indicator */}
-              <div className="text-center mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-700 font-medium">💡 Scroll through this section to explore tools automatically</p>
-              </div>
-              
               {actualTools.map((tool, index) => (
                 <div 
                   key={index} 
-                  className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 ${
+                  className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 ${
                     selectedTool === index 
-                      ? 'border-black bg-gray-50 shadow-md' 
-                      : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                      ? 'border-black bg-white/70 shadow-md backdrop-blur' 
+                      : 'border-gray-200 bg-white/60 hover:border-gray-300 hover:shadow-sm backdrop-blur'
                   }`}
                   onClick={() => setSelectedTool(index)}
                 >
@@ -549,7 +602,7 @@ const HomePage: React.FC = () => {
             </div>
             
             {/* Tool Showcase - Right Side */}
-            <div className="bg-white border border-gray-200 rounded-lg p-8">
+            <div className="rounded-2xl border border-gray-200 bg-white/70 p-8 backdrop-blur">
               <div className="mb-6">
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">
                   {actualTools[selectedTool].title}
@@ -560,7 +613,7 @@ const HomePage: React.FC = () => {
               </div>
               
               {/* Desktop Interactive Demo Component */}
-              <div className="mb-8 p-6 bg-gray-50 rounded-lg border">
+              <div className="mb-8 p-6 bg-gray-50/70 rounded-xl border">
                 {selectedTool === 0 && (
                   <div className="space-y-4">
                     <h4 className="font-semibold text-gray-900">Live Sentiment Analysis</h4>
@@ -683,6 +736,47 @@ const HomePage: React.FC = () => {
               </div>
             </div>
           </div>
+
+        </div>
+      </section>
+
+      {/* FAQ (Cluely-like) */}
+      <section className="py-16 sm:py-20 bg-gray-50">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="mx-auto max-w-4xl">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Frequently asked questions</h2>
+              <p className="text-lg text-gray-600">Short answers to help you get started fast.</p>
+            </div>
+            <div className="divide-y divide-gray-200 rounded-2xl border border-gray-200 bg-white/70 backdrop-blur">
+              {[
+                {
+                  q: 'Why AlphaSphere vs. a regular trading website?',
+                  a: 'AlphaSphere delivers real-time, trade-ready insights as markets move by the second, so you can act while the opportunity still exists.'
+                },
+                {
+                  q: 'Who is AlphaSphere for?',
+                  a: 'Everyone from new investors to pro traders. Pick your style; day trade, swing, options, or long-term.'
+                },
+                {
+                  q: 'Is there a free plan?',
+                  a: 'Yes. Start on the Starter plan and upgrade when you need advanced features.'
+                },
+                {
+                  q: 'Does it work on any device?',
+                  a: 'Yes. Use it on web today. Mobile apps are planned.'
+                },
+              ].map((item, idx) => (
+                <details key={item.q} className={`group p-5 ${idx === 0 ? 'rounded-t-2xl' : ''} ${idx === 3 ? 'rounded-b-2xl' : ''}`}>
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+                    <span className="text-base font-medium text-gray-900">{item.q}</span>
+                    <span className="ml-4 text-gray-400 transition group-open:rotate-45">+</span>
+                  </summary>
+                  <p className="mt-3 text-sm text-gray-600">{item.a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -700,7 +794,7 @@ const HomePage: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
             {pricing.map((plan, index) => (
-              <div key={index} className={plan.highlight ? 'bg-white rounded-lg p-8 ring-2 ring-black' : 'bg-white rounded-lg p-8 border border-gray-200'}>
+              <div key={index} className={plan.highlight ? 'rounded-2xl p-8 ring-2 ring-black bg-white/80 backdrop-blur' : 'rounded-2xl p-8 border border-gray-200 bg-white/70 backdrop-blur'}>
                 {plan.highlight && (
                   <div className="text-center mb-4">
                     <span className="bg-black text-white px-3 py-1 rounded-full text-sm font-medium">

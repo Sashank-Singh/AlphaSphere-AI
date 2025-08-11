@@ -471,7 +471,7 @@ const ImprovedStockDetailPage: React.FC = () => {
 
               {/* Right Column - AI Insights */}
               <div className="bg-[#1E1E1E] p-4 sm:p-6 rounded-2xl shadow-lg order-2">
-                <h3 className="text-2xl font-bold text-[#E0E0E0] mb-6">AI Insights</h3>
+                <h3 className="text-2xl font-bold text-[#E0E0E0] mb-6">Sphere AI Insights</h3>
                 <div className="space-y-6">
                   <div className="flex items-start space-x-4">
                     <div className="bg-[rgba(33,150,243,0.1)] p-3 rounded-full">

@@ -669,7 +669,7 @@ CRITICAL FORMATTING:
         <div className="flex items-center space-x-2">
 
           <div>
-            <h2 className="text-base font-semibold text-white leading-tight">AI Insights</h2>
+            <h2 className="text-base font-semibold text-white leading-tight">Sphere AI Insights</h2>
             <p className="text-xs text-slate-400">Context-aware recommendations for {symbol}</p>
           </div>
         </div>

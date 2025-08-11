@@ -57,8 +57,18 @@ CACHE_DURATION = {
     'sectors': 1800,  # 30 minutes for sector data
 }
 
-# Cache file path
-CACHE_FILE = 'yahoo_finance_cache.pkl'
+# Cache persistence configuration
+# Set YF_FILE_CACHE=false to disable writing a pickle file to disk
+# Set YF_CACHE_FILE to override the cache file path
+# Set YF_CACHE_SAVE_EVERY to control how often we persist (by entry count)
+FILE_CACHE_ENABLED = os.getenv('YF_FILE_CACHE', 'true').lower() == 'true'
+CACHE_FILE = os.getenv(
+    'YF_CACHE_FILE',
+    os.path.join(os.path.dirname(__file__), 'yahoo_finance_cache.pkl')
+)
+CACHE_SAVE_EVERY = int(os.getenv('YF_CACHE_SAVE_EVERY', '10'))
+# Rotate (delete) the cache file after this many minutes
+CACHE_ROTATE_MINUTES = int(os.getenv('YF_CACHE_ROTATE_MINUTES', '30'))
 
 # In-memory cache storage
 cache_storage = {}
@@ -67,6 +77,10 @@ def load_cache_from_file():
     """Load cache data from file on startup."""
     global cache_storage
     try:
+        if not FILE_CACHE_ENABLED:
+            cache_storage = {}
+            logging.info("File cache disabled (YF_FILE_CACHE=false); starting with empty cache")
+            return
         if os.path.exists(CACHE_FILE):
             with open(CACHE_FILE, 'rb') as f:
                 cache_storage = pickle.load(f)
@@ -81,6 +95,8 @@ def load_cache_from_file():
 def save_cache_to_file():
     """Save cache data to file."""
     try:
+        if not FILE_CACHE_ENABLED:
+            return
         # Clean expired entries before saving
         current_time = time.time()
         expired_keys = []
@@ -133,8 +149,8 @@ def set_cached_data(cache_key, data, duration):
     }
     logging.info(f"Cached data for {cache_key} (expires in {duration}s)")
     
-    # Save to file periodically (every 10 cache operations)
-    if len(cache_storage) % 10 == 0:
+    # Save to file periodically (every N cache operations)
+    if FILE_CACHE_ENABLED and CACHE_SAVE_EVERY > 0 and len(cache_storage) % CACHE_SAVE_EVERY == 0:
         save_cache_to_file()
 
 def cleanup_expired_cache():
@@ -152,6 +168,26 @@ def cleanup_expired_cache():
     if expired_keys:
         logging.info(f"Cleaned up {len(expired_keys)} expired cache entries")
         save_cache_to_file()
+
+def rotate_cache_if_necessary():
+    """Delete cache file and clear in-memory cache if file is older than rotation window."""
+    try:
+        if not FILE_CACHE_ENABLED:
+            return
+        if not os.path.exists(CACHE_FILE):
+            return
+        file_age_seconds = time.time() - os.path.getmtime(CACHE_FILE)
+        if file_age_seconds > CACHE_ROTATE_MINUTES * 60:
+            try:
+                os.remove(CACHE_FILE)
+                logging.info(f"Rotated cache file older than {CACHE_ROTATE_MINUTES} minutes: deleted {CACHE_FILE}")
+            except Exception as remove_err:
+                logging.warning(f"Failed to delete cache file during rotation: {remove_err}")
+            # Also clear in-memory entries so new data can be cached fresh
+            cache_storage.clear()
+            logging.info("Cleared in-memory Yahoo Finance cache after rotation")
+    except Exception as e:
+        logging.warning(f"Error while rotating cache: {e}")
 
 # Load cache on module import
 load_cache_from_file()
@@ -1115,3 +1151,4 @@ def get_next_friday():
 def periodic_cache_cleanup():
     """Periodically clean up expired cache entries."""
     cleanup_expired_cache()
+    rotate_cache_if_necessary()

@@ -13,7 +13,7 @@ const QuickActions: React.FC = () => {
       action: () => navigate('/trading')
     },
     {
-      name: 'AI Insights',
+      name: 'Sphere AI Insights',
       icon: 'insights',
       color: 'bg-green-500/20 text-green-400',
       action: () => navigate('/analytics')

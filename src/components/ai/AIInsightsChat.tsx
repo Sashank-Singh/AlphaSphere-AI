@@ -256,7 +256,7 @@ const AIInsightsChat: React.FC<AIInsightsChatProps> = ({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-white">
             <Brain className="h-5 w-5 text-purple-500" />
-            AI Insights
+            Sphere AI Insights
             <Zap className="h-4 w-4 text-yellow-500" />
           </CardTitle>
           <div className="flex items-center gap-2">
